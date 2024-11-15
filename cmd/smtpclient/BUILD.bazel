@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "smtpclient_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/stlimtat/remiges-smtp/cmd/smtpclient",
+    visibility = ["//visibility:private"],
+    deps = ["//cmd/smtpclient/cmd"],
+)
+
+go_binary(
+    name = "smtpclient",
+    embed = [":smtpclient_lib"],
+    visibility = ["//visibility:public"],
+)
