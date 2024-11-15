@@ -10,9 +10,14 @@ go_library(
     importpath = "github.com/stlimtat/remiges-smtp/cmd/smtpclient",
     visibility = ["//visibility:private"],
     deps = [
+        "//internal/cli",
+        "//internal/config",
         "//internal/telemetry",
+        "@com_github_gin_gonic_gin//:gin",
+        "@com_github_go_mods_zerolog_gin//:zerolog-gin",
         "@com_github_rs_zerolog//:zerolog",
         "@com_github_spf13_cobra//:cobra",
+        "@org_golang_x_sync//errgroup",
     ],
 )
 
