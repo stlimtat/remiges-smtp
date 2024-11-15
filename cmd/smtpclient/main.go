@@ -1,11 +1,20 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2024 Swee Tat Lim <st_lim@stlim.net>
 */
 package main
 
-import "github.com/stlimtat/remiges-smtp/cmd/smtpclient/cmd"
+import (
+	"context"
+
+	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+)
 
 func main() {
-	cmd.Execute()
+	ctx := context.Background()
+	ctx, logger := telemetry.InitLogger(ctx)
+	rootCmd := newRootCmd(ctx)
+	err := rootCmd.cmd.ExecuteContext(ctx)
+	if err != nil {
+		logger.Panic().Err(err).Msg("ExecuteContext")
+	}
 }
