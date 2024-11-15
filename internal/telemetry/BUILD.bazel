@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "telemetry",
+    srcs = ["zerolog.go"],
+    importpath = "github.com/stlimtat/remiges-smtp/internal/telemetry",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "@com_github_rs_zerolog//:zerolog",
+        "@com_github_rs_zerolog//diode",
+        "@com_github_samber_slog_zerolog_v2//:slog-zerolog",
+    ],
+)
