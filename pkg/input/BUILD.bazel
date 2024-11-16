@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "input",
+    srcs = ["file.go"],
+    importpath = "github.com/stlimtat/remiges-smtp/pkg/input",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_rs_zerolog//:zerolog"],
+)

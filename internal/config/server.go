@@ -9,7 +9,8 @@ import (
 )
 
 type ServerConfig struct {
-	InPath string `mapstructure:"in_path"`
+	InPath          string `mapstructure:"in_path"`
+	PollIntervalInt int    `mapstructure:"poll_interval"`
 }
 
 func NewServerConfig(ctx context.Context) ServerConfig {
@@ -35,6 +36,10 @@ func NewServerConfig(ctx context.Context) ServerConfig {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Unmarshal")
 	}
+
+	logger.Debug().
+		Interface("result", result).
+		Msg("ServerConfig init")
 
 	return result
 }
