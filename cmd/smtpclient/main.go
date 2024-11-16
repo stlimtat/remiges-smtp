@@ -5,12 +5,16 @@ package main
 
 import (
 	"context"
+	"os/signal"
+	"syscall"
 
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
 	ctx, logger := telemetry.InitLogger(ctx)
 	rootCmd := newRootCmd(ctx)
 	err := rootCmd.cmd.ExecuteContext(ctx)

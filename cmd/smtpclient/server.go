@@ -5,6 +5,8 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"time"
 
 	zerologgin "github.com/go-mods/zerolog-gin"
 	"github.com/rs/zerolog"
@@ -46,9 +48,10 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 }
 
 type Server struct {
-	Cfg    config.ServerConfig
-	Gin    *gin.Engine
-	InPath string
+	Cfg     config.ServerConfig
+	Gin     *gin.Engine
+	HTTPSvr *http.Server
+	InPath  string
 }
 
 func newServer(
@@ -63,7 +66,7 @@ func newServer(
 		InPath: cfg.InPath,
 	}
 
-	result.Gin = gin.New()
+	result.Gin = gin.Default()
 	result.Gin.Use(
 		zerologgin.LoggerWithOptions(
 			&zerologgin.Options{
@@ -72,20 +75,41 @@ func newServer(
 			},
 		),
 	)
+	result.HTTPSvr = &http.Server{
+		Addr:              ":8000",
+		Handler:           result.Gin,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
 
 	return result
 }
 
 func (s *Server) Run(ctx context.Context) {
 	logger := zerolog.Ctx(ctx)
-	eg, _ := errgroup.WithContext(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
+	var err error
 
 	eg.Go(func() error {
-		err := s.Gin.Run(":8000")
+		err = s.HTTPSvr.ListenAndServe()
+		if err != nil {
+			logger.Error().Err(err).Msg("HTTPSvr.ListenAndServe")
+		}
 		return err
 	})
 
-	err := eg.Wait()
+	eg.Go(func() error {
+		<-ctx.Done()
+		ctx1, cancel := context.WithTimeout(ctx, time.Minute)
+		defer cancel()
+		logger.Warn().Msg("Shutting down")
+		err = s.HTTPSvr.Shutdown(ctx1)
+		if err != nil {
+			logger.Error().Err(err).Msg("HTTPSvr.Shutdown")
+		}
+		return err
+	})
+
+	err = eg.Wait()
 	if err != nil {
 		logger.Error().Err(err).Msg("errgroup Wait")
 	}
