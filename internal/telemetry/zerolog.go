@@ -16,7 +16,7 @@ import (
 )
 
 func InitLogger(ctx context.Context) (context.Context, *zerolog.Logger) {
-	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+	zerolog.CallerMarshalFunc = func(_ uintptr, file string, line int) string {
 		return filepath.Base(file) + ":" + strconv.Itoa(line)
 	}
 	zerolog.FloatingPointPrecision = 2

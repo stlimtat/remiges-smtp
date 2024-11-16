@@ -53,7 +53,7 @@ type Server struct {
 
 func newServer(
 	cmd *cobra.Command,
-	args []string,
+	_ []string,
 	cfg config.ServerConfig,
 ) *Server {
 	ctx := cmd.Context()
@@ -78,7 +78,7 @@ func newServer(
 
 func (s *Server) Run(ctx context.Context) {
 	logger := zerolog.Ctx(ctx)
-	eg, ctx := errgroup.WithContext(ctx)
+	eg, _ := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
 		err := s.Gin.Run(":8000")

@@ -16,6 +16,9 @@ func NewServerConfig(ctx context.Context) ServerConfig {
 	logger := zerolog.Ctx(ctx)
 
 	home, err := homedir.Dir()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("homedir.Dir")
+	}
 
 	viper.AddConfigPath(home)
 	viper.SetConfigName("config")
@@ -25,12 +28,12 @@ func NewServerConfig(ctx context.Context) ServerConfig {
 
 	err = viper.ReadInConfig()
 	if err != nil {
-		logger.Panic().Err(err).Msg("ReadInConfig")
+		logger.Fatal().Err(err).Msg("ReadInConfig")
 	}
 	var result ServerConfig
 	err = viper.Unmarshal(&result)
 	if err != nil {
-		logger.Panic().Err(err).Msg("Unmarshal")
+		logger.Fatal().Err(err).Msg("Unmarshal")
 	}
 
 	return result

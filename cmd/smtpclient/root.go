@@ -40,7 +40,7 @@ func newRootCmd(ctx context.Context) *rootCmd {
 	)
 	err := result.cmd.ExecuteContext(ctx)
 	if err != nil {
-		logger.Panic().Err(err).Msg("rootCmd.Execute")
+		logger.Fatal().Err(err).Msg("rootCmd.Execute")
 	}
 	_, serverCobraCmd := newServerCmd(ctx)
 
