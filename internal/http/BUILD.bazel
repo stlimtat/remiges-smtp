@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "http",
+    srcs = [
+        "handlers.go",
+        "routes.go",
+    ],
+    importpath = "github.com/stlimtat/remiges-smtp/internal/http",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "@com_github_gin_contrib_pprof//:pprof",
+        "@com_github_gin_gonic_gin//:gin",
+    ],
+)
