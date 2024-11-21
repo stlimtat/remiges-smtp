@@ -8,6 +8,8 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/stlimtat/remiges-smtp/internal/config"
 )
 
 type rootCmd struct {
@@ -19,12 +21,13 @@ type rootCmd struct {
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func newRootCmd(ctx context.Context) *rootCmd {
 	logger := zerolog.Ctx(ctx)
+	var err error
 
 	result := &rootCmd{}
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	// cobra.OnInitialize(NewConfig)
+	cobra.OnInitialize(config.RootConfigInit)
 
 	// rootCmd represents the base command when called without any subcommands
 	result.cmd = &cobra.Command{
@@ -38,14 +41,18 @@ func newRootCmd(ctx context.Context) *rootCmd {
 		"",
 		"config file (default is $HOME/.smtpclient.yaml)",
 	)
-	err := result.cmd.ExecuteContext(ctx)
+	err = viper.BindPFlag("config", result.cmd.PersistentFlags().Lookup("config"))
+	if err != nil {
+		logger.Fatal().Err(err).Msg("viper.BindPFlag")
+	}
+	err = result.cmd.ExecuteContext(ctx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("rootCmd.Execute")
 	}
-	_, serverCobraCmd := newServerCmd(ctx)
+	_, serverCmd := newServerCmd(ctx)
 
 	result.cmd.AddCommand(
-		serverCobraCmd,
+		serverCmd,
 	)
 	return result
 }

@@ -82,8 +82,14 @@ def go_dependencies():
     go_repository(
         name = "com_github_gabriel_vasile_mimetype",
         importpath = "github.com/gabriel-vasile/mimetype",
-        sum = "h1:3+PzJTKLkvgjeTbts6msPJt4DixhT4YtFNf1gtGe3zc=",
-        version = "v1.4.6",
+        sum = "h1:SKFKl7kD0RiPdbht0s7hFtjl489WcQ1VyPW8ZzUMYCA=",
+        version = "v1.4.7",
+    )
+    go_repository(
+        name = "com_github_gin_contrib_pprof",
+        importpath = "github.com/gin-contrib/pprof",
+        sum = "h1:Mzy+3HHtHbtwr4VewBTXZp/hR7pS6ZuZkueBIrQiLL4=",
+        version = "v1.5.1",
     )
     go_repository(
         name = "com_github_gin_contrib_sse",
@@ -136,8 +142,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_go_playground_validator_v10",
         importpath = "github.com/go-playground/validator/v10",
-        sum = "h1:40JcKH+bBNGFczGuoBYgX4I6m/i27HYW8P9FDk5PbgA=",
-        version = "v10.22.1",
+        sum = "h1:/PwmTwZhS0dPkav3cdK9kV1FsAmrL8sThn8IHr/sO+o=",
+        version = "v10.23.0",
     )
     go_repository(
         name = "com_github_go_task_slim_sprig_v3",
