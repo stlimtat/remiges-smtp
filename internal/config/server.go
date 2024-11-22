@@ -2,14 +2,16 @@ package config
 
 import (
 	"context"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
 
 type ServerConfig struct {
-	InPath          string `mapstructure:"in_path"`
-	PollIntervalInt int    `mapstructure:"poll_interval"`
+	InPath          string        `mapstructure:"in_path"`
+	PollInterval    time.Duration `mapstructure:",omitempty"`
+	PollIntervalInt int           `mapstructure:"poll_interval"`
 }
 
 func NewServerConfig(ctx context.Context) ServerConfig {

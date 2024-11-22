@@ -8,14 +8,11 @@ import (
 	"net/http"
 	"time"
 
-	zerologgin "github.com/go-mods/zerolog-gin"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	rhttp "github.com/stlimtat/remiges-smtp/internal/http"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/gin-gonic/gin"
 )
 
 type serverCmd struct {
@@ -48,47 +45,22 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 }
 
 type Server struct {
-	Cfg     config.ServerConfig
-	Gin     *gin.Engine
-	HTTPSvr *http.Server
-	InPath  string
+	AdminSvr   *http.Server
+	Cfg        config.ServerConfig
+	FileReader *input.FileReader
 }
 
 func newServer(
 	cmd *cobra.Command,
 	_ []string,
 ) *Server {
-	ctx := cmd.Context()
-	logger := zerolog.Ctx(ctx)
-	var err error
-
-	cfg := config.NewServerConfig(ctx)
+	appCtx := NewAppCtx(cmd.Context())
 
 	result := &Server{
-		Cfg:    cfg,
-		InPath: cfg.InPath,
+		AdminSvr:   appCtx.AdminSvr,
+		Cfg:        appCtx.Cfg,
+		FileReader: appCtx.FileReader,
 	}
-
-	result.Gin = gin.Default()
-	result.Gin.Use(
-		zerologgin.LoggerWithOptions(
-			&zerologgin.Options{
-				Name:   "remiges-smtp",
-				Logger: logger,
-			},
-		),
-	)
-	err = rhttp.RegisterAdminRoutes(ctx, result.Gin)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("http.NewAdminRoutes")
-	}
-
-	result.HTTPSvr = &http.Server{
-		Addr:              ":8000",
-		Handler:           result.Gin,
-		ReadHeaderTimeout: 10 * time.Second,
-	}
-
 	return result
 }
 
@@ -98,9 +70,9 @@ func (s *Server) Run(ctx context.Context) error {
 	var err error
 
 	eg.Go(func() error {
-		err = s.HTTPSvr.ListenAndServe()
+		err = s.AdminSvr.ListenAndServe()
 		if err != nil {
-			logger.Error().Err(err).Msg("HTTPSvr.ListenAndServe")
+			logger.Error().Err(err).Msg("AdminSvr.ListenAndServe")
 		}
 		return err
 	})
@@ -110,11 +82,16 @@ func (s *Server) Run(ctx context.Context) error {
 		ctx1, cancel := context.WithTimeout(ctx, time.Minute)
 		defer cancel()
 		logger.Warn().Msg("Shutting down")
-		err = s.HTTPSvr.Shutdown(ctx1)
+		err = s.AdminSvr.Shutdown(ctx1)
 		if err != nil {
-			logger.Error().Err(err).Msg("HTTPSvr.Shutdown")
+			logger.Error().Err(err).Msg("AdminSvr.Shutdown")
 		}
 		return err
+	})
+
+	eg.Go(func() error {
+		// fileReader is able to stop based on ctx.Done
+		return s.FileReader.Run(ctx)
 	})
 
 	err = eg.Wait()

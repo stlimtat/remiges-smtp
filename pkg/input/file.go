@@ -33,17 +33,17 @@ func (fr *FileReader) Run(
 	defer fr.ticker.Stop()
 	logger := zerolog.Ctx(ctx)
 
-	go func() {
-		for {
-			select {
-			case t := <-fr.ticker.C:
-				// check file exists
-				logger.Info().Time("t", t).Msg("ticker.C")
-			case <-ctx.Done():
-				logger.Debug().Msg("ctx.Done")
-				return
-			}
+	// https://blog.devtrovert.com/p/select-and-for-range-channel-i-bet
+outerloop:
+	for {
+		select {
+		case t := <-fr.ticker.C:
+			// check file exists
+			logger.Info().Time("t", t).Msg("ticker.C")
+		case <-ctx.Done():
+			logger.Debug().Msg("ctx.Done")
+			break outerloop
 		}
-	}()
+	}
 	return nil
 }

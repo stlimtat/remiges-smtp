@@ -11,7 +11,9 @@ func RegisterAdminRoutes(
 	_ context.Context,
 	engine *gin.Engine,
 ) error {
-	debugGroup := engine.Group("/debug", HandleAuth)
+	debugGroup := engine.Group("/debug", gin.BasicAuth(gin.Accounts{
+		"foo": "bar",
+	}))
 	pprof.RouteRegister(debugGroup, "pprof")
 	return nil
 }
