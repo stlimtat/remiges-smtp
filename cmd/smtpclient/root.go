@@ -13,8 +13,7 @@ import (
 )
 
 type rootCmd struct {
-	cmd     *cobra.Command
-	cfgFile string
+	cmd *cobra.Command
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -24,35 +23,46 @@ func newRootCmd(ctx context.Context) *rootCmd {
 	var err error
 
 	result := &rootCmd{}
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-	cobra.OnInitialize(config.RootConfigInit)
-
 	// rootCmd represents the base command when called without any subcommands
 	result.cmd = &cobra.Command{
 		Use:   "smtpclient",
 		Short: "An smtp client for remigres",
 		Long:  `An smtp client for remigres`,
 	}
-	result.cmd.PersistentFlags().StringVar(
-		&result.cfgFile,
-		"config",
-		"",
-		"config file (default is $HOME/.smtpclient.yaml)",
+	// Here you will define your flags and configuration settings.
+	// Cobra supports persistent flags, which, if defined here,
+	// will be global for your application.
+	cobra.OnInitialize(config.RootConfigInit)
+
+	result.cmd.PersistentFlags().BoolP(
+		"debug", "d",
+		false,
+		"Run the application in debug mode",
 	)
+	result.cmd.PersistentFlags().StringP(
+		"config", "c",
+		"",
+		"config file (default is $HOME/config.yaml)",
+	)
+	err = viper.BindPFlag("debug", result.cmd.PersistentFlags().Lookup("debug"))
+	if err != nil {
+		logger.Fatal().Err(err).Msg("viper.BindPFlag.debug")
+	}
 	err = viper.BindPFlag("config", result.cmd.PersistentFlags().Lookup("config"))
 	if err != nil {
-		logger.Fatal().Err(err).Msg("viper.BindPFlag")
+		logger.Fatal().Err(err).Msg("viper.BindPFlag.config")
 	}
+	_, sendMailCmd := newSendMailCmd(ctx)
+	_, serverCmd := newServerCmd(ctx)
+
+	result.cmd.AddCommand(
+		sendMailCmd,
+		serverCmd,
+	)
+
 	err = result.cmd.ExecuteContext(ctx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("rootCmd.Execute")
 	}
-	_, serverCmd := newServerCmd(ctx)
-
-	result.cmd.AddCommand(
-		serverCmd,
-	)
 	return result
 }
