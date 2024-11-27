@@ -1,5 +1,7 @@
+################################################################################
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+################################################################################
 #
 # Binaries for programs and plugins
 *.exe
@@ -24,8 +26,10 @@ go.work.sum
 # env file
 .env
 
+################################################################################
 # gitignore template for Bazel build system
 # website: https://bazel.build/
+################################################################################
 
 # Ignore all bazel-* symlinks. There is no full list since this can change
 # based on the name of the directory bazel is cloned into.
@@ -37,3 +41,8 @@ go.work.sum
 /.ijwb/
 /.aswb/
 /.clwb/
+
+################################################################################
+# gitignore for this project
+################################################################################
+/testdata/
