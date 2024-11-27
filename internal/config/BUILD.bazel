@@ -4,12 +4,13 @@ go_library(
     name = "config",
     srcs = [
         "root.go",
+        "sendmail.go",
         "server.go",
     ],
     importpath = "github.com/stlimtat/remiges-smtp/internal/config",
     visibility = ["//:__subpackages__"],
     deps = [
-        "@com_github_mitchellh_go_homedir//:go-homedir",
+        "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
         "@com_github_rs_zerolog//log",
         "@com_github_spf13_viper//:viper",

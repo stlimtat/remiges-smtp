@@ -1,7 +1,8 @@
 package config
 
 import (
-	"github.com/mitchellh/go-homedir"
+	"os"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -9,7 +10,7 @@ import (
 func RootConfigInit() {
 	logger := log.Logger
 
-	home, err := homedir.Dir()
+	home, err := os.UserHomeDir()
 	if err != nil {
 		logger.Fatal().Err(err).Msg("homedir.Dir")
 	}
@@ -23,7 +24,7 @@ func RootConfigInit() {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("ReadInConfig")
 	}
-	logger.Debug().
+	logger.Info().
 		Interface("viper_AllSettings", viper.AllSettings()).
 		Msg("RootConfigInitialize...Done")
 }

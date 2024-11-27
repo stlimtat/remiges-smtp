@@ -9,9 +9,9 @@ import (
 )
 
 type ServerConfig struct {
-	InPath          string        `mapstructure:"in_path"`
-	PollInterval    time.Duration `mapstructure:",omitempty"`
-	PollIntervalInt int           `mapstructure:"poll_interval"`
+	Debug        bool          `mapstructure:"debug"`
+	InPath       string        `mapstructure:"in_path"`
+	PollInterval time.Duration `mapstructure:"poll_interval"`
 }
 
 func NewServerConfig(ctx context.Context) ServerConfig {
@@ -23,7 +23,8 @@ func NewServerConfig(ctx context.Context) ServerConfig {
 		logger.Fatal().Err(err).Msg("Unmarshal")
 	}
 
-	logger.Debug().
+	logger.Info().
+		Interface("viper.AllSettings", viper.AllSettings()).
 		Interface("result", result).
 		Msg("ServerConfig init")
 
