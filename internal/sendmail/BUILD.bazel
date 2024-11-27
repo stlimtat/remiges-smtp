@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "sendmail",
+    srcs = [
+        "sendmail.go",
+        "sendmail_mock.go",
+    ],
+    importpath = "github.com/stlimtat/remiges-smtp/internal/sendmail",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "@com_github_mjl_adns//:adns",
+        "@com_github_mjl_mox//dns",
+        "@com_github_rs_zerolog//:zerolog",
+        "@org_uber_go_mock//gomock",
+    ],
+)
+
+go_test(
+    name = "sendmail_test",
+    srcs = ["sendmail_test.go"],
+    embed = [":sendmail"],
+    deps = [
+        "//internal/telemetry",
+        "@com_github_mjl_adns//:adns",
+        "@com_github_mjl_mox//dns",
+        "@com_github_stretchr_testify//assert",
+        "@org_uber_go_mock//gomock",
+    ],
+)
