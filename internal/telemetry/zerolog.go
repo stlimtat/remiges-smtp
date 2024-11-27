@@ -53,3 +53,18 @@ func InitLogger(ctx context.Context) (context.Context, *zerolog.Logger) {
 
 	return ctx, &result
 }
+
+func SetGlobalLogLevel(level zerolog.Level) {
+	zerolog.SetGlobalLevel(level)
+}
+
+func GetSLogger(ctx context.Context) *slog.Logger {
+	logger := zerolog.Ctx(ctx)
+	result := slog.New(
+		slogzerolog.Option{
+			Level:  slog.LevelInfo,
+			Logger: logger,
+		}.NewZerologHandler(),
+	)
+	return result
+}
