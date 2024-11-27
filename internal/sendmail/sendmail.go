@@ -14,13 +14,9 @@ const (
 	DEFAULT_SMTP_PORT_STR string = "25"
 )
 
-//go:generate mockgen -destination=sendmail_mock.go -package=sendmail . INetDialer,IResolver,IMailSender
+//go:generate mockgen -destination=sendmail_mock.go -package=sendmail . IResolver,IMailSender
 type IResolver interface {
 	LookupMX(ctx context.Context, name string) ([]*net.MX, adns.Result, error)
-}
-
-type INetDialer interface {
-	Dial(network, address string) (net.Conn, error)
 }
 
 type IMailSender interface {
@@ -36,20 +32,20 @@ type MXRecord struct {
 }
 
 type MailSender struct {
-	CachedMX map[string]MXRecord
-	Dialer   INetDialer
-	Resolver IResolver
+	CachedMX      map[string]MXRecord
+	DialerFactory INetDialerFactory
+	Resolver      IResolver
 }
 
 func NewMailSender(
 	_ context.Context,
-	dialer INetDialer,
+	dialerFactory INetDialerFactory,
 	resolver IResolver,
 ) *MailSender {
 	result := &MailSender{
-		CachedMX: make(map[string]MXRecord, 0),
-		Dialer:   dialer,
-		Resolver: resolver,
+		CachedMX:      make(map[string]MXRecord, 0),
+		DialerFactory: dialerFactory,
+		Resolver:      resolver,
 	}
 	return result
 }
@@ -101,8 +97,9 @@ func (m *MailSender) NewConn(
 	}
 	host := hosts[randomInt]
 
+	dialer := m.DialerFactory.NewDialer()
 	addr := net.JoinHostPort(host, DEFAULT_SMTP_PORT_STR)
-	result, err := m.Dialer.Dial("tcp", addr)
+	result, err := dialer.Dial("tcp", addr)
 	if err != nil {
 		logger.Error().Err(err).Msg("d.Dial")
 		return nil, err

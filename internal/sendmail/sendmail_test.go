@@ -83,7 +83,8 @@ func TestNewConn(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			dialer := NewMockINetDialer(ctrl)
-			dialer.EXPECT().Dial(gomock.Any(), gomock.Any()).
+			dialer.EXPECT().
+				Dial(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(network, address string) (net.Conn, error) {
 					assert.Equal(t, "tcp", network)
 					hosts2 := []string{}
@@ -94,8 +95,11 @@ func TestNewConn(t *testing.T) {
 					assert.Contains(t, hosts2, address)
 					return &net.TCPConn{}, nil
 				})
+			dialerFactory := NewMockINetDialerFactory(ctrl)
+			dialerFactory.EXPECT().
+				NewDialer().Return(dialer)
 
-			m := NewMailSender(ctx, dialer, nil)
+			m := NewMailSender(ctx, dialerFactory, nil)
 			_, err := m.NewConn(ctx, tt.hosts)
 			if tt.wantErr {
 				assert.NoError(t, err)
