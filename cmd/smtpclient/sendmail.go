@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/mjl-/mox/dns"
 	"github.com/rs/zerolog"
-	slogzerolog "github.com/samber/slog-zerolog/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/sendmail"
+	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -22,7 +24,6 @@ type sendMailCmd struct {
 
 func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 	logger := zerolog.Ctx(ctx)
-	logger.Debug().Msg("Testing")
 	var err error
 
 	result := &sendMailCmd{}
@@ -33,18 +34,22 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 		Short: "Send a mail from a sender email, to a destination email, with a test message",
 		Long:  `Runs the smtp client which will run sendMail`,
 		Args: func(cmd *cobra.Command, _ []string) error {
-			cfg := config.NewSendMailConfig(cmd.Context())
+			ctx := cmd.Context()
+			cmdLogger := zerolog.Ctx(ctx)
+			cfg := config.NewSendMailConfig(ctx)
 			if len(cfg.From) < 1 || len(cfg.To) < 1 {
-				logger.Fatal().
+				cmdLogger.Fatal().
 					Err(fmt.Errorf("missing fields")).
 					Interface("cfg", cfg).
 					Msg("Missing fields")
 			}
+			ctx = config.SetContextConfig(ctx, cfg)
+			cmd.SetContext(ctx)
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sendMailSvc := newSendMailSvc(cmd, args)
-			err = sendMailSvc.Run(ctx)
+			err = sendMailSvc.Run(cmd, args)
 			return err
 		},
 	}
@@ -78,7 +83,11 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 }
 
 type SendMailSvc struct {
-	Cfg config.SendMailConfig
+	Cfg           config.SendMailConfig
+	DialerFactory sendmail.INetDialerFactory
+	MailSender    sendmail.IMailSender
+	Resolver      sendmail.IResolver
+	Slogger       *slog.Logger
 }
 
 func newSendMailSvc(
@@ -86,14 +95,24 @@ func newSendMailSvc(
 	_ []string,
 ) *SendMailSvc {
 	result := &SendMailSvc{}
-	result.Cfg = config.NewSendMailConfig(cmd.Context())
+	ctx := cmd.Context()
+	cfg := config.GetContextConfig(ctx).(config.SendMailConfig)
+	result.Cfg = cfg
+	result.Slogger = telemetry.GetSLogger(ctx)
+	result.DialerFactory = sendmail.NewDefaultDialerFactory()
+	result.Resolver = dns.StrictResolver{
+		Log: result.Slogger,
+	}
+	result.MailSender = sendmail.NewMailSender(ctx, result.DialerFactory, result.Resolver)
 	return result
 }
 
-func (s *SendMailSvc) Run(ctx context.Context) error {
+func (s *SendMailSvc) Run(
+	cmd *cobra.Command,
+	_ []string,
+) error {
+	ctx := cmd.Context()
 	logger := zerolog.Ctx(ctx)
-	sLogger := slog.New(slogzerolog.Option{Level: slog.LevelInfo, Logger: logger}.NewZerologHandler())
-	sLogger.Debug("slog")
 
 	eg, _ := errgroup.WithContext(ctx)
 	var err error

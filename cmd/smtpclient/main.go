@@ -17,7 +17,7 @@ func main() {
 
 	ctx, logger := telemetry.InitLogger(ctx)
 	rootCmd := newRootCmd(ctx)
-	err := rootCmd.cmd.ExecuteContext(ctx)
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("ExecuteContext")
 	}

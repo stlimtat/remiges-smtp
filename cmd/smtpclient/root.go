@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
 
 type rootCmd struct {
@@ -28,6 +29,10 @@ func newRootCmd(ctx context.Context) *rootCmd {
 		Use:   "smtpclient",
 		Short: "An smtp client for remigres",
 		Long:  `An smtp client for remigres`,
+		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+			cmdCtx, _ := telemetry.GetLogger(cmd.Context(), cmd.OutOrStdout())
+			cmd.SetContext(cmdCtx)
+		},
 	}
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -52,17 +57,19 @@ func newRootCmd(ctx context.Context) *rootCmd {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag.config")
 	}
+	_, lookupMXCmd := newLookupMXCmd(ctx)
 	_, sendMailCmd := newSendMailCmd(ctx)
 	_, serverCmd := newServerCmd(ctx)
 
 	result.cmd.AddCommand(
+		lookupMXCmd,
 		sendMailCmd,
 		serverCmd,
 	)
 
-	err = result.cmd.ExecuteContext(ctx)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("rootCmd.Execute")
-	}
 	return result
+}
+
+func (r *rootCmd) ExecuteContext(ctx context.Context) error {
+	return r.cmd.ExecuteContext(ctx)
 }

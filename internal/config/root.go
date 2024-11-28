@@ -1,14 +1,18 @@
 package config
 
 import (
+	"context"
 	"os"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
+	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
 
+const CTX_KEY_CONFIG = "config"
+
 func RootConfigInit() {
-	logger := log.Logger
+	ctx := context.Background()
+	_, logger := telemetry.GetLogger(ctx, os.Stdout)
 
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -27,4 +31,11 @@ func RootConfigInit() {
 	logger.Info().
 		Interface("viper_AllSettings", viper.AllSettings()).
 		Msg("RootConfigInitialize...Done")
+}
+
+func SetContextConfig(ctx context.Context, cfg any) context.Context {
+	return context.WithValue(ctx, CTX_KEY_CONFIG, cfg)
+}
+func GetContextConfig(ctx context.Context) any {
+	return ctx.Value(CTX_KEY_CONFIG)
 }

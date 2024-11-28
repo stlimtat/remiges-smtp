@@ -3,12 +3,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "sendmail",
     srcs = [
+        "dialer.go",
+        "dialer_mock.go",
         "sendmail.go",
         "sendmail_mock.go",
     ],
     importpath = "github.com/stlimtat/remiges-smtp/internal/sendmail",
     visibility = ["//:__subpackages__"],
     deps = [
+        "//internal/utils",
         "@com_github_mjl_adns//:adns",
         "@com_github_mjl_mox//dns",
         "@com_github_rs_zerolog//:zerolog",

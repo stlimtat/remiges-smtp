@@ -146,6 +146,9 @@ linters-settings:
         disabled: true
       - name: unused-parameter
       - name: unused-receiver
+  staticcheck:
+    checks:
+      - -SA1029
   stylecheck:
     checks:
       - all

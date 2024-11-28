@@ -22,7 +22,7 @@ type IResolver interface {
 
 type IMailSender interface {
 	LookupMX(ctx context.Context, domain dns.Domain) ([]string, error)
-	NewConn(ctx context.Context) (net.Conn, error)
+	NewConn(ctx context.Context, hosts []string) (net.Conn, error)
 }
 
 type MXRecord struct {

@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -13,9 +14,14 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/diode"
+	"github.com/rs/zerolog/log"
 )
 
 func InitLogger(ctx context.Context) (context.Context, *zerolog.Logger) {
+	return GetLogger(ctx, os.Stdout)
+}
+
+func GetLogger(ctx context.Context, writer io.Writer) (context.Context, *zerolog.Logger) {
 	zerolog.CallerMarshalFunc = func(_ uintptr, file string, line int) string {
 		return filepath.Base(file) + ":" + strconv.Itoa(line)
 	}
@@ -23,17 +29,17 @@ func InitLogger(ctx context.Context) (context.Context, *zerolog.Logger) {
 	zerolog.ErrorFieldName = "e"
 	zerolog.LevelFieldName = "l"
 	zerolog.MessageFieldName = "m"
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.TimestampFieldName = "t"
 
 	wr := diode.NewWriter(
-		os.Stderr,
+		writer,
 		1000,
 		10*time.Millisecond,
 		func(missed int) {
 			fmt.Printf("Logger Dropped %d messages", missed)
 		})
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 	result := zerolog.New(wr).
 		With().
@@ -42,6 +48,7 @@ func InitLogger(ctx context.Context) (context.Context, *zerolog.Logger) {
 		Logger()
 
 	ctx = result.WithContext(ctx)
+	log.Logger = result
 
 	_ = slog.New(
 		slogzerolog.Option{
