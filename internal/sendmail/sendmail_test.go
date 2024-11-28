@@ -86,7 +86,7 @@ func TestNewConn(t *testing.T) {
 			dialer.EXPECT().
 				Dial(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(network, address string) (net.Conn, error) {
-					assert.Equal(t, "tcp", network)
+					assert.Equal(t, TCP_NETWORK, network)
 					hosts2 := []string{}
 					for _, host := range tt.hosts {
 						host = fmt.Sprintf("%s:%s", host, DEFAULT_SMTP_PORT_STR)

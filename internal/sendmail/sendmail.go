@@ -12,6 +12,7 @@ import (
 
 const (
 	DEFAULT_SMTP_PORT_STR string = "25"
+	TCP_NETWORK           string = "tcp"
 )
 
 //go:generate mockgen -destination=sendmail_mock.go -package=sendmail . IResolver,IMailSender
@@ -99,7 +100,7 @@ func (m *MailSender) NewConn(
 
 	dialer := m.DialerFactory.NewDialer()
 	addr := net.JoinHostPort(host, DEFAULT_SMTP_PORT_STR)
-	result, err := dialer.Dial("tcp", addr)
+	result, err := dialer.Dial(TCP_NETWORK, addr)
 	if err != nil {
 		logger.Error().Err(err).Msg("d.Dial")
 		return nil, err
