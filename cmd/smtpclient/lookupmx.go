@@ -77,15 +77,18 @@ func newLookupMXSvc(
 ) *LookupMXSvc {
 	result := &LookupMXSvc{}
 	ctx := cmd.Context()
-	cfg := config.GetContextConfig(ctx).(config.LookupMXConfig)
-	result.Cfg = cfg
+	result.Cfg = config.GetContextConfig(ctx).(config.LookupMXConfig)
 	result.Slogger = telemetry.GetSLogger(ctx)
 	result.Resolver = dns.StrictResolver{
 		Log: result.Slogger,
 	}
 	result.DialerFactory = sendmail.NewDefaultDialerFactory()
-	result.MailSender = sendmail.NewMailSender(ctx, result.DialerFactory, result.Resolver)
-
+	result.MailSender = sendmail.NewMailSender(
+		ctx,
+		result.DialerFactory,
+		result.Resolver,
+		result.Slogger,
+	)
 	return result
 }
 

@@ -15,7 +15,6 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/sendmail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"golang.org/x/sync/errgroup"
 )
 
 type sendMailCmd struct {
@@ -64,7 +63,7 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 	)
 	result.cmd.Flags().StringP(
 		"msg", "m",
-		"Testing", "Test message",
+		"", "Test message",
 	)
 	err = viper.BindPFlag("from", result.cmd.Flags().Lookup("from"))
 	if err != nil {
@@ -96,14 +95,18 @@ func newSendMailSvc(
 ) *SendMailSvc {
 	result := &SendMailSvc{}
 	ctx := cmd.Context()
-	cfg := config.GetContextConfig(ctx).(config.SendMailConfig)
-	result.Cfg = cfg
+	result.Cfg = config.GetContextConfig(ctx).(config.SendMailConfig)
 	result.Slogger = telemetry.GetSLogger(ctx)
 	result.DialerFactory = sendmail.NewDefaultDialerFactory()
 	result.Resolver = dns.StrictResolver{
 		Log: result.Slogger,
 	}
-	result.MailSender = sendmail.NewMailSender(ctx, result.DialerFactory, result.Resolver)
+	result.MailSender = sendmail.NewMailSender(
+		ctx,
+		result.DialerFactory,
+		result.Resolver,
+		result.Slogger,
+	)
 	return result
 }
 
@@ -113,29 +116,21 @@ func (s *SendMailSvc) Run(
 ) error {
 	ctx := cmd.Context()
 	logger := zerolog.Ctx(ctx)
-
-	eg, _ := errgroup.WithContext(ctx)
 	var err error
 
-	eg.Go(func() error {
-		logger.Info().Interface("config", s.Cfg).Msg("Running in errgroup")
-		// opts := smtpclient.Opts{}
-		// client, err := smtpclient.New(
-		// 	ctx,
-		// 	sLogger,
-		// 	conn,
-		// 	smtpclient.TLSOpportunistic,
-		// 	false,
-		// 	s.Cfg.FromAddr,
-		// 	s.Cfg.ToAddr,
-		// 	opts,
-		// )
-		return nil
-	})
-
-	err = eg.Wait()
+	hosts, err := s.MailSender.LookupMX(ctx, s.Cfg.ToAddr.Domain)
 	if err != nil {
-		logger.Error().Err(err).Msg("errgroup Wait")
+		logger.Error().Err(err).Msg("MailSender.LookupMX")
+		return err
 	}
+
+	conn, err := s.MailSender.NewConn(ctx, hosts)
+	if err != nil {
+		logger.Error().Err(err).Msg("MailSender.NewConn")
+		return err
+	}
+
+	err = s.MailSender.SendMail(ctx, conn, s.Cfg.FromAddr, s.Cfg.ToAddr, s.Cfg.MsgBytes)
+	// do nothing. underlying has handled the error
 	return err
 }

@@ -1,12 +1,18 @@
 package sendmail
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
 	"net"
+	"strings"
 
 	"github.com/mjl-/adns"
 	"github.com/mjl-/mox/dns"
+	"github.com/mjl-/mox/smtp"
+	"github.com/mjl-/mox/smtpclient"
 	"github.com/rs/zerolog"
+	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/utils"
 )
 
@@ -23,6 +29,7 @@ type IResolver interface {
 type IMailSender interface {
 	LookupMX(ctx context.Context, domain dns.Domain) ([]string, error)
 	NewConn(ctx context.Context, hosts []string) (net.Conn, error)
+	SendMail(ctx context.Context, conn net.Conn, from smtp.Address, to smtp.Address, msg []byte) error
 }
 
 type MXRecord struct {
@@ -36,17 +43,26 @@ type MailSender struct {
 	CachedMX      map[string]MXRecord
 	DialerFactory INetDialerFactory
 	Resolver      IResolver
+	Slogger       *slog.Logger
+	SmtpOpts      smtpclient.Opts
 }
 
 func NewMailSender(
-	_ context.Context,
+	ctx context.Context,
 	dialerFactory INetDialerFactory,
 	resolver IResolver,
+	slogger *slog.Logger,
 ) *MailSender {
 	result := &MailSender{
 		CachedMX:      make(map[string]MXRecord, 0),
 		DialerFactory: dialerFactory,
 		Resolver:      resolver,
+		Slogger:       slogger,
+		SmtpOpts: smtpclient.Opts{
+			// Auth is nil, because we don't need authentication for the smtp server/relay
+			Auth:    nil,
+			RootCAs: config.GetCertPool(ctx),
+		},
 	}
 	return result
 }
@@ -63,7 +79,12 @@ func (m *MailSender) LookupMX(
 	mxRecord, ok := m.CachedMX[domain.ASCII]
 	if !ok {
 		// 2. resolve the mx record for the domain
-		mxList, aDNSResult, err := m.Resolver.LookupMX(ctx, domain.ASCII)
+		// 2a. Need to make sure that the domain ends with a dot
+		domainStr := domain.ASCII
+		if !strings.HasSuffix(domain.ASCII, ".") {
+			domainStr += "."
+		}
+		mxList, aDNSResult, err := m.Resolver.LookupMX(ctx, domainStr)
 		if err != nil {
 			logger.Error().Err(err).Msg("m.Resolver.LookupMX")
 			return nil, err
@@ -106,4 +127,53 @@ func (m *MailSender) NewConn(
 		return nil, err
 	}
 	return result, nil
+}
+
+func (m *MailSender) SendMail(
+	ctx context.Context,
+	conn net.Conn,
+	from smtp.Address,
+	to smtp.Address,
+	msg []byte,
+) error {
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("from", from.String()).
+		Str("to", to.String()).
+		Bytes("msg", msg).
+		Logger()
+
+	client, err := smtpclient.New(
+		ctx,
+		m.Slogger,
+		conn,
+		smtpclient.TLSOpportunistic,
+		false,
+		to.Domain,
+		to.Domain,
+		m.SmtpOpts,
+	)
+	if err != nil {
+		logger.Error().Err(err).Msg("smtpclient.New")
+		return err
+	}
+	err = client.Deliver(
+		ctx,
+		from.String(),
+		to.String(),
+		int64(len(msg)),
+		bytes.NewReader(msg),
+		true, false, false,
+	)
+	if err != nil {
+		if smtpclientErr, ok := err.(smtpclient.Error); ok {
+			logger.Error().
+				Err(err).
+				Interface("smtpclient_err", smtpclientErr).
+				Msg("smtpclient.Deliver")
+		} else {
+			logger.Error().Err(err).Msg("smtpclient.Deliver")
+		}
+	}
+	return err
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"strings"
 
 	"github.com/mjl-/mox/smtp"
 	"github.com/rs/zerolog"
@@ -15,11 +16,14 @@ type SendMailConfig struct {
 	To       string       `mapstructure:"to"`
 	ToAddr   smtp.Address `mapstructure:",omitempty"`
 	Msg      string       `mapstructure:"msg"`
+	MsgBytes []byte       `mapstructure:",omitempty"`
 }
 
 func NewSendMailConfig(ctx context.Context) SendMailConfig {
 	logger := zerolog.Ctx(ctx)
 	var err error
+
+	viper.SetDefault("msg", "Test message\r\n")
 
 	var result SendMailConfig
 	err = viper.Unmarshal(&result)
@@ -42,6 +46,12 @@ func NewSendMailConfig(ctx context.Context) SendMailConfig {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("smtp.ParseAddress.To")
 	}
+
+	if !strings.HasPrefix(result.Msg, "\r\n") {
+		result.Msg += "\r\n"
+	}
+
+	result.MsgBytes = []byte(result.Msg)
 
 	return result
 }

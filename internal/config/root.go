@@ -2,8 +2,10 @@ package config
 
 import (
 	"context"
+	"crypto/x509"
 	"os"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
@@ -38,4 +40,14 @@ func SetContextConfig(ctx context.Context, cfg any) context.Context {
 }
 func GetContextConfig(ctx context.Context) any {
 	return ctx.Value(CTX_KEY_CONFIG)
+}
+
+func GetCertPool(ctx context.Context) *x509.CertPool {
+	logger := zerolog.Ctx(ctx)
+	// basic cert pool
+	result, err := x509.SystemCertPool()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("x509.SystemCertPool")
+	}
+	return result
 }

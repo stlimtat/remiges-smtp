@@ -46,6 +46,7 @@ func TestLookupMX(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ctx, _ = telemetry.InitLogger(ctx)
+			slogger := telemetry.GetSLogger(ctx)
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -57,7 +58,7 @@ func TestLookupMX(t *testing.T) {
 					return tt.mxResult.mxList, tt.mxResult.ADNSResult, tt.mxResult.err
 				})
 
-			m := NewMailSender(ctx, nil, resolver)
+			m := NewMailSender(ctx, nil, resolver, slogger)
 			_, err := m.LookupMX(ctx, tt.domain)
 			if tt.wantErr {
 				assert.NoError(t, err)
@@ -79,6 +80,7 @@ func TestNewConn(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ctx, _ = telemetry.InitLogger(ctx)
+			slogger := telemetry.GetSLogger(ctx)
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -99,7 +101,7 @@ func TestNewConn(t *testing.T) {
 			dialerFactory.EXPECT().
 				NewDialer().Return(dialer)
 
-			m := NewMailSender(ctx, dialerFactory, nil)
+			m := NewMailSender(ctx, dialerFactory, nil, slogger)
 			_, err := m.NewConn(ctx, tt.hosts)
 			if tt.wantErr {
 				assert.NoError(t, err)
