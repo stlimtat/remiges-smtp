@@ -50,10 +50,11 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 }
 
 type Server struct {
-	AdminSvr   *http.Server
-	Cfg        config.ServerConfig
-	FileReader *input.FileReader
-	Gin        *gin.Engine
+	AdminSvr    *http.Server
+	Cfg         config.ServerConfig
+	FileReader  *input.FileReader
+	FileService *input.FileService
+	Gin         *gin.Engine
 }
 
 func newServer(
@@ -70,6 +71,10 @@ func newServer(
 	result.FileReader = input.NewFileReader(
 		ctx,
 		result.Cfg.InPath,
+	)
+	result.FileService = input.NewFileService(
+		ctx,
+		result.FileReader,
 		result.Cfg.PollInterval,
 	)
 
@@ -128,7 +133,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	eg.Go(func() error {
 		// fileReader is able to stop based on ctx.Done
-		return s.FileReader.Run(ctx)
+		return s.FileService.Run(ctx)
 	})
 
 	err = eg.Wait()

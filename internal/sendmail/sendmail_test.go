@@ -28,7 +28,7 @@ func TestLookupMX(t *testing.T) {
 		{
 			name: "happy",
 			domain: dns.Domain{
-				ASCII: "abc.com",
+				ASCII: "abc.com.",
 			},
 			mxResult: LookupMXResult{
 				mxList: []*net.MX{
