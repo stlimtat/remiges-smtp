@@ -66,31 +66,30 @@ func (fr *FileReader) Process(
 			logger.Error().Err(fmt.Errorf("fileInfo error")).Msg("fr.ReadFiles")
 			continue
 		}
-		if strings.HasPrefix(e.Name(), "df") {
+		if strings.HasPrefix(fileName, "df") {
 			fileID := fileName[2:]
 			currFileInfo := FileInfo{
 				BodyFileName: fileName,
 				FileID:       fileID,
 				Status:       FILE_STATUS_PROCESSING,
 			}
-			fr.ReadFiles[fileName] = currFileInfo
-			result = append(result, currFileInfo)
 			// 4. check if qf file exists
 			qfFileName := strings.Replace(fileName, "df", "qf", 1)
-			_, err := os.Stat(qfFileName)
+			qfFullFileName := fr.InPath + "/" + qfFileName
+			_, err := os.Stat(qfFullFileName)
 			if err != nil {
 				logger.Error().Err(err).Msg("qfExists")
 				continue
 			}
 			currFileInfo.HeaderFileName = qfFileName
 			// 5. read mail body
-			currFileInfo.BodyBytes, err = fr.ReadFile(ctx, fileName)
+			currFileInfo.BodyBytes, err = fr.ReadFile(ctx, fr.InPath+"/"+fileName)
 			if err != nil {
 				continue
 			}
 			currFileInfo.Status = FILE_STATUS_BODY_READ
 			// 6. read mail headers
-			currFileInfo.HeaderBytes, err = fr.ReadFile(ctx, qfFileName)
+			currFileInfo.HeaderBytes, err = fr.ReadFile(ctx, qfFullFileName)
 			if err != nil {
 				continue
 			}
@@ -101,6 +100,9 @@ func (fr *FileReader) Process(
 				continue
 			}
 			currFileInfo.Status = FILE_STATUS_HEADERS_PARSE
+			// 8. add to result
+			fr.ReadFiles[fileName] = currFileInfo
+			result = append(result, currFileInfo)
 		}
 	}
 	return result, nil

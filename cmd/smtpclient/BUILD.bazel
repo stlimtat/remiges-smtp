@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "lookupmx.go",
         "main.go",
+        "read_file.go",
         "root.go",
         "sendmail.go",
         "server.go",
