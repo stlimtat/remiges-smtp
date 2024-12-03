@@ -8,6 +8,7 @@ go_library(
     deps = [
         "@com_github_rs_zerolog//:zerolog",
         "@com_github_rs_zerolog//diode",
+        "@com_github_rs_zerolog//log",
         "@com_github_samber_slog_zerolog_v2//:slog-zerolog",
     ],
 )

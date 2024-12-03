@@ -11,9 +11,9 @@ go_library(
     importpath = "github.com/stlimtat/remiges-smtp/internal/config",
     visibility = ["//:__subpackages__"],
     deps = [
+        "//internal/telemetry",
         "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
-        "@com_github_rs_zerolog//log",
         "@com_github_spf13_viper//:viper",
     ],
 )
