@@ -13,6 +13,7 @@ type SendMailConfig struct {
 	Debug    bool         `mapstructure:"debug"`
 	From     string       `mapstructure:"from"`
 	FromAddr smtp.Address `mapstructure:",omitempty"`
+	InPath   string       `mapstructure:"in_path"`
 	To       string       `mapstructure:"to"`
 	ToAddr   smtp.Address `mapstructure:",omitempty"`
 	Msg      string       `mapstructure:"msg"`
@@ -47,7 +48,7 @@ func NewSendMailConfig(ctx context.Context) SendMailConfig {
 		logger.Fatal().Err(err).Msg("smtp.ParseAddress.To")
 	}
 
-	if !strings.HasPrefix(result.Msg, "\r\n") {
+	if !strings.HasSuffix(result.Msg, "\r\n") {
 		result.Msg += "\r\n"
 	}
 

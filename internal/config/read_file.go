@@ -29,13 +29,24 @@ func NewReadFileConfig(ctx context.Context) ReadFileConfig {
 		Msg("ReadFileConfig init")
 
 	// validate the config
-	if len(result.InPath) < 1 {
+	err = result.Validate(ctx)
+	if err != nil {
+		return ReadFileConfig{}
+	}
+
+	return result
+}
+
+func (cfg *ReadFileConfig) Validate(ctx context.Context) error {
+	logger := zerolog.Ctx(ctx)
+	// validate the config
+	if len(cfg.InPath) < 1 {
 		logger.Fatal().
 			Err(fmt.Errorf("missing fields")).
-			Interface("cfg", result).
+			Interface("cfg", cfg).
 			Msg("Missing fields")
 	}
-	fileInfo, err := os.Stat(result.InPath)
+	fileInfo, err := os.Stat(cfg.InPath)
 	if err != nil {
 		logger.Fatal().
 			Err(err).
@@ -47,5 +58,5 @@ func NewReadFileConfig(ctx context.Context) ReadFileConfig {
 			Msg("InPath is not a directory")
 	}
 
-	return result
+	return nil
 }
