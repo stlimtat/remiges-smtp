@@ -5,7 +5,6 @@ import (
 	"context"
 	"log/slog"
 	"net"
-	"strings"
 
 	"github.com/mjl-/adns"
 	"github.com/mjl-/mox/dns"
@@ -21,28 +20,17 @@ const (
 	TCP_NETWORK           string = "tcp"
 )
 
-//go:generate mockgen -destination=sendmail_mock.go -package=sendmail . IResolver,IMailSender
-type IResolver interface {
-	LookupMX(ctx context.Context, name string) ([]*net.MX, adns.Result, error)
-}
-
-type IMailSender interface {
-	LookupMX(ctx context.Context, domain dns.Domain) ([]string, error)
-	NewConn(ctx context.Context, hosts []string) (net.Conn, error)
-	SendMail(ctx context.Context, conn net.Conn, from smtp.Address, to smtp.Address, msg []byte) error
-}
-
 type MXRecord struct {
 	ADNSResult adns.Result
 	Domain     string
-	Entries    []*net.MX
+	Entries    []dns.IPDomain
 	Hosts      []string
 }
 
 type MailSender struct {
 	CachedMX      map[string]MXRecord
 	DialerFactory INetDialerFactory
-	Resolver      IResolver
+	Resolver      dns.Resolver
 	Slogger       *slog.Logger
 	SmtpOpts      smtpclient.Opts
 }
@@ -50,7 +38,7 @@ type MailSender struct {
 func NewMailSender(
 	ctx context.Context,
 	dialerFactory INetDialerFactory,
-	resolver IResolver,
+	resolver dns.Resolver,
 	slogger *slog.Logger,
 ) *MailSender {
 	result := &MailSender{
@@ -75,29 +63,36 @@ func (m *MailSender) LookupMX(
 		With().
 		Str("domain", domain.ASCII).
 		Logger()
+
 	// 1. check if mx already exists in cache
 	mxRecord, ok := m.CachedMX[domain.ASCII]
 	if !ok {
 		// 2. resolve the mx record for the domain
-		// 2a. Need to make sure that the domain ends with a dot
-		domainStr := domain.ASCII
-		if !strings.HasSuffix(domain.ASCII, ".") {
-			domainStr += "."
+		ipDomain := dns.IPDomain{
+			Domain: domain,
 		}
-		mxList, aDNSResult, err := m.Resolver.LookupMX(ctx, domainStr)
+
+		_, _, _, expandedNextHop, hosts, _, err := smtpclient.GatherDestinations(ctx, m.Slogger, m.Resolver, ipDomain)
 		if err != nil {
-			logger.Error().Err(err).Msg("m.Resolver.LookupMX")
+			logger.Error().Err(err).Msg("smtpclient.GatherDestinations")
 			return nil, err
 		}
-		m.CachedMX[domain.ASCII] = MXRecord{
-			ADNSResult: aDNSResult,
-			Domain:     domain.ASCII,
-			Entries:    mxList,
-			Hosts:      make([]string, 0),
+		// 3. convert from dns.IPDomain to string
+		hostStrSlice := []string{}
+		for _, host := range hosts {
+			hostStrSlice = append(hostStrSlice, host.String())
 		}
-		mxRecord = m.CachedMX[domain.ASCII]
-		for _, entry := range mxRecord.Entries {
-			mxRecord.Hosts = append(mxRecord.Hosts, entry.Host)
+		if expandedNextHop.ASCII != domain.ASCII {
+			m.CachedMX[expandedNextHop.ASCII] = MXRecord{
+				Domain:  expandedNextHop.ASCII,
+				Entries: hosts,
+				Hosts:   hostStrSlice,
+			}
+		}
+		m.CachedMX[domain.ASCII] = MXRecord{
+			Domain:  domain.ASCII,
+			Entries: hosts,
+			Hosts:   hostStrSlice,
 		}
 	}
 	logger.Info().

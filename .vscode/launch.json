@@ -1,0 +1,46 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Go Debug",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/smtpclient",
+            "args": [
+                "${input:command}",
+                "--domain",
+                "${input:domain}",
+            ],
+            "env": {},
+            "showLog": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "command",
+            "type": "pickString",
+            "description": "Command to run",
+            "default": "lookupmx",
+            "options": [
+                "lookupmx",
+                "readfile",
+                "sendmail",
+                "server",
+            ]
+        },
+        {
+            "id": "domain",
+            "type": "pickString",
+            "description": "Domain to lookup",
+            "default": "stlim.net",
+            "options": [
+                "stlim.net",
+                "gmail.com",
+            ]
+        }
+    ]
+}
