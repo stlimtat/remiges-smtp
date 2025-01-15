@@ -96,7 +96,7 @@ type SendMailSvc struct {
 	DialerFactory sendmail.INetDialerFactory
 	FileReader    *input.FileReader
 	MailSender    sendmail.IMailSender
-	Resolver      sendmail.IResolver
+	Resolver      dns.Resolver
 	Slogger       *slog.Logger
 }
 

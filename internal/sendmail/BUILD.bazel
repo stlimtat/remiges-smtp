@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "dialer.go",
         "dialer_mock.go",
+        "interface.go",
         "sendmail.go",
         "sendmail_mock.go",
     ],

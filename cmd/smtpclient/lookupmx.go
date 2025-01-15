@@ -67,7 +67,7 @@ type LookupMXSvc struct {
 	Cfg           config.LookupMXConfig
 	DialerFactory sendmail.INetDialerFactory
 	MailSender    sendmail.IMailSender
-	Resolver      sendmail.IResolver
+	Resolver      dns.Resolver
 	Slogger       *slog.Logger
 }
 
