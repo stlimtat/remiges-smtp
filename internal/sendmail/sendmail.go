@@ -116,7 +116,7 @@ func (m *MailSender) NewConn(
 
 	dialer := m.DialerFactory.NewDialer()
 	addr := net.JoinHostPort(host, DEFAULT_SMTP_PORT_STR)
-	result, err := dialer.Dial(TCP_NETWORK, addr)
+	result, err := dialer.DialContext(ctx, TCP_NETWORK, addr)
 	if err != nil {
 		logger.Error().Err(err).Msg("d.Dial")
 		return nil, err

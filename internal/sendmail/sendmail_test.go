@@ -22,14 +22,16 @@ func TestLookupMX(t *testing.T) {
 	var tests = []struct {
 		name     string
 		domain   dns.Domain
+		cname    string
 		mxResult LookupMXResult
 		wantErr  bool
 	}{
 		{
 			name: "happy",
 			domain: dns.Domain{
-				ASCII: "abc.com.",
+				ASCII: "abc.com",
 			},
+			cname: "abc.com.",
 			mxResult: LookupMXResult{
 				mxList: []*net.MX{
 					{Host: "host1.abc.com", Pref: uint16(0)},
@@ -50,11 +52,17 @@ func TestLookupMX(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			resolver := NewMockIResolver(ctrl)
+			resolver := NewMockResolver(ctrl)
 			resolver.EXPECT().
-				LookupMX(gomock.Any(), tt.domain.ASCII).
+				LookupCNAME(gomock.Any(), tt.cname).
+				DoAndReturn(func(_ context.Context, host string) (string, adns.Result, error) {
+					assert.Equal(t, host, tt.cname)
+					return tt.cname, tt.mxResult.ADNSResult, tt.mxResult.err
+				}).AnyTimes()
+			resolver.EXPECT().
+				LookupMX(gomock.Any(), tt.cname).
 				DoAndReturn(func(_ context.Context, domain string) ([]*net.MX, adns.Result, error) {
-					assert.Equal(t, domain, tt.domain.ASCII)
+					assert.Equal(t, domain, tt.cname)
 					return tt.mxResult.mxList, tt.mxResult.ADNSResult, tt.mxResult.err
 				})
 
@@ -84,10 +92,10 @@ func TestNewConn(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			dialer := NewMockINetDialer(ctrl)
+			dialer := NewMockDialer(ctrl)
 			dialer.EXPECT().
-				Dial(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(network, address string) (net.Conn, error) {
+				DialContext(gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(ctx context.Context, network, address string) (net.Conn, error) {
 					assert.Equal(t, TCP_NETWORK, network)
 					hosts2 := []string{}
 					for _, host := range tt.hosts {

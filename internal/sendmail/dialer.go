@@ -3,24 +3,17 @@ package sendmail
 import (
 	"net"
 	"time"
+
+	"github.com/mjl-/mox/smtpclient"
 )
-
-//go:generate mockgen -destination=dialer_mock.go -package=sendmail . INetDialer,INetDialerFactory
-type INetDialer interface {
-	Dial(network, address string) (net.Conn, error)
-}
-
-type INetDialerFactory interface {
-	NewDialer() INetDialer
-}
 
 type DefaultNetDialerFactory struct{}
 
-func NewDefaultDialerFactory() INetDialerFactory {
+func NewDefaultDialerFactory() *DefaultNetDialerFactory {
 	result := &DefaultNetDialerFactory{}
 	return result
 }
 
-func (_ *DefaultNetDialerFactory) NewDialer() INetDialer {
+func (_ *DefaultNetDialerFactory) NewDialer() smtpclient.Dialer {
 	return &net.Dialer{Timeout: 50 * time.Second}
 }
