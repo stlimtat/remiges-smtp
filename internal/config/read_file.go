@@ -10,7 +10,7 @@ import (
 )
 
 type ReadFileConfig struct {
-	InPath string
+	InPath string `json:"in_path" mapstructure:"in_path"`
 }
 
 func NewReadFileConfig(ctx context.Context) ReadFileConfig {
