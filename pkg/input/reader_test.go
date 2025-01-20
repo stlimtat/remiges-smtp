@@ -8,6 +8,7 @@ import (
 
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRefreshList(t *testing.T) {
@@ -36,21 +37,21 @@ func TestRefreshList(t *testing.T) {
 			if tt.createDirInPath {
 				inPathInfo, err := os.Stat(tt.inPath)
 				if err != nil || inPathInfo == nil {
-					os.MkdirAll(tt.inPath, 0755)
+					_ = os.MkdirAll(tt.inPath, 0755)
 				}
 			}
 			if tt.createDfFileInPath {
 				dfFilePath := filepath.Join(tt.inPath, "df123")
 				dfFileInfo, err := os.Stat(dfFilePath)
 				if err != nil || dfFileInfo == nil {
-					os.Create(dfFilePath)
+					_, _ = os.Create(dfFilePath)
 				}
 			}
 			if tt.createQfFileInPath {
 				qfFilePath := filepath.Join(tt.inPath, "qf123")
 				qfFileInfo, err := os.Stat(qfFilePath)
 				if err != nil || qfFileInfo == nil {
-					os.Create(qfFilePath)
+					_, _ = os.Create(qfFilePath)
 				}
 			}
 
@@ -58,7 +59,7 @@ func TestRefreshList(t *testing.T) {
 			if tt.wantInitErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				_, err := fr.RefreshList(ctx)
 				assert.Equal(t, tt.wantErr, err != nil)
 			}
@@ -92,21 +93,21 @@ func TestReadNextFile(t *testing.T) {
 			if tt.createDirInPath {
 				inPathInfo, err := os.Stat(tt.inPath)
 				if err != nil || inPathInfo == nil {
-					os.MkdirAll(tt.inPath, 0755)
+					_ = os.MkdirAll(tt.inPath, 0755)
 				}
 			}
 			if tt.createDfFileInPath {
 				dfFilePath := filepath.Join(tt.inPath, "df123")
 				dfFileInfo, err := os.Stat(dfFilePath)
 				if err != nil || dfFileInfo == nil {
-					os.Create(dfFilePath)
+					_, _ = os.Create(dfFilePath)
 				}
 			}
 			if tt.createQfFileInPath {
 				qfFilePath := filepath.Join(tt.inPath, "qf123")
 				qfFileInfo, err := os.Stat(qfFilePath)
 				if err != nil || qfFileInfo == nil {
-					os.Create(qfFilePath)
+					_, _ = os.Create(qfFilePath)
 				}
 			}
 
@@ -114,7 +115,7 @@ func TestReadNextFile(t *testing.T) {
 			if tt.wantInitErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				_, err := fr.RefreshList(ctx)
 				assert.Equal(t, tt.wantErr, err != nil)
 			}

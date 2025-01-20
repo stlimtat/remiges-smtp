@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/mjl-/mox/dns"
 	"github.com/rs/zerolog"
@@ -94,7 +93,7 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 type SendMailSvc struct {
 	Cfg           config.SendMailConfig
 	DialerFactory sendmail.INetDialerFactory
-	FileReader    *input.FileReader
+	FileReader    input.IFileReader
 	MailSender    sendmail.IMailSender
 	Resolver      dns.Resolver
 	Slogger       *slog.Logger
@@ -104,12 +103,17 @@ func newSendMailSvc(
 	cmd *cobra.Command,
 	_ []string,
 ) *SendMailSvc {
+	var err error
 	result := &SendMailSvc{}
 	ctx := cmd.Context()
+	logger := zerolog.Ctx(ctx)
 	result.Cfg = config.GetContextConfig(ctx).(config.SendMailConfig)
 	result.Slogger = telemetry.GetSLogger(ctx)
 	result.DialerFactory = sendmail.NewDefaultDialerFactory()
-	result.FileReader = input.NewFileReader(ctx, result.Cfg.InPath)
+	result.FileReader, err = input.NewDefaultFileReader(ctx, result.Cfg.InPath)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newSendMailSvc.FileReader")
+	}
 	result.Resolver = dns.StrictResolver{
 		Log: result.Slogger,
 	}
@@ -136,27 +140,27 @@ func (s *SendMailSvc) Run(
 		return err
 	}
 
-	conn, err := s.MailSender.NewConn(ctx, hosts)
+	_, err = s.MailSender.NewConn(ctx, hosts)
 	if err != nil {
 		logger.Error().Err(err).Msg("MailSender.NewConn")
 		return err
 	}
 
 	// read a file
-	files, err := s.FileReader.Process(ctx)
-	if err != nil {
-		logger.Error().Err(err).Msg("FileReader.Process")
-		return err
-	}
-	if len(files) < 1 {
-		logger.Fatal().Msg("No files found")
-	}
-	msgBytes := files[0].BodyBytes
-	if !strings.HasSuffix(string(msgBytes), "\r\n") {
-		msgBytes = append(msgBytes, []byte("\r\n")...)
-	}
+	// files, err := s.FileReader.Process(ctx)
+	// if err != nil {
+	// 	logger.Error().Err(err).Msg("FileReader.Process")
+	// 	return err
+	// }
+	// if len(files) < 1 {
+	// 	logger.Fatal().Msg("No files found")
+	// }
+	// msgBytes := files[0].BodyBytes
+	// if !strings.HasSuffix(string(msgBytes), "\r\n") {
+	// 	msgBytes = append(msgBytes, []byte("\r\n")...)
+	// }
 
-	err = s.MailSender.SendMail(ctx, conn, s.Cfg.FromAddr, s.Cfg.ToAddr, msgBytes)
-	// do nothing. underlying has handled the error
+	// err = s.MailSender.SendMail(ctx, conn, s.Cfg.FromAddr, s.Cfg.ToAddr, msgBytes)
+	// // do nothing. underlying has handled the error
 	return err
 }

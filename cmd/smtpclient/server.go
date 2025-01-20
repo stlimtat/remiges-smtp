@@ -52,7 +52,7 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 type Server struct {
 	AdminSvr    *http.Server
 	Cfg         config.ServerConfig
-	FileReader  *input.FileReader
+	FileReader  input.IFileReader
 	FileService *input.FileService
 	Gin         *gin.Engine
 }
@@ -68,10 +68,13 @@ func newServer(
 
 	result.Cfg = config.NewServerConfig(ctx)
 
-	result.FileReader = input.NewFileReader(
+	result.FileReader, err = input.NewDefaultFileReader(
 		ctx,
 		result.Cfg.InPath,
 	)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newServer.FileReader")
+	}
 	result.FileService = input.NewFileService(
 		ctx,
 		result.FileReader,

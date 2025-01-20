@@ -167,7 +167,7 @@ func (r *DefaultFileReader) RefreshList(
 
 func (r *DefaultFileReader) ReadNextFile(
 	ctx context.Context,
-) (io.Reader, io.Reader, error) {
+) (dfReader, qfReader io.Reader, err error) {
 	logger := zerolog.Ctx(ctx)
 	// 1. check that there are files
 	if len(r.Files) == 0 {
@@ -181,7 +181,7 @@ func (r *DefaultFileReader) ReadNextFile(
 	r.FileIndex++
 	r.mutex.Unlock()
 	// 3. validate the df file
-	err := r.ValidateFile(ctx, dfFilePath)
+	err = r.ValidateFile(ctx, dfFilePath)
 	if err != nil {
 		logger.Error().Err(err).
 			Str("dfFilePath", dfFilePath).

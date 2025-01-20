@@ -95,7 +95,7 @@ func TestNewConn(t *testing.T) {
 			dialer := NewMockDialer(ctrl)
 			dialer.EXPECT().
 				DialContext(gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx context.Context, network, address string) (net.Conn, error) {
+				DoAndReturn(func(_ context.Context, network, address string) (net.Conn, error) {
 					assert.Equal(t, TCP_NETWORK, network)
 					hosts2 := []string{}
 					for _, host := range tt.hosts {

@@ -57,17 +57,22 @@ func newReadFileCmd(ctx context.Context) (*readFileCmd, *cobra.Command) {
 
 type ReadFileSvc struct {
 	Cfg        config.ReadFileConfig
-	FileReader *input.FileReader
+	FileReader input.IFileReader
 }
 
 func newReadFileSvc(
 	cmd *cobra.Command,
 	_ []string,
 ) *ReadFileSvc {
+	var err error
 	result := &ReadFileSvc{}
 	ctx := cmd.Context()
+	logger := zerolog.Ctx(ctx)
 	result.Cfg = config.GetContextConfig(ctx).(config.ReadFileConfig)
-	result.FileReader = input.NewFileReader(ctx, result.Cfg.InPath)
+	result.FileReader, err = input.NewDefaultFileReader(ctx, result.Cfg.InPath)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newReadFileSvc.FileReader")
+	}
 	return result
 }
 
@@ -79,12 +84,19 @@ func (s *ReadFileSvc) Run(
 	logger := zerolog.Ctx(ctx)
 	var err error
 
-	files, err := s.FileReader.Process(ctx)
+	_, err = s.FileReader.RefreshList(ctx)
 	if err != nil {
-		logger.Error().Err(err).Msg("s.FileReader.Process")
+		logger.Error().Err(err).Msg("s.FileReader.RefreshList")
 		return err
 	}
-	logger.Info().Interface("files", files).Msg("files")
+
+	dfReader, qfReader, err := s.FileReader.ReadNextFile(ctx)
+	if err != nil {
+		logger.Error().Err(err).Msg("s.FileReader.ReadNextFile")
+		return err
+	}
+
+	logger.Info().Interface("dfReader", dfReader).Interface("qfReader", qfReader).Msg("ReadNextFile")
 
 	return err
 }
