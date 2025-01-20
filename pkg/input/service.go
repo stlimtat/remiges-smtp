@@ -8,14 +8,14 @@ import (
 )
 
 type FileService struct {
-	FileReader   *FileReader
+	FileReader   IFileReader
 	PollInterval time.Duration
 	ticker       *time.Ticker
 }
 
 func NewFileService(
 	_ context.Context,
-	fileReader *FileReader,
+	fileReader IFileReader,
 	pollInterval time.Duration,
 ) *FileService {
 	result := &FileService{

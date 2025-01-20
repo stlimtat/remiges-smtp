@@ -1,10 +1,14 @@
 package input
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/rs/zerolog"
 )
@@ -19,121 +23,195 @@ const (
 	FILE_STATUS_DONE          FileStatus = 9
 )
 
-type FileInfo struct {
-	BodyFileName   string
-	BodyBytes      []byte
-	FileID         string
-	HeaderBytes    []byte
-	HeaderFileName string
-	Headers        map[string]string
-	Status         FileStatus
-}
-
-type FileReader struct {
+type DefaultFileReader struct {
+	FileIndex int
+	Files     []FileInfo
 	InPath    string
-	ReadFiles map[string]FileInfo
+	mutex     sync.Mutex
 }
 
-func NewFileReader(
-	_ context.Context,
+func NewDefaultFileReader(
+	ctx context.Context,
 	inPath string,
-) *FileReader {
-	result := &FileReader{
+) (*DefaultFileReader, error) {
+	logger := zerolog.Ctx(ctx)
+	var err error
+	result := &DefaultFileReader{
+		FileIndex: 0,
+		Files:     make([]FileInfo, 0),
 		InPath:    inPath,
-		ReadFiles: make(map[string]FileInfo, 0),
+		mutex:     sync.Mutex{},
 	}
 
-	return result
+	// 1. check that directory exists
+	err = result.ValidateInPath(ctx)
+	if err != nil {
+		logger.Error().Err(err).Msg("ValidateInPath")
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func (fr *FileReader) Process(
+func (r *DefaultFileReader) ValidateInPath(
+	ctx context.Context,
+) error {
+	logger := zerolog.Ctx(ctx)
+	// 1. check that directory exists
+	fileInfo, err := os.Stat(r.InPath)
+	if err != nil {
+		logger.Error().Err(err).Msg("os.Stat")
+		return err
+	}
+	// 2. check that it is a directory
+	if !fileInfo.IsDir() {
+		logger.Error().Msg("InPath is not a directory")
+		return fmt.Errorf("InPath is not a directory")
+	}
+	return nil
+}
+
+func (r *DefaultFileReader) ValidateFile(
+	ctx context.Context,
+	fileName string,
+) error {
+	logger := zerolog.Ctx(ctx)
+	// 1. file path
+	filePath := filepath.Join(r.InPath, fileName)
+	// 1. check that file exists
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		logger.Error().Err(err).Msg("os.Stat")
+		return err
+	}
+	// 2. check that it is a file
+	if fileInfo.IsDir() {
+		logger.Error().Msg("fileName is not a file")
+		return fmt.Errorf("fileName is not a file")
+	}
+	return nil
+}
+
+func (r *DefaultFileReader) GetQfFileName(
+	ctx context.Context,
+	dfFileName string,
+) (string, error) {
+	logger := zerolog.Ctx(ctx)
+	result := ""
+	if strings.HasPrefix(dfFileName, "df") {
+		result = strings.Replace(dfFileName, "df", "qf", 1)
+		err := r.ValidateFile(ctx, result)
+		if err != nil {
+			logger.Error().Err(err).Msg("ValidateFile")
+			return result, err
+		}
+	}
+	return result, nil
+}
+
+func (r *DefaultFileReader) RefreshList(
 	ctx context.Context,
 ) ([]FileInfo, error) {
 	logger := zerolog.Ctx(ctx)
-	// 1. read list of files in directory
-	entries, err := os.ReadDir(fr.InPath)
+	// 0. Reset the current list of files
+	result := make([]FileInfo, 0)
+	// 1. validate directory
+	err := r.ValidateInPath(ctx)
+	if err != nil {
+		logger.Error().Err(err).Msg("ValidateInPath")
+		return nil, err
+	}
+	// 2. read list of files in directory
+	entries, err := os.ReadDir(r.InPath)
 	if err != nil {
 		logger.Error().Err(err).Msg("os.ReadDir")
 		return nil, err
 	}
-	result := make([]FileInfo, 0)
-	// 2. check with are new files
-	for _, e := range entries {
-		fileName := e.Name()
-		// 3. read newest file - message, rcpt
-		_, ok := fr.ReadFiles[fileName]
-		if ok {
-			logger.Error().Err(fmt.Errorf("fileInfo error")).Msg("fr.ReadFiles")
+	// 3. no files found
+	if len(entries) < 1 {
+		logger.Error().Msg("no files found in directory")
+		return nil, fmt.Errorf("no files found in directory")
+	}
+	// 4. check with new files
+	for _, entry := range entries {
+		if entry.IsDir() {
 			continue
 		}
-		if strings.HasPrefix(fileName, "df") {
-			fileID := fileName[2:]
-			currFileInfo := FileInfo{
-				BodyFileName: fileName,
-				FileID:       fileID,
-				Status:       FILE_STATUS_PROCESSING,
-			}
-			// 4. check if qf file exists
-			qfFileName := strings.Replace(fileName, "df", "qf", 1)
-			qfFullFileName := fr.InPath + "/" + qfFileName
-			_, err := os.Stat(qfFullFileName)
-			if err != nil {
-				logger.Error().Err(err).Msg("qfExists")
-				continue
-			}
-			currFileInfo.HeaderFileName = qfFileName
-			// 5. read mail body
-			currFileInfo.BodyBytes, err = fr.ReadFile(ctx, fr.InPath+"/"+fileName)
-			if err != nil {
-				continue
-			}
-			currFileInfo.Status = FILE_STATUS_BODY_READ
-			// 6. read mail headers
-			currFileInfo.HeaderBytes, err = fr.ReadFile(ctx, qfFullFileName)
-			if err != nil {
-				continue
-			}
-			currFileInfo.Status = FILE_STATUS_HEADERS_READ
-			// 7. parse headers
-			currFileInfo.Headers, err = fr.ParseHeaders(ctx, currFileInfo.HeaderBytes)
-			if err != nil {
-				continue
-			}
-			currFileInfo.Status = FILE_STATUS_HEADERS_PARSE
-			// 8. add to result
-			fr.ReadFiles[fileName] = currFileInfo
-			result = append(result, currFileInfo)
+		dfFileName := entry.Name()
+		qfFileName, err := r.GetQfFileName(ctx, dfFileName)
+		if err != nil {
+			logger.Error().Err(err).Msg("GetQfFileName")
+			continue
 		}
+		logger.Info().
+			Str("dfFileName", dfFileName).
+			Str("qfFileName", qfFileName).
+			Msg("RefreshList")
+		id := dfFileName[2:]
+		fileInfo := FileInfo{
+			DfFilePath: filepath.Join(r.InPath, dfFileName),
+			ID:         id,
+			QfFilePath: filepath.Join(r.InPath, qfFileName),
+			Status:     FILE_STATUS_PROCESSING,
+		}
+		result = append(result, fileInfo)
 	}
-	return result, nil
+	// 5. update the list of files - note this needs
+	// to be thread safe
+	r.mutex.Lock()
+	r.Files = result
+	r.FileIndex = 0
+	defer r.mutex.Unlock()
+	return r.Files, nil
 }
 
-func (_ *FileReader) ReadFile(ctx context.Context, fileName string) ([]byte, error) {
-	logger := zerolog.Ctx(ctx).With().Str("fileName", fileName).Logger()
-	result, err := os.ReadFile(fileName)
-	if err != nil {
-		logger.Error().Err(err).Msg("os.ReadFile")
-		return nil, err
-	}
-	logger.Debug().Bytes("fileBytes", result).Msg("ReadFile")
-	return result, nil
-}
-
-func (_ *FileReader) ParseHeaders(ctx context.Context, headerBytes []byte) (map[string]string, error) {
+func (r *DefaultFileReader) ReadNextFile(
+	ctx context.Context,
+) (io.Reader, io.Reader, error) {
 	logger := zerolog.Ctx(ctx)
-	result := make(map[string]string, 0)
-	lines := strings.Split(string(headerBytes), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "H??") {
-			line = strings.TrimPrefix(line, "H??")
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				headerKey := strings.TrimSpace(parts[0])
-				headerValue := strings.TrimSpace(parts[1])
-				result[headerKey] = headerValue
-			}
-		}
+	// 1. check that there are files
+	if len(r.Files) == 0 {
+		logger.Error().Msg("no files found")
+		return nil, nil, fmt.Errorf("no files found")
 	}
-	logger.Debug().Interface("headers", result).Msg("ParseHeaders")
-	return result, nil
+	// 2. read the next file
+	r.mutex.Lock()
+	dfFilePath := r.Files[r.FileIndex].DfFilePath
+	qfFilePath := r.Files[r.FileIndex].QfFilePath
+	r.FileIndex++
+	r.mutex.Unlock()
+	// 3. validate the df file
+	err := r.ValidateFile(ctx, dfFilePath)
+	if err != nil {
+		logger.Error().Err(err).
+			Str("dfFilePath", dfFilePath).
+			Msg("ValidateFile")
+		return nil, nil, err
+	}
+	// 4. validate the qf file
+	err = r.ValidateFile(ctx, qfFilePath)
+	if err != nil {
+		logger.Error().Err(err).
+			Str("qfFilePath", qfFilePath).
+			Msg("ValidateFile")
+		return nil, nil, err
+	}
+	// 6. read the df file
+	dfFileBytes, err := os.ReadFile(dfFilePath)
+	if err != nil {
+		logger.Error().Err(err).
+			Str("dfFilePath", dfFilePath).
+			Msg("os.ReadFile")
+		return nil, nil, err
+	}
+	// 7. read the qf file
+	qfFileBytes, err := os.ReadFile(qfFilePath)
+	if err != nil {
+		logger.Error().Err(err).
+			Str("qfFilePath", qfFilePath).
+			Msg("os.ReadFile")
+		return nil, nil, err
+	}
+
+	return bytes.NewReader(dfFileBytes), bytes.NewReader(qfFileBytes), nil
 }
