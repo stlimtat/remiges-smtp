@@ -4,10 +4,11 @@ go_library(
     name = "sendmail",
     srcs = [
         "dialer.go",
-        "dialer_mock.go",
+        "dns_mock.go",
         "interface.go",
+        "mock.go",
         "sendmail.go",
-        "sendmail_mock.go",
+        "smtpclient_mock.go",
     ],
     importpath = "github.com/stlimtat/remiges-smtp/internal/sendmail",
     visibility = ["//:__subpackages__"],

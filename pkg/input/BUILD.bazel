@@ -3,12 +3,17 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "input",
     srcs = [
+        "interface.go",
+        "mock.go",
         "reader.go",
         "service.go",
     ],
     importpath = "github.com/stlimtat/remiges-smtp/pkg/input",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_rs_zerolog//:zerolog"],
+    deps = [
+        "@com_github_rs_zerolog//:zerolog",
+        "@org_uber_go_mock//gomock",
+    ],
 )
 
 go_test(
@@ -18,5 +23,6 @@ go_test(
     deps = [
         "//internal/telemetry",
         "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

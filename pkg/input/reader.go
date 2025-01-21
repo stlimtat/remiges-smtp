@@ -13,16 +13,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type FileStatus uint8
-
-const (
-	FILE_STATUS_PROCESSING    FileStatus = 0
-	FILE_STATUS_BODY_READ     FileStatus = 1
-	FILE_STATUS_HEADERS_READ  FileStatus = 2
-	FILE_STATUS_HEADERS_PARSE FileStatus = 3
-	FILE_STATUS_DONE          FileStatus = 9
-)
-
 type DefaultFileReader struct {
 	FileIndex int
 	Files     []FileInfo
@@ -163,7 +153,7 @@ func (r *DefaultFileReader) RefreshList(
 			DfFilePath: filepath.Join(r.InPath, dfFileName),
 			ID:         id,
 			QfFilePath: filepath.Join(r.InPath, qfFileName),
-			Status:     FILE_STATUS_PROCESSING,
+			Status:     FILE_STATUS_INIT,
 		}
 		result = append(result, fileInfo)
 	}

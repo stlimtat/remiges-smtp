@@ -5,6 +5,17 @@ import (
 	"io"
 )
 
+type FileStatus uint8
+
+const (
+	FILE_STATUS_INIT          FileStatus = 0
+	FILE_STATUS_PROCESSING    FileStatus = 1
+	FILE_STATUS_BODY_READ     FileStatus = 2
+	FILE_STATUS_HEADERS_READ  FileStatus = 3
+	FILE_STATUS_HEADERS_PARSE FileStatus = 4
+	FILE_STATUS_DONE          FileStatus = 99
+)
+
 type FileInfo struct {
 	DfFilePath string
 	ID         string
