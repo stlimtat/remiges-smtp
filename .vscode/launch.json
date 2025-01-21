@@ -5,18 +5,30 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Go Debug",
+            "name": "lookupmx",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/smtpclient",
             "args": [
-                "${input:command}",
+                "lookupmx",
                 "--domain",
                 "${input:domain}",
             ],
-            "env": {},
-            "showLog": true
+            "env": {}
+        },
+        {
+            "name": "readfile",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/smtpclient",
+            "args": [
+                "readfile",
+                "--path",
+                "${input:path}",
+            ],
+            "env": {}
         }
     ],
     "inputs": [
@@ -24,7 +36,7 @@
             "id": "command",
             "type": "pickString",
             "description": "Command to run",
-            "default": "lookupmx",
+            "default": "readfile",
             "options": [
                 "lookupmx",
                 "readfile",
@@ -38,8 +50,20 @@
             "description": "Domain to lookup",
             "default": "stlim.net",
             "options": [
+                "www.stlim.net",
                 "stlim.net",
+                "www.gmail.com",
                 "gmail.com",
+            ]
+        },
+        {
+            "id": "path",
+            "type": "pickString",
+            "description": "Path to read",
+            "default": "${workspaceFolder}/remiges-smtp/testdata",
+            "options": [
+                "${workspaceFolder}/remiges-smtp/testdata",
+                "/tmp",
             ]
         }
     ]
