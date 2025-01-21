@@ -75,9 +75,17 @@ func (r *DefaultFileReader) ValidateFile(
 	ctx context.Context,
 	fileName string,
 ) error {
-	logger := zerolog.Ctx(ctx)
 	// 1. file path
 	filePath := filepath.Join(r.InPath, fileName)
+	err := r.ValidateFilePath(ctx, filePath)
+	return err
+}
+
+func (_ *DefaultFileReader) ValidateFilePath(
+	ctx context.Context,
+	filePath string,
+) error {
+	logger := zerolog.Ctx(ctx)
 	// 1. check that file exists
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
@@ -138,6 +146,9 @@ func (r *DefaultFileReader) RefreshList(
 			continue
 		}
 		dfFileName := entry.Name()
+		if !strings.HasPrefix(dfFileName, "df") {
+			continue
+		}
 		qfFileName, err := r.GetQfFileName(ctx, dfFileName)
 		if err != nil {
 			logger.Error().Err(err).Msg("GetQfFileName")
@@ -181,7 +192,7 @@ func (r *DefaultFileReader) ReadNextFile(
 	r.FileIndex++
 	r.mutex.Unlock()
 	// 3. validate the df file
-	err = r.ValidateFile(ctx, dfFilePath)
+	err = r.ValidateFilePath(ctx, dfFilePath)
 	if err != nil {
 		logger.Error().Err(err).
 			Str("dfFilePath", dfFilePath).
@@ -189,7 +200,7 @@ func (r *DefaultFileReader) ReadNextFile(
 		return nil, nil, err
 	}
 	// 4. validate the qf file
-	err = r.ValidateFile(ctx, qfFilePath)
+	err = r.ValidateFilePath(ctx, qfFilePath)
 	if err != nil {
 		logger.Error().Err(err).
 			Str("qfFilePath", qfFilePath).

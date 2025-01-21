@@ -96,7 +96,10 @@ func (s *ReadFileSvc) Run(
 		return err
 	}
 
-	logger.Info().Interface("dfReader", dfReader).Interface("qfReader", qfReader).Msg("ReadNextFile")
+	logger.Info().
+		Interface("dfReader", dfReader).
+		Interface("qfReader", qfReader).
+		Msg("ReadNextFile")
 
 	return err
 }
