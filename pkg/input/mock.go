@@ -11,7 +11,6 @@ package input
 
 import (
 	context "context"
-	io "io"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -42,13 +41,12 @@ func (m *MockIFileReader) EXPECT() *MockIFileReaderMockRecorder {
 }
 
 // ReadNextFile mocks base method.
-func (m *MockIFileReader) ReadNextFile(ctx context.Context) (io.Reader, io.Reader, error) {
+func (m *MockIFileReader) ReadNextFile(ctx context.Context) (*FileInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadNextFile", ctx)
-	ret0, _ := ret[0].(io.Reader)
-	ret1, _ := ret[1].(io.Reader)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret0, _ := ret[0].(*FileInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ReadNextFile indicates an expected call of ReadNextFile.
@@ -58,10 +56,10 @@ func (mr *MockIFileReaderMockRecorder) ReadNextFile(ctx any) *gomock.Call {
 }
 
 // RefreshList mocks base method.
-func (m *MockIFileReader) RefreshList(ctx context.Context) ([]FileInfo, error) {
+func (m *MockIFileReader) RefreshList(ctx context.Context) ([]*FileInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RefreshList", ctx)
-	ret0, _ := ret[0].([]FileInfo)
+	ret0, _ := ret[0].([]*FileInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

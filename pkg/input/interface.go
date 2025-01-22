@@ -18,13 +18,15 @@ const (
 
 type FileInfo struct {
 	DfFilePath string
+	DfReader   io.Reader
 	ID         string
 	QfFilePath string
+	QfReader   io.Reader
 	Status     FileStatus
 }
 
 //go:generate mockgen -destination=mock.go -package=input -source=interface.go
 type IFileReader interface {
-	RefreshList(ctx context.Context) ([]FileInfo, error)
-	ReadNextFile(ctx context.Context) (io.Reader, io.Reader, error)
+	RefreshList(ctx context.Context) ([]*FileInfo, error)
+	ReadNextFile(ctx context.Context) (*FileInfo, error)
 }

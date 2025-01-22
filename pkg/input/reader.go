@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,7 +14,7 @@ import (
 
 type DefaultFileReader struct {
 	FileIndex int
-	Files     []FileInfo
+	Files     []*FileInfo
 	InPath    string
 	mutex     sync.Mutex
 }
@@ -28,7 +27,7 @@ func NewDefaultFileReader(
 	var err error
 	result := &DefaultFileReader{
 		FileIndex: 0,
-		Files:     make([]FileInfo, 0),
+		Files:     make([]*FileInfo, 0),
 		InPath:    inPath,
 		mutex:     sync.Mutex{},
 	}
@@ -109,10 +108,10 @@ func (r *DefaultFileReader) GetQfFileName(
 
 func (r *DefaultFileReader) RefreshList(
 	ctx context.Context,
-) ([]FileInfo, error) {
+) ([]*FileInfo, error) {
 	logger := zerolog.Ctx(ctx)
 	// 0. Reset the current list of files
-	result := make([]FileInfo, 0)
+	result := make([]*FileInfo, 0)
 	// 1. validate directory
 	err := r.ValidateInPath(ctx)
 	if err != nil {
@@ -149,7 +148,7 @@ func (r *DefaultFileReader) RefreshList(
 			Str("qfFileName", qfFileName).
 			Msg("RefreshList")
 		id := dfFileName[2:]
-		fileInfo := FileInfo{
+		fileInfo := &FileInfo{
 			DfFilePath: filepath.Join(r.InPath, dfFileName),
 			ID:         id,
 			QfFilePath: filepath.Join(r.InPath, qfFileName),
@@ -168,17 +167,19 @@ func (r *DefaultFileReader) RefreshList(
 
 func (r *DefaultFileReader) ReadNextFile(
 	ctx context.Context,
-) (dfReader, qfReader io.Reader, err error) {
+) (*FileInfo, error) {
 	logger := zerolog.Ctx(ctx)
+	var err error
 	// 1. check that there are files
 	if len(r.Files) == 0 {
 		logger.Error().Msg("no files found")
-		return nil, nil, fmt.Errorf("no files found")
+		return nil, fmt.Errorf("no files found")
 	}
 	// 2. read the next file
 	r.mutex.Lock()
-	dfFilePath := r.Files[r.FileIndex].DfFilePath
-	qfFilePath := r.Files[r.FileIndex].QfFilePath
+	result := r.Files[r.FileIndex]
+	dfFilePath := result.DfFilePath
+	qfFilePath := result.QfFilePath
 	r.FileIndex++
 	r.mutex.Unlock()
 	// 3. validate the df file
@@ -187,7 +188,7 @@ func (r *DefaultFileReader) ReadNextFile(
 		logger.Error().Err(err).
 			Str("dfFilePath", dfFilePath).
 			Msg("ValidateFile")
-		return nil, nil, err
+		return nil, err
 	}
 	// 4. validate the qf file
 	err = r.ValidateFilePath(ctx, qfFilePath)
@@ -195,7 +196,7 @@ func (r *DefaultFileReader) ReadNextFile(
 		logger.Error().Err(err).
 			Str("qfFilePath", qfFilePath).
 			Msg("ValidateFile")
-		return nil, nil, err
+		return nil, err
 	}
 	// 6. read the df file
 	dfFileBytes, err := os.ReadFile(dfFilePath)
@@ -203,7 +204,7 @@ func (r *DefaultFileReader) ReadNextFile(
 		logger.Error().Err(err).
 			Str("dfFilePath", dfFilePath).
 			Msg("os.ReadFile")
-		return nil, nil, err
+		return nil, err
 	}
 	// 7. read the qf file
 	qfFileBytes, err := os.ReadFile(qfFilePath)
@@ -211,8 +212,10 @@ func (r *DefaultFileReader) ReadNextFile(
 		logger.Error().Err(err).
 			Str("qfFilePath", qfFilePath).
 			Msg("os.ReadFile")
-		return nil, nil, err
+		return nil, err
 	}
 
-	return bytes.NewReader(dfFileBytes), bytes.NewReader(qfFileBytes), nil
+	result.DfReader = bytes.NewReader(dfFileBytes)
+	result.QfReader = bytes.NewReader(qfFileBytes)
+	return result, nil
 }

@@ -90,15 +90,14 @@ func (s *ReadFileSvc) Run(
 		return err
 	}
 
-	dfReader, qfReader, err := s.FileReader.ReadNextFile(ctx)
+	fileInfo, err := s.FileReader.ReadNextFile(ctx)
 	if err != nil {
 		logger.Error().Err(err).Msg("s.FileReader.ReadNextFile")
 		return err
 	}
 
 	logger.Info().
-		Interface("dfReader", dfReader).
-		Interface("qfReader", qfReader).
+		Interface("fileInfo", fileInfo).
 		Msg("ReadNextFile")
 
 	return err

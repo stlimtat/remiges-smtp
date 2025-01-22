@@ -7,8 +7,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+type FromType uint8
+
+const (
+	FromTypeHeaders FromType = 0
+	FromTypeDefault FromType = 1
+)
+
 type ReadFileConfig struct {
-	InPath string `json:"in_path" mapstructure:"in_path"`
+	InPath      string   `json:"in_path" mapstructure:"in_path"`
+	FromType    FromType `json:"from_type" mapstructure:"from_type"`
+	DefaultFrom string   `json:"from" mapstructure:"from"`
 }
 
 func NewReadFileConfig(ctx context.Context) ReadFileConfig {
