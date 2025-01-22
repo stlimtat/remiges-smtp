@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "mail",
+    srcs = [
+        "factory.go",
+        "interface.go",
+        "mock.go",
+        "unixdos.go",
+    ],
+    importpath = "github.com/stlimtat/remiges-smtp/internal/mail",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/config",
+        "@com_github_rs_zerolog//:zerolog",
+        "@org_uber_go_mock//gomock",
+    ],
+)
+
+go_test(
+    name = "mail_test",
+    srcs = ["factory_test.go"],
+    embed = [":mail"],
+    deps = [
+        "//internal/config",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)
