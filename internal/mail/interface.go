@@ -9,7 +9,7 @@ import (
 type Mail struct {
 	From    string
 	To      string
-	Headers map[string]string
+	Headers map[string][]byte
 	Body    []byte
 }
 

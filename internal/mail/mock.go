@@ -41,6 +41,20 @@ func (m *MockIMailProcessor) EXPECT() *MockIMailProcessorMockRecorder {
 	return m.recorder
 }
 
+// Index mocks base method.
+func (m *MockIMailProcessor) Index() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Index")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Index indicates an expected call of Index.
+func (mr *MockIMailProcessorMockRecorder) Index() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Index", reflect.TypeOf((*MockIMailProcessor)(nil).Index))
+}
+
 // Init mocks base method.
 func (m *MockIMailProcessor) Init(ctx context.Context, cfg config.MailProcessorConfig) error {
 	m.ctrl.T.Helper()
