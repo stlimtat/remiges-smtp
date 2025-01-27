@@ -4,6 +4,7 @@ go_library(
     name = "input",
     srcs = [
         "interface.go",
+        "mail_transform.go",
         "mock.go",
         "reader.go",
         "service.go",
@@ -11,16 +12,25 @@ go_library(
     importpath = "github.com/stlimtat/remiges-smtp/pkg/input",
     visibility = ["//visibility:public"],
     deps = [
+        "//internal/config",
+        "//internal/mail",
         "@com_github_rs_zerolog//:zerolog",
+        "@org_golang_x_text//cases",
+        "@org_golang_x_text//language",
         "@org_uber_go_mock//gomock",
     ],
 )
 
 go_test(
     name = "input_test",
-    srcs = ["reader_test.go"],
+    srcs = [
+        "mail_transform_test.go",
+        "reader_test.go",
+    ],
     embed = [":input"],
     deps = [
+        "//internal/config",
+        "//internal/mail",
         "//internal/telemetry",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
