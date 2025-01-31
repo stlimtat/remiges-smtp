@@ -13,23 +13,26 @@ import (
 )
 
 type DefaultFileReader struct {
-	FileIndex int
-	Files     []*FileInfo
-	InPath    string
-	mutex     sync.Mutex
+	FileIndex       int
+	Files           []*FileInfo
+	InPath          string
+	mutex           sync.Mutex
+	FileReadTracker IFileReadTracker
 }
 
 func NewDefaultFileReader(
 	ctx context.Context,
 	inPath string,
+	fileReadTracker IFileReadTracker,
 ) (*DefaultFileReader, error) {
 	logger := zerolog.Ctx(ctx)
 	var err error
 	result := &DefaultFileReader{
-		FileIndex: 0,
-		Files:     make([]*FileInfo, 0),
-		InPath:    inPath,
-		mutex:     sync.Mutex{},
+		FileIndex:       0,
+		Files:           make([]*FileInfo, 0),
+		InPath:          inPath,
+		mutex:           sync.Mutex{},
+		FileReadTracker: fileReadTracker,
 	}
 
 	// 1. check that directory exists
@@ -155,6 +158,11 @@ func (r *DefaultFileReader) RefreshList(
 			Status:     FILE_STATUS_INIT,
 		}
 		result = append(result, fileInfo)
+		err = r.FileReadTracker.UpsertFile(ctx, id, FILE_STATUS_INIT)
+		if err != nil {
+			logger.Error().Err(err).Msg("UpsertFile")
+			continue
+		}
 	}
 	// 5. update the list of files - note this needs
 	// to be thread safe
@@ -182,6 +190,16 @@ func (r *DefaultFileReader) ReadNextFile(
 	qfFilePath := result.QfFilePath
 	r.FileIndex++
 	r.mutex.Unlock()
+	// 3. check if the file has been read
+	status, err := r.FileReadTracker.FileRead(ctx, result.ID)
+	if err != nil {
+		logger.Error().Err(err).Msg("FileRead")
+		return nil, err
+	}
+	if status == FILE_STATUS_ERROR {
+		logger.Error().Msg("file has been read and failed")
+		return nil, fmt.Errorf("file has been read and failed")
+	}
 	// 3. validate the df file
 	err = r.ValidateFilePath(ctx, dfFilePath)
 	if err != nil {
