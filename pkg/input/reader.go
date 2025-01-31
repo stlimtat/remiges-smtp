@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -196,9 +197,19 @@ func (r *DefaultFileReader) ReadNextFile(
 		logger.Error().Err(err).Msg("FileRead")
 		return nil, err
 	}
-	if status == FILE_STATUS_ERROR {
-		logger.Error().Msg("file has been read and failed")
-		return nil, fmt.Errorf("file has been read and failed")
+	logger.Info().
+		Int8("status", int8(status)).
+		Msg("ReadNextFile")
+	if slices.Contains([]FileStatus{
+		FILE_STATUS_ERROR,
+		FILE_STATUS_BODY_READ,
+		FILE_STATUS_PROCESSING,
+		FILE_STATUS_HEADERS_READ,
+		FILE_STATUS_HEADERS_PARSE,
+		FILE_STATUS_DONE,
+	}, status) {
+		logger.Error().Msg("file is being processed")
+		return nil, fmt.Errorf("file is being processed")
 	}
 	// 3. validate the df file
 	err = r.ValidateFilePath(ctx, dfFilePath)
