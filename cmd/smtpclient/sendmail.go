@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 Lim Swee Tat <st_lim@stlim.net>
 */
 package main
 
@@ -9,6 +9,7 @@ import (
 	"log/slog"
 
 	"github.com/mjl-/mox/dns"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -70,6 +71,10 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 		"msg", "m",
 		"", "Test message",
 	)
+	result.cmd.Flags().StringP(
+		"redis_addr", "r",
+		"", "Redis address",
+	)
 	err = viper.BindPFlag("from", result.cmd.Flags().Lookup("from"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag.from")
@@ -91,12 +96,14 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 }
 
 type SendMailSvc struct {
-	Cfg           config.SendMailConfig
-	DialerFactory sendmail.INetDialerFactory
-	FileReader    input.IFileReader
-	MailSender    sendmail.IMailSender
-	Resolver      dns.Resolver
-	Slogger       *slog.Logger
+	Cfg             config.SendMailConfig
+	DialerFactory   sendmail.INetDialerFactory
+	FileReader      input.IFileReader
+	FileReadTracker input.IFileReadTracker
+	MailSender      sendmail.IMailSender
+	RedisClient     *redis.Client
+	Resolver        dns.Resolver
+	Slogger         *slog.Logger
 }
 
 func newSendMailSvc(
@@ -110,7 +117,11 @@ func newSendMailSvc(
 	result.Cfg = config.GetContextConfig(ctx).(config.SendMailConfig)
 	result.Slogger = telemetry.GetSLogger(ctx)
 	result.DialerFactory = sendmail.NewDefaultDialerFactory()
-	result.FileReader, err = input.NewDefaultFileReader(ctx, result.Cfg.InPath)
+	result.RedisClient = redis.NewClient(&redis.Options{
+		Addr: result.Cfg.ReadFileConfig.RedisAddr,
+	})
+	result.FileReadTracker = input.NewFileReadTracker(ctx, result.RedisClient)
+	result.FileReader, err = input.NewDefaultFileReader(ctx, result.Cfg.InPath, result.FileReadTracker)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.FileReader")
 	}

@@ -21,6 +21,7 @@ go_library(
         "@com_github_gin_gonic_gin//:gin",
         "@com_github_go_mods_zerolog_gin//:zerolog-gin",
         "@com_github_mjl_mox//dns",
+        "@com_github_redis_go_redis_v9//:go-redis",
         "@com_github_rs_zerolog//:zerolog",
         "@com_github_spf13_cobra//:cobra",
         "@com_github_spf13_viper//:viper",

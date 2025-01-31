@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -56,8 +57,10 @@ func newReadFileCmd(ctx context.Context) (*readFileCmd, *cobra.Command) {
 }
 
 type ReadFileSvc struct {
-	Cfg        config.ReadFileConfig
-	FileReader input.IFileReader
+	Cfg             config.ReadFileConfig
+	FileReader      input.IFileReader
+	FileReadTracker input.IFileReadTracker
+	RedisClient     *redis.Client
 }
 
 func newReadFileSvc(
@@ -69,7 +72,11 @@ func newReadFileSvc(
 	ctx := cmd.Context()
 	logger := zerolog.Ctx(ctx)
 	result.Cfg = config.GetContextConfig(ctx).(config.ReadFileConfig)
-	result.FileReader, err = input.NewDefaultFileReader(ctx, result.Cfg.InPath)
+	result.RedisClient = redis.NewClient(&redis.Options{
+		Addr: result.Cfg.RedisAddr,
+	})
+	result.FileReadTracker = input.NewFileReadTracker(ctx, result.RedisClient)
+	result.FileReader, err = input.NewDefaultFileReader(ctx, result.Cfg.InPath, result.FileReadTracker)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newReadFileSvc.FileReader")
 	}

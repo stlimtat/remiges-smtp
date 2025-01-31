@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	zerologgin "github.com/go-mods/zerolog-gin"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -50,11 +51,14 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 }
 
 type Server struct {
-	AdminSvr    *http.Server
-	Cfg         config.ServerConfig
-	FileReader  input.IFileReader
-	FileService *input.FileService
-	Gin         *gin.Engine
+	AdminSvr        *http.Server
+	Cfg             config.ServerConfig
+	FileReader      input.IFileReader
+	FileReadTracker input.IFileReadTracker
+	FileService     *input.FileService
+	Gin             *gin.Engine
+	MailTransformer input.IMailTransformer
+	RedisClient     *redis.Client
 }
 
 func newServer(
@@ -67,17 +71,24 @@ func newServer(
 	result := &Server{}
 
 	result.Cfg = config.NewServerConfig(ctx)
-
+	result.RedisClient = redis.NewClient(&redis.Options{
+		Addr: result.Cfg.ReadFileConfig.RedisAddr,
+	})
+	result.FileReadTracker = input.NewFileReadTracker(ctx, result.RedisClient)
 	result.FileReader, err = input.NewDefaultFileReader(
 		ctx,
 		result.Cfg.InPath,
+		result.FileReadTracker,
 	)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newServer.FileReader")
 	}
+	result.MailTransformer = input.NewMailTransformer(ctx, result.Cfg.ReadFileConfig)
 	result.FileService = input.NewFileService(
 		ctx,
+		result.Cfg.Concurrency,
 		result.FileReader,
+		result.MailTransformer,
 		result.Cfg.PollInterval,
 	)
 
