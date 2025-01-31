@@ -10,14 +10,15 @@ import (
 )
 
 type SendMailConfig struct {
-	Debug    bool         `mapstructure:"debug"`
-	From     string       `mapstructure:"from"`
-	FromAddr smtp.Address `mapstructure:",omitempty"`
-	InPath   string       `mapstructure:"in_path"`
-	To       string       `mapstructure:"to"`
-	ToAddr   smtp.Address `mapstructure:",omitempty"`
-	Msg      string       `mapstructure:"msg"`
-	MsgBytes []byte       `mapstructure:",omitempty"`
+	Debug          bool           `mapstructure:"debug"`
+	From           string         `mapstructure:"from"`
+	FromAddr       smtp.Address   `mapstructure:",omitempty"`
+	InPath         string         `mapstructure:"in_path"`
+	To             string         `mapstructure:"to"`
+	ToAddr         smtp.Address   `mapstructure:",omitempty"`
+	Msg            string         `mapstructure:"msg"`
+	MsgBytes       []byte         `mapstructure:",omitempty"`
+	ReadFileConfig ReadFileConfig `mapstructure:"read_file"`
 }
 
 func NewSendMailConfig(ctx context.Context) SendMailConfig {

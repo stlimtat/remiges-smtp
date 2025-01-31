@@ -18,6 +18,7 @@ type ReadFileConfig struct {
 	InPath      string   `json:"in_path" mapstructure:"in_path"`
 	FromType    FromType `json:"from_type" mapstructure:"from_type"`
 	DefaultFrom string   `json:"from" mapstructure:"from"`
+	RedisAddr   string   `json:"redis_addr" mapstructure:"redis_addr"`
 }
 
 func NewReadFileConfig(ctx context.Context) ReadFileConfig {
