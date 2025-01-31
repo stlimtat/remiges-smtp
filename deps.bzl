@@ -14,6 +14,18 @@ def go_dependencies():
         version = "v1.0.1",
     )
     go_repository(
+        name = "com_github_bsm_ginkgo_v2",
+        importpath = "github.com/bsm/ginkgo/v2",
+        sum = "h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=",
+        version = "v2.12.0",
+    )
+    go_repository(
+        name = "com_github_bsm_gomega",
+        importpath = "github.com/bsm/gomega",
+        sum = "h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=",
+        version = "v1.27.10",
+    )
+    go_repository(
         name = "com_github_bytedance_sonic",
         importpath = "github.com/bytedance/sonic",
         sum = "h1:9Csb3c9ZJhfUWeMtpCDCq6BUoH5ogfDFLUgQ/jG+R0k=",
@@ -66,6 +78,12 @@ def go_dependencies():
         importpath = "github.com/davecgh/go-spew",
         sum = "h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=",
         version = "v1.1.2-0.20180830191138-d8f796af33cc",
+    )
+    go_repository(
+        name = "com_github_dgryski_go_rendezvous",
+        importpath = "github.com/dgryski/go-rendezvous",
+        sum = "h1:lO4WD4F/rVNCu3HqELle0jiPLLBs70cWOduZpkS1E78=",
+        version = "v0.0.0-20200823014737-9f7001d12a5f",
     )
     go_repository(
         name = "com_github_fatih_color",
@@ -156,6 +174,12 @@ def go_dependencies():
         importpath = "github.com/go-playground/validator/v10",
         sum = "h1:/PwmTwZhS0dPkav3cdK9kV1FsAmrL8sThn8IHr/sO+o=",
         version = "v10.23.0",
+    )
+    go_repository(
+        name = "com_github_go_redis_redismock_v9",
+        importpath = "github.com/go-redis/redismock/v9",
+        sum = "h1:ZrMYQeKPECZPjOj5u9eyOjg8Nnb0BS9lkVIZ6IpsKLw=",
+        version = "v9.2.0",
     )
     go_repository(
         name = "com_github_go_task_slim_sprig_v3",
@@ -482,6 +506,18 @@ def go_dependencies():
         version = "v1.0.1",
     )
     go_repository(
+        name = "com_github_nxadm_tail",
+        importpath = "github.com/nxadm/tail",
+        sum = "h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=",
+        version = "v1.4.8",
+    )
+    go_repository(
+        name = "com_github_onsi_ginkgo",
+        importpath = "github.com/onsi/ginkgo",
+        sum = "h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=",
+        version = "v1.16.5",
+    )
+    go_repository(
         name = "com_github_onsi_ginkgo_v2",
         importpath = "github.com/onsi/ginkgo/v2",
         sum = "h1:7rg/4f3rB88pb5obDgNZrNHrQ4e6WpjonchcpuBRnZM=",
@@ -540,6 +576,12 @@ def go_dependencies():
         importpath = "github.com/prometheus/procfs",
         sum = "h1:jluTpSng7V9hY0O2R9DzzJHYb2xULk9VTR1V1R/k6Bo=",
         version = "v0.12.0",
+    )
+    go_repository(
+        name = "com_github_redis_go_redis_v9",
+        importpath = "github.com/redis/go-redis/v9",
+        sum = "h1:HhLSs+B6O021gwzl+locl0zEDnyNkxMtf/Z3NNBMa9E=",
+        version = "v9.7.0",
     )
     go_repository(
         name = "com_github_rogpeppe_go_internal",
@@ -732,6 +774,12 @@ def go_dependencies():
         importpath = "gopkg.in/ini.v1",
         sum = "h1:Dgnx+6+nfE+IfzjUEISNeydPJh9AXNNsWbGP9KzCsOA=",
         version = "v1.67.0",
+    )
+    go_repository(
+        name = "in_gopkg_tomb_v1",
+        importpath = "gopkg.in/tomb.v1",
+        sum = "h1:uRGJdciOHaEIrze2W8Q3AKkepLTh2hOroT7a+7czfdQ=",
+        version = "v1.0.0-20141024135613-dd632973f1e7",
     )
     go_repository(
         name = "in_gopkg_yaml_v3",
