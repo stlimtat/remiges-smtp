@@ -8,7 +8,7 @@ import (
 
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -78,7 +78,7 @@ func TestReadNextMail(t *testing.T) {
 			fs := NewFileService(ctx, 1, fr, mt, time.Second)
 			go func() {
 				err := fs.Run(ctx)
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			}()
 			time.Sleep(5 * time.Second)
 			cancel()
