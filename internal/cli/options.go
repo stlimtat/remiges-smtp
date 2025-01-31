@@ -6,8 +6,8 @@ import (
 )
 
 func WithServerConfig(
-	cfg config.ServerConfig,
-	wrappedCmd func(*cobra.Command, []string, config.ServerConfig),
+	cfg *config.ServerConfig,
+	wrappedCmd func(*cobra.Command, []string, *config.ServerConfig),
 ) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
 		wrappedCmd(cmd, args, cfg)
