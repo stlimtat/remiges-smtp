@@ -65,14 +65,16 @@ func (m *MailSender) LookupMX(
 		Logger()
 
 	// 1. check if mx already exists in cache
-	mxRecord, ok := m.CachedMX[domain.ASCII]
+	result, ok := m.CachedMX[domain.ASCII]
 	if !ok {
 		// 2. resolve the mx record for the domain
 		ipDomain := dns.IPDomain{
 			Domain: domain,
 		}
 
-		_, _, _, expandedNextHop, hosts, _, err := smtpclient.GatherDestinations(ctx, m.Slogger, m.Resolver, ipDomain)
+		_, _, _, expandedNextHop, hosts, _, err := smtpclient.GatherDestinations(
+			ctx, m.Slogger, m.Resolver, ipDomain,
+		)
 		if err != nil {
 			logger.Error().Err(err).Msg("smtpclient.GatherDestinations")
 			return nil, err
@@ -94,11 +96,12 @@ func (m *MailSender) LookupMX(
 			Entries: hosts,
 			Hosts:   hostStrSlice,
 		}
+		result = m.CachedMX[domain.ASCII]
 	}
 	logger.Info().
-		Strs("hosts", mxRecord.Hosts).
+		Strs("hosts", result.Hosts).
 		Msg("lookupMX")
-	return mxRecord.Hosts, nil
+	return result.Hosts, nil
 }
 
 func (m *MailSender) NewConn(
