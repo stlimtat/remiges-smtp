@@ -1,4 +1,4 @@
-package file
+package file_mail
 
 import (
 	"context"
@@ -6,26 +6,27 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
-type FileService struct {
+type FileMailService struct {
 	Concurrency     int
-	FileReader      IFileReader
+	FileReader      file.IFileReader
 	MailTransformer IMailTransformer
 	PollInterval    time.Duration
 	ticker          *time.Ticker
 }
 
-func NewFileService(
+func NewFileMailService(
 	_ context.Context,
 	concurrency int,
-	fileReader IFileReader,
+	fileReader file.IFileReader,
 	mailTransformer IMailTransformer,
 	pollInterval time.Duration,
-) *FileService {
-	result := &FileService{
+) *FileMailService {
+	result := &FileMailService{
 		Concurrency:     concurrency,
 		FileReader:      fileReader,
 		MailTransformer: mailTransformer,
@@ -36,7 +37,7 @@ func NewFileService(
 	return result
 }
 
-func (fs *FileService) Run(
+func (fs *FileMailService) Run(
 	ctx context.Context,
 ) error {
 	defer fs.ticker.Stop()
@@ -69,7 +70,7 @@ outerloop:
 	return nil
 }
 
-func (fs *FileService) ProcessFileLoop(
+func (fs *FileMailService) ProcessFileLoop(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 ) {
@@ -98,9 +99,9 @@ outerloop:
 	}
 }
 
-func (fs *FileService) ReadNextMail(
+func (fs *FileMailService) ReadNextMail(
 	ctx context.Context,
-) (*FileInfo, *mail.Mail, error) {
+) (*file.FileInfo, *mail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 
 	fileInfo, err := fs.FileReader.ReadNextFile(ctx)
@@ -116,7 +117,7 @@ func (fs *FileService) ReadNextMail(
 		Msg("ReadNextFile")
 	fileInfo.Status = input.FILE_STATUS_PROCESSING
 	myMail, err := fs.MailTransformer.Transform(
-		ctx, fileInfo,
+		ctx, fileInfo, &mail.Mail{},
 	)
 	if err != nil {
 		return nil, nil, err

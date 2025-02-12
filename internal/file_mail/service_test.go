@@ -1,4 +1,4 @@
-package file
+package file_mail
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/mjl-/mox/dns"
 	"github.com/mjl-/mox/smtp"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +18,14 @@ import (
 func TestReadNextMail(t *testing.T) {
 	tests := []struct {
 		name                string
-		wantFile            *FileInfo
+		wantFile            *file.FileInfo
 		wantMail            *mail.Mail
 		wantRefreshListErr  bool
 		wantReadNextFileErr bool
 	}{
 		{
 			name: "happy",
-			wantFile: &FileInfo{
+			wantFile: &file.FileInfo{
 				ID: "test1",
 			},
 			wantMail: &mail.Mail{
@@ -54,21 +55,21 @@ func TestReadNextMail(t *testing.T) {
 			ctx := context.Background()
 			ctx, cancel := context.WithCancel(ctx)
 			ctx, _ = telemetry.InitLogger(ctx)
-			fr := NewMockIFileReader(ctrl)
+			fr := file.NewMockIFileReader(ctrl)
 			fr.EXPECT().
 				RefreshList(ctx).
 				DoAndReturn(
-					func(_ context.Context) ([]*FileInfo, error) {
+					func(_ context.Context) ([]*file.FileInfo, error) {
 						if tt.wantRefreshListErr {
 							return nil, errors.New("test error")
 						}
-						return []*FileInfo{tt.wantFile}, nil
+						return []*file.FileInfo{tt.wantFile}, nil
 					},
 				).AnyTimes()
 			fr.EXPECT().
 				ReadNextFile(ctx).
 				DoAndReturn(
-					func(_ context.Context) (*FileInfo, error) {
+					func(_ context.Context) (*file.FileInfo, error) {
 						if tt.wantReadNextFileErr {
 							return nil, errors.New("test error")
 						}
@@ -77,13 +78,13 @@ func TestReadNextMail(t *testing.T) {
 				).AnyTimes()
 			mt := NewMockIMailTransformer(ctrl)
 			mt.EXPECT().
-				Transform(ctx, tt.wantFile).
+				Transform(ctx, tt.wantFile, gomock.Any()).
 				DoAndReturn(
-					func(_ context.Context, _ *FileInfo) (*mail.Mail, error) {
+					func(_ context.Context, _ *file.FileInfo, _ *mail.Mail) (*mail.Mail, error) {
 						return tt.wantMail, nil
 					},
 				).AnyTimes()
-			fs := NewFileService(ctx, 1, fr, mt, time.Second)
+			fs := NewFileMailService(ctx, 1, fr, mt, time.Second)
 			go func() {
 				err := fs.Run(ctx)
 				assert.NoError(t, err)

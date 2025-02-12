@@ -1,4 +1,4 @@
-package file
+package file_mail
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"github.com/mjl-/mox/smtp"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"golang.org/x/text/cases"
@@ -42,35 +43,35 @@ func (t *MailTransformer) WithToAddr(
 
 func (t *MailTransformer) Transform(
 	ctx context.Context,
-	fileInfo *FileInfo,
+	fileInfo *file.FileInfo,
+	myMail *mail.Mail,
 ) (*mail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Info().
 		Str("id", fileInfo.ID).
 		Msg("Transforming mail")
 
-	result := &mail.Mail{}
 	headers, err := t.ReadHeaders(ctx, fileInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	result.From, err = t.ReadFrom(ctx, headers)
+	myMail.From, err = t.ReadFrom(ctx, headers)
 	if err != nil {
 		return nil, err
 	}
 
-	result.To, err = t.ReadTo(ctx, headers)
+	myMail.To, err = t.ReadTo(ctx, headers)
 	if err != nil {
 		return nil, err
 	}
 
-	result.Body, err = t.ReadBody(ctx, fileInfo)
+	myMail.Body, err = t.ReadBody(ctx, fileInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return myMail, nil
 }
 
 func (t *MailTransformer) ReadFrom(
@@ -106,7 +107,7 @@ func (t *MailTransformer) ReadTo(
 
 func (_ *MailTransformer) ReadBody(
 	ctx context.Context,
-	fileInfo *FileInfo,
+	fileInfo *file.FileInfo,
 ) ([]byte, error) {
 	logger := zerolog.Ctx(ctx).With().Str("df_file_path", fileInfo.DfFilePath).Logger()
 	logger.Info().Msg("Reading body")
@@ -122,7 +123,7 @@ func (_ *MailTransformer) ReadBody(
 
 func (t *MailTransformer) ReadHeaders(
 	ctx context.Context,
-	fileInfo *FileInfo,
+	fileInfo *file.FileInfo,
 ) (map[string][]byte, error) {
 	logger := zerolog.Ctx(ctx).With().Str("qf_file_path", fileInfo.QfFilePath).Logger()
 	logger.Info().Msg("Reading headers")

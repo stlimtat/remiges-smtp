@@ -1,4 +1,4 @@
-package file
+package file_mail
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"github.com/mjl-/mox/dns"
 	"github.com/mjl-/mox/smtp"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
@@ -20,7 +21,7 @@ func TestMailTransformer(t *testing.T) {
 	tests := []struct {
 		name     string
 		cfg      config.ReadFileConfig
-		fileInfo *FileInfo
+		fileInfo *file.FileInfo
 		wantMail *mail.Mail
 		wantErr  bool
 	}{
@@ -30,7 +31,7 @@ func TestMailTransformer(t *testing.T) {
 				FromType:    config.FromTypeHeaders,
 				DefaultFrom: "defaultFrom@example.com",
 			},
-			fileInfo: &FileInfo{
+			fileInfo: &file.FileInfo{
 				DfReader: bytes.NewReader([]byte(
 					`Test Body`,
 				)),
@@ -61,7 +62,7 @@ Subject: test
 				FromType:    config.FromTypeDefault,
 				DefaultFrom: "defaultFrom@example.com",
 			},
-			fileInfo: &FileInfo{
+			fileInfo: &file.FileInfo{
 				DfReader: bytes.NewReader([]byte(
 					`Test Body`,
 				)),
@@ -94,7 +95,7 @@ Subject: test
 			ctx := context.Background()
 			ctx, _ = telemetry.GetLogger(ctx, os.Stdout)
 			mailTransformer := NewMailTransformer(ctx, tt.cfg)
-			got, err := mailTransformer.Transform(ctx, tt.fileInfo)
+			got, err := mailTransformer.Transform(ctx, tt.fileInfo, tt.wantMail)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -111,7 +112,7 @@ func TestMailTransformer_ReadBody(t *testing.T) {
 	tests := []struct {
 		name     string
 		cfg      config.ReadFileConfig
-		fileInfo *FileInfo
+		fileInfo *file.FileInfo
 		want     []byte
 		wantErr  bool
 	}{
@@ -121,7 +122,7 @@ func TestMailTransformer_ReadBody(t *testing.T) {
 				FromType:    config.FromTypeHeaders,
 				DefaultFrom: "defaultFrom@example.com",
 			},
-			fileInfo: &FileInfo{
+			fileInfo: &file.FileInfo{
 				DfReader: bytes.NewReader([]byte("Test Body")),
 			},
 			want:    []byte("Test Body"),
@@ -148,7 +149,7 @@ func TestMailTransformer_ReadHeaders(t *testing.T) {
 	tests := []struct {
 		name     string
 		cfg      config.ReadFileConfig
-		fileInfo *FileInfo
+		fileInfo *file.FileInfo
 		want     map[string][]byte
 		wantErr  bool
 	}{
@@ -158,7 +159,7 @@ func TestMailTransformer_ReadHeaders(t *testing.T) {
 				FromType:    config.FromTypeHeaders,
 				DefaultFrom: "defaultFrom@example.com",
 			},
-			fileInfo: &FileInfo{
+			fileInfo: &file.FileInfo{
 				QfReader: bytes.NewReader([]byte(
 					`From: sender@example.com
 To: recipient@example.com

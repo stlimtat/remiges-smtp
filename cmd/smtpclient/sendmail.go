@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
+	"github.com/stlimtat/remiges-smtp/internal/file_mail"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/sendmail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
@@ -101,10 +102,10 @@ type SendMailSvc struct {
 	DialerFactory        sendmail.INetDialerFactory
 	FileReader           file.IFileReader
 	FileReadTracker      file.IFileReadTracker
-	FileService          *file.FileService
+	FileService          *file_mail.FileMailService
 	MailProcessorFactory *mail.DefaultMailProcessorFactory
 	MailSender           sendmail.IMailSender
-	MailTransformer      file.IMailTransformer
+	MailTransformer      file_mail.IMailTransformer
 	RedisClient          *redis.Client
 	Resolver             dns.Resolver
 	Slogger              *slog.Logger
@@ -141,12 +142,12 @@ func newSendMailSvc(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.FileReader")
 	}
-	result.MailTransformer = file.NewMailTransformer(
+	result.MailTransformer = file_mail.NewMailTransformer(
 		ctx,
 		result.Cfg.ReadFileConfig,
 	).WithToAddr(result.Cfg.ToAddr.String())
 
-	result.FileService = file.NewFileService(
+	result.FileService = file_mail.NewFileMailService(
 		ctx,
 		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,

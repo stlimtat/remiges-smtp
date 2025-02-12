@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
+	"github.com/stlimtat/remiges-smtp/internal/file_mail"
 	rhttp "github.com/stlimtat/remiges-smtp/internal/http"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"golang.org/x/sync/errgroup"
@@ -55,9 +56,9 @@ type Server struct {
 	Cfg             config.ServerConfig
 	FileReader      file.IFileReader
 	FileReadTracker file.IFileReadTracker
-	FileService     *file.FileService
+	FileService     *file_mail.FileMailService
 	Gin             *gin.Engine
-	MailTransformer file.IMailTransformer
+	MailTransformer file_mail.IMailTransformer
 	RedisClient     *redis.Client
 }
 
@@ -83,8 +84,8 @@ func newServer(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newServer.FileReader")
 	}
-	result.MailTransformer = file.NewMailTransformer(ctx, result.Cfg.ReadFileConfig)
-	result.FileService = file.NewFileService(
+	result.MailTransformer = file_mail.NewMailTransformer(ctx, result.Cfg.ReadFileConfig)
+	result.FileService = file_mail.NewFileMailService(
 		ctx,
 		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,

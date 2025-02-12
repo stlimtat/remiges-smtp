@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 
-	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
@@ -17,14 +16,10 @@ type FileInfo struct {
 	Status     input.FileStatus
 }
 
-//go:generate mockgen -destination=mock.go -package=file . IFileReader,IMailTransformer,IFileReadTracker
+//go:generate mockgen -destination=mock.go -package=file . IFileReader,IFileReadTracker
 type IFileReader interface {
 	RefreshList(ctx context.Context) ([]*FileInfo, error)
 	ReadNextFile(ctx context.Context) (*FileInfo, error)
-}
-
-type IMailTransformer interface {
-	Transform(ctx context.Context, fileInfo *FileInfo) (*mail.Mail, error)
 }
 
 type IFileReadTracker interface {
