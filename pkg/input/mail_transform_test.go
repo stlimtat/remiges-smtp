@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mjl-/mox/dns"
+	"github.com/mjl-/mox/smtp"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
@@ -41,8 +43,14 @@ Subject: test
 				Status: FILE_STATUS_INIT,
 			},
 			wantMail: &mail.Mail{
-				From: "sender@example.com",
-				To:   "recipient@example.com",
+				From: smtp.Address{
+					Localpart: "sender",
+					Domain:    dns.Domain{ASCII: "example.com"},
+				},
+				To: smtp.Address{
+					Localpart: "recipient",
+					Domain:    dns.Domain{ASCII: "example.com"},
+				},
 				Body: []byte("Test Body"),
 			},
 			wantErr: false,
@@ -66,8 +74,14 @@ Subject: test
 				Status: FILE_STATUS_INIT,
 			},
 			wantMail: &mail.Mail{
-				From: "defaultFrom@example.com",
-				To:   "recipient@example.com",
+				From: smtp.Address{
+					Localpart: "defaultFrom",
+					Domain:    dns.Domain{ASCII: "example.com"},
+				},
+				To: smtp.Address{
+					Localpart: "recipient",
+					Domain:    dns.Domain{ASCII: "example.com"},
+				},
 				Body: []byte("Test Body"),
 			},
 			wantErr: false,

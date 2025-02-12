@@ -14,10 +14,10 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/config",
+        "//internal/mail",
         "//internal/utils",
         "@com_github_mjl_adns//:adns",
         "@com_github_mjl_mox//dns",
-        "@com_github_mjl_mox//smtp",
         "@com_github_mjl_mox//smtpclient",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",

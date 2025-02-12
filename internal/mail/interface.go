@@ -3,14 +3,16 @@ package mail
 import (
 	"context"
 
+	"github.com/mjl-/mox/smtp"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 )
 
 type Mail struct {
-	From    string
-	To      string
-	Headers map[string][]byte
-	Body    []byte
+	From        smtp.Address
+	To          smtp.Address
+	Headers     map[string][]byte
+	BodyHeaders map[string][]byte
+	Body        []byte
 }
 
 //go:generate mockgen -destination=mock.go -package=mail github.com/stlimtat/remiges-smtp/internal/mail IMailProcessor,IMailProcessorFactory

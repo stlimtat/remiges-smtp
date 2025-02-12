@@ -31,11 +31,11 @@ func (f *FileReadTracker) FileRead(
 	if getResult.Err() != nil {
 		return FILE_STATUS_ERROR, getResult.Err()
 	}
-	getResultInt, err := strconv.ParseInt(getResult.Val(), 10, 8)
+	getResultInt, err := strconv.ParseInt(getResult.Val(), 10, 32)
 	if err != nil {
 		return FILE_STATUS_ERROR, err
 	}
-	return FileStatus(uint8(getResultInt)), nil
+	return FileStatus(getResultInt), nil
 }
 
 func (f *FileReadTracker) UpsertFile(
@@ -49,8 +49,10 @@ func (f *FileReadTracker) UpsertFile(
 		Int("status", int(status)).
 		Msg("UpsertFile")
 	setResult := f.redisClient.Set(
-		ctx, "read_tracker_"+id,
-		status, 6*time.Hour,
+		ctx,
+		"read_tracker_"+id,
+		status,
+		6*time.Hour,
 	)
 	if setResult.Err() != nil {
 		logger.Error().Err(setResult.Err()).Msg("UpsertFile")

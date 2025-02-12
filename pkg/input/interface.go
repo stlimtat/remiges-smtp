@@ -7,7 +7,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 )
 
-type FileStatus uint8
+type FileStatus int
 
 const (
 	FILE_STATUS_INIT          FileStatus = 1

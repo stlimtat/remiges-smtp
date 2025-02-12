@@ -17,11 +17,25 @@ type DefaultMailProcessorFactory struct {
 
 func NewDefaultMailProcessorFactory(
 	_ context.Context,
-) (IMailProcessorFactory, error) {
+) (*DefaultMailProcessorFactory, error) {
 	result := &DefaultMailProcessorFactory{}
 	result.registry = make(map[string]reflect.Type)
 	result.registry[UnixDosProcessorType] = reflect.TypeOf(UnixDosProcessor{})
+	result.registry[BodyHeadersProcessorType] = reflect.TypeOf(BodyHeadersProcessor{})
 	return result, nil
+}
+
+func (f *DefaultMailProcessorFactory) Init(
+	ctx context.Context,
+	cfgs []config.MailProcessorConfig,
+) error {
+	// This is to map to the IMailProcessor interface
+	f.cfgs = cfgs
+	_, err := f.NewMailProcessor(ctx, cfgs[0])
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (f *DefaultMailProcessorFactory) NewMailProcessors(
@@ -81,6 +95,10 @@ func (f *DefaultMailProcessorFactory) NewMailProcessor(
 		return nil, err
 	}
 	return processor, nil
+}
+
+func (_ *DefaultMailProcessorFactory) Index() int {
+	return -1
 }
 
 func (f *DefaultMailProcessorFactory) Process(

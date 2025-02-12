@@ -66,7 +66,7 @@ func TestLookupMX(t *testing.T) {
 					return tt.mxResult.mxList, tt.mxResult.ADNSResult, tt.mxResult.err
 				})
 
-			m := NewMailSender(ctx, nil, resolver, slogger)
+			m := NewMailSender(ctx, false, nil, resolver, slogger)
 			_, err := m.LookupMX(ctx, tt.domain)
 			if tt.wantErr {
 				assert.NoError(t, err)
@@ -109,7 +109,7 @@ func TestNewConn(t *testing.T) {
 			dialerFactory.EXPECT().
 				NewDialer().Return(dialer)
 
-			m := NewMailSender(ctx, dialerFactory, nil, slogger)
+			m := NewMailSender(ctx, false, dialerFactory, nil, slogger)
 			_, err := m.NewConn(ctx, tt.hosts)
 			if tt.wantErr {
 				assert.NoError(t, err)

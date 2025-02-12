@@ -11,7 +11,12 @@ func DefaultMailProcessorConfigs() []MailProcessorConfig {
 		{
 			Args:  map[string]string{},
 			Index: 0,
-			Type:  "unixdosProcessor",
+			Type:  "unixdos",
+		},
+		{
+			Args:  map[string]string{},
+			Index: 1,
+			Type:  "bodyHeaders",
 		},
 	}
 }

@@ -114,7 +114,9 @@ func (fs *FileService) ReadNextMail(
 		Str("fileInfo", fileInfo.ID).
 		Msg("ReadNextFile")
 	fileInfo.Status = FILE_STATUS_PROCESSING
-	myMail, err := fs.MailTransformer.Transform(ctx, fileInfo)
+	myMail, err := fs.MailTransformer.Transform(
+		ctx, fileInfo,
+	)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "mail",
     srcs = [
+        "body_headers.go",
         "factory.go",
         "interface.go",
         "mock.go",
@@ -12,6 +13,7 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/config",
+        "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",
     ],
@@ -19,10 +21,16 @@ go_library(
 
 go_test(
     name = "mail_test",
-    srcs = ["factory_test.go"],
+    srcs = [
+        "body_headers_test.go",
+        "factory_test.go",
+        "unixdos_test.go",
+    ],
     embed = [":mail"],
     deps = [
         "//internal/config",
+        "@com_github_mjl_mox//dns",
+        "@com_github_mjl_mox//smtp",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

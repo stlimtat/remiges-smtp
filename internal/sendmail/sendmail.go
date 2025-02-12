@@ -8,10 +8,10 @@ import (
 
 	"github.com/mjl-/adns"
 	"github.com/mjl-/mox/dns"
-	"github.com/mjl-/mox/smtp"
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/utils"
 )
 
@@ -29,6 +29,7 @@ type MXRecord struct {
 
 type MailSender struct {
 	CachedMX      map[string]MXRecord
+	Debug         bool
 	DialerFactory INetDialerFactory
 	Resolver      dns.Resolver
 	Slogger       *slog.Logger
@@ -37,12 +38,14 @@ type MailSender struct {
 
 func NewMailSender(
 	ctx context.Context,
+	debug bool,
 	dialerFactory INetDialerFactory,
 	resolver dns.Resolver,
 	slogger *slog.Logger,
 ) *MailSender {
 	result := &MailSender{
 		CachedMX:      make(map[string]MXRecord, 0),
+		Debug:         debug,
 		DialerFactory: dialerFactory,
 		Resolver:      resolver,
 		Slogger:       slogger,
@@ -130,16 +133,17 @@ func (m *MailSender) NewConn(
 func (m *MailSender) SendMail(
 	ctx context.Context,
 	conn net.Conn,
-	from smtp.Address,
-	to smtp.Address,
-	msg []byte,
+	myMail *mail.Mail,
 ) error {
 	logger := zerolog.Ctx(ctx).
 		With().
-		Str("from", from.String()).
-		Str("to", to.String()).
-		Bytes("msg", msg).
+		Interface("mail", *myMail).
 		Logger()
+
+	if m.Debug {
+		logger.Info().Msg("debug mode, not sending mail")
+		return nil
+	}
 
 	client, err := smtpclient.New(
 		ctx,
@@ -147,8 +151,8 @@ func (m *MailSender) SendMail(
 		conn,
 		smtpclient.TLSOpportunistic,
 		false,
-		to.Domain,
-		to.Domain,
+		myMail.From.Domain,
+		myMail.To.Domain,
 		m.SmtpOpts,
 	)
 	if err != nil {
@@ -157,10 +161,10 @@ func (m *MailSender) SendMail(
 	}
 	err = client.Deliver(
 		ctx,
-		from.String(),
-		to.String(),
-		int64(len(msg)),
-		bytes.NewReader(msg),
+		myMail.From.String(),
+		myMail.To.String(),
+		int64(len(myMail.Body)),
+		bytes.NewReader(myMail.Body),
 		true, false, false,
 	)
 	if err != nil {

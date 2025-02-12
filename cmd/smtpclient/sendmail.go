@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/sendmail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
@@ -96,14 +97,17 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 }
 
 type SendMailSvc struct {
-	Cfg             config.SendMailConfig
-	DialerFactory   sendmail.INetDialerFactory
-	FileReader      input.IFileReader
-	FileReadTracker input.IFileReadTracker
-	MailSender      sendmail.IMailSender
-	RedisClient     *redis.Client
-	Resolver        dns.Resolver
-	Slogger         *slog.Logger
+	Cfg                  config.SendMailConfig
+	DialerFactory        sendmail.INetDialerFactory
+	FileReader           input.IFileReader
+	FileReadTracker      input.IFileReadTracker
+	FileService          *input.FileService
+	MailProcessorFactory *mail.DefaultMailProcessorFactory
+	MailSender           sendmail.IMailSender
+	MailTransformer      input.IMailTransformer
+	RedisClient          *redis.Client
+	Resolver             dns.Resolver
+	Slogger              *slog.Logger
 }
 
 func newSendMailSvc(
@@ -120,16 +124,49 @@ func newSendMailSvc(
 	result.RedisClient = redis.NewClient(&redis.Options{
 		Addr: result.Cfg.ReadFileConfig.RedisAddr,
 	})
-	result.FileReadTracker = input.NewFileReadTracker(ctx, result.RedisClient)
-	result.FileReader, err = input.NewDefaultFileReader(ctx, result.Cfg.InPath, result.FileReadTracker)
+	// Run a ping on the redis client to check if it's working
+	_, err = result.RedisClient.Ping(ctx).Result()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newSendMailSvc.RedisClient.Ping")
+	}
+	result.FileReadTracker = input.NewFileReadTracker(
+		ctx,
+		result.RedisClient,
+	)
+	result.FileReader, err = input.NewDefaultFileReader(
+		ctx,
+		result.Cfg.ReadFileConfig.InPath,
+		result.FileReadTracker,
+	)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.FileReader")
+	}
+	result.MailTransformer = input.NewMailTransformer(
+		ctx,
+		result.Cfg.ReadFileConfig,
+	).WithToAddr(result.Cfg.ToAddr.String())
+
+	result.FileService = input.NewFileService(
+		ctx,
+		result.Cfg.ReadFileConfig.Concurrency,
+		result.FileReader,
+		result.MailTransformer,
+		result.Cfg.ReadFileConfig.PollInterval,
+	)
+	result.MailProcessorFactory, err = mail.NewDefaultMailProcessorFactory(ctx)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory")
+	}
+	err = result.MailProcessorFactory.Init(ctx, result.Cfg.MailProcessors)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory.Init")
 	}
 	result.Resolver = dns.StrictResolver{
 		Log: result.Slogger,
 	}
 	result.MailSender = sendmail.NewMailSender(
 		ctx,
+		result.Cfg.Debug,
 		result.DialerFactory,
 		result.Resolver,
 		result.Slogger,
@@ -151,27 +188,42 @@ func (s *SendMailSvc) Run(
 		return err
 	}
 
-	_, err = s.MailSender.NewConn(ctx, hosts)
+	// refresh file list
+	_, err = s.FileReader.RefreshList(ctx)
+	if err != nil {
+		logger.Error().Err(err).Msg("FileReader.RefreshList")
+		return err
+	}
+
+	// read a file
+	fileInfo, myMail, err := s.FileService.ReadNextMail(ctx)
+	if err != nil {
+		logger.Error().Err(err).Msg("FileService.ReadNextMail")
+		return err
+	}
+	logger.Info().
+		Str("fileInfo", fileInfo.ID).
+		Str("from", myMail.From.String()).
+		Msg("ReadNextMail")
+
+	// process the mail
+	myMail, err = s.MailProcessorFactory.Process(ctx, myMail)
+	if err != nil {
+		logger.Error().Err(err).Msg("MailProcessorFactory.Process")
+		return err
+	}
+
+	conn, err := s.MailSender.NewConn(ctx, hosts)
 	if err != nil {
 		logger.Error().Err(err).Msg("MailSender.NewConn")
 		return err
 	}
 
-	// read a file
-	// files, err := s.FileReader.Process(ctx)
-	// if err != nil {
-	// 	logger.Error().Err(err).Msg("FileReader.Process")
-	// 	return err
-	// }
-	// if len(files) < 1 {
-	// 	logger.Fatal().Msg("No files found")
-	// }
-	// msgBytes := files[0].BodyBytes
-	// if !strings.HasSuffix(string(msgBytes), "\r\n") {
-	// 	msgBytes = append(msgBytes, []byte("\r\n")...)
-	// }
+	err = s.MailSender.SendMail(ctx, conn, myMail)
+	if err != nil {
+		logger.Error().Err(err).Msg("MailSender.SendMail")
+		return err
+	}
 
-	// err = s.MailSender.SendMail(ctx, conn, s.Cfg.FromAddr, s.Cfg.ToAddr, msgBytes)
-	// // do nothing. underlying has handled the error
-	return err
+	return nil
 }

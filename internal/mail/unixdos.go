@@ -35,7 +35,28 @@ func (_ *UnixDosProcessor) Process(
 	logger := zerolog.Ctx(ctx)
 	logger.Info().Msg("UnixDosProcessor")
 
-	inMail.Body = bytes.ReplaceAll(inMail.Body, []byte("\n"), []byte("\r\n"))
+	// Convert all \r\n to \n, then convert all \n to \r\n
+	if bytes.Contains(inMail.Body, []byte("\r\n")) {
+		inMail.Body = bytes.ReplaceAll(
+			inMail.Body,
+			[]byte("\r\n"),
+			[]byte("\n"),
+		)
+	}
+	if bytes.Contains(inMail.Body, []byte("\r")) {
+		inMail.Body = bytes.ReplaceAll(
+			inMail.Body,
+			[]byte("\r"),
+			[]byte("\n"),
+		)
+	}
+	if bytes.Contains(inMail.Body, []byte("\n")) {
+		inMail.Body = bytes.ReplaceAll(
+			inMail.Body,
+			[]byte("\n"),
+			[]byte("\r\n"),
+		)
+	}
 
 	return inMail, nil
 }

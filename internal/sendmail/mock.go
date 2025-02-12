@@ -15,8 +15,8 @@ import (
 	reflect "reflect"
 
 	dns "github.com/mjl-/mox/dns"
-	smtp "github.com/mjl-/mox/smtp"
 	smtpclient "github.com/mjl-/mox/smtpclient"
+	mail "github.com/stlimtat/remiges-smtp/internal/mail"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -113,15 +113,15 @@ func (mr *MockIMailSenderMockRecorder) NewConn(ctx, hosts any) *gomock.Call {
 }
 
 // SendMail mocks base method.
-func (m *MockIMailSender) SendMail(ctx context.Context, conn net.Conn, from, to smtp.Address, msg []byte) error {
+func (m *MockIMailSender) SendMail(ctx context.Context, conn net.Conn, mail *mail.Mail) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendMail", ctx, conn, from, to, msg)
+	ret := m.ctrl.Call(m, "SendMail", ctx, conn, mail)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendMail indicates an expected call of SendMail.
-func (mr *MockIMailSenderMockRecorder) SendMail(ctx, conn, from, to, msg any) *gomock.Call {
+func (mr *MockIMailSenderMockRecorder) SendMail(ctx, conn, mail any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMail", reflect.TypeOf((*MockIMailSender)(nil).SendMail), ctx, conn, from, to, msg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMail", reflect.TypeOf((*MockIMailSender)(nil).SendMail), ctx, conn, mail)
 }

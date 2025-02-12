@@ -77,7 +77,7 @@ func newServer(
 	result.FileReadTracker = input.NewFileReadTracker(ctx, result.RedisClient)
 	result.FileReader, err = input.NewDefaultFileReader(
 		ctx,
-		result.Cfg.InPath,
+		result.Cfg.ReadFileConfig.InPath,
 		result.FileReadTracker,
 	)
 	if err != nil {
@@ -86,7 +86,7 @@ func newServer(
 	result.MailTransformer = input.NewMailTransformer(ctx, result.Cfg.ReadFileConfig)
 	result.FileService = input.NewFileService(
 		ctx,
-		result.Cfg.Concurrency,
+		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,
 		result.MailTransformer,
 		result.Cfg.PollInterval,

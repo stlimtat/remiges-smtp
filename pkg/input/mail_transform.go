@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/mjl-/mox/smtp"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
@@ -16,6 +17,7 @@ import (
 type MailTransformer struct {
 	Casers cases.Caser
 	Cfg    config.ReadFileConfig
+	ToAddr string
 }
 
 func NewMailTransformer(
@@ -28,6 +30,13 @@ func NewMailTransformer(
 	}
 
 	return result
+}
+
+func (t *MailTransformer) WithToAddr(
+	toAddr string,
+) *MailTransformer {
+	t.ToAddr = toAddr
+	return t
 }
 
 func (t *MailTransformer) Transform(
@@ -45,34 +54,61 @@ func (t *MailTransformer) Transform(
 		return nil, err
 	}
 
+	result.From, err = t.ReadFrom(ctx, headers)
+	if err != nil {
+		return nil, err
+	}
+
+	result.To, err = t.ReadTo(ctx, headers)
+	if err != nil {
+		return nil, err
+	}
+
+	result.Body, err = t.ReadBody(ctx, fileInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (t *MailTransformer) ReadFrom(
+	_ context.Context,
+	headers map[string][]byte,
+) (smtp.Address, error) {
+	var from string
 	switch t.Cfg.FromType {
 	case config.FromTypeHeaders:
 		// combine the df and qf files
-		result.From = string(headers["From"])
-		result.From = strings.TrimSpace(result.From)
+		from = string(headers["From"])
+		from = strings.TrimSpace(from)
 	case config.FromTypeDefault:
 		// use the default from
-		result.From = t.Cfg.DefaultFrom
+		from = t.Cfg.DefaultFrom
 	}
-	result.To = string(headers["To"])
-	result.To = strings.TrimSpace(result.To)
+	result, err := smtp.ParseAddress(from)
+	return result, err
+}
 
-	// result.Body, err = t.MergeMailBody(ctx, fileInfo)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	return result, nil
+func (t *MailTransformer) ReadTo(
+	_ context.Context,
+	headers map[string][]byte,
+) (smtp.Address, error) {
+	to := string(headers["To"])
+	if to == "" {
+		to = t.ToAddr
+	}
+	to = strings.TrimSpace(to)
+	result, err := smtp.ParseAddress(to)
+	return result, err
 }
 
 func (_ *MailTransformer) ReadBody(
 	ctx context.Context,
 	fileInfo *FileInfo,
 ) ([]byte, error) {
-	logger := zerolog.Ctx(ctx)
-	logger.Info().
-		Str("df_file_path", fileInfo.DfFilePath).
-		Msg("Reading body")
+	logger := zerolog.Ctx(ctx).With().Str("df_file_path", fileInfo.DfFilePath).Logger()
+	logger.Info().Msg("Reading body")
 
 	result, err := io.ReadAll(fileInfo.DfReader)
 	if err != nil {
@@ -87,10 +123,8 @@ func (t *MailTransformer) ReadHeaders(
 	ctx context.Context,
 	fileInfo *FileInfo,
 ) (map[string][]byte, error) {
-	logger := zerolog.Ctx(ctx)
-	logger.Info().
-		Str("qf_file_path", fileInfo.QfFilePath).
-		Msg("Reading headers")
+	logger := zerolog.Ctx(ctx).With().Str("qf_file_path", fileInfo.QfFilePath).Logger()
+	logger.Info().Msg("Reading headers")
 
 	// 1. read all the bytes from the qf file
 	result := make(map[string][]byte)
@@ -110,7 +144,7 @@ func (t *MailTransformer) ReadHeaders(
 
 	// 3. iterate over the lines and add them to the result map
 	for _, line := range lines {
-		// 4. split the line into key and value
+		// 4. split the line into key and value with the colon as the delimiter
 		if len(line) < 1 || !bytes.Contains(line, []byte(":")) {
 			continue
 		}

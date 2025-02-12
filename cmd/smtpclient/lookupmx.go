@@ -85,6 +85,7 @@ func newLookupMXSvc(
 	result.DialerFactory = sendmail.NewDefaultDialerFactory()
 	result.MailSender = sendmail.NewMailSender(
 		ctx,
+		true,
 		result.DialerFactory,
 		result.Resolver,
 		result.Slogger,

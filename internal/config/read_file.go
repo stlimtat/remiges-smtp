@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
@@ -15,10 +16,12 @@ const (
 )
 
 type ReadFileConfig struct {
-	InPath      string   `json:"in_path" mapstructure:"in_path"`
-	FromType    FromType `json:"from_type" mapstructure:"from_type"`
-	DefaultFrom string   `json:"from" mapstructure:"from"`
-	RedisAddr   string   `json:"redis_addr" mapstructure:"redis_addr"`
+	Concurrency  int           `json:"concurrency" mapstructure:"concurrency"`
+	DefaultFrom  string        `json:"from" mapstructure:"from"`
+	FromType     FromType      `json:"from_type" mapstructure:"from_type"`
+	InPath       string        `json:"in_path" mapstructure:"in_path"`
+	PollInterval time.Duration `json:"poll_interval" mapstructure:"poll_interval"`
+	RedisAddr    string        `json:"redis_addr" mapstructure:"redis_addr"`
 }
 
 func NewReadFileConfig(ctx context.Context) ReadFileConfig {

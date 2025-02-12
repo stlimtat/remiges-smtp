@@ -135,30 +135,30 @@ func (m *MockIFileReadTracker) EXPECT() *MockIFileReadTrackerMockRecorder {
 }
 
 // FileRead mocks base method.
-func (m *MockIFileReadTracker) FileRead(ctx context.Context, ID string) (FileStatus, error) {
+func (m *MockIFileReadTracker) FileRead(ctx context.Context, id string) (FileStatus, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FileRead", ctx, ID)
+	ret := m.ctrl.Call(m, "FileRead", ctx, id)
 	ret0, _ := ret[0].(FileStatus)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FileRead indicates an expected call of FileRead.
-func (mr *MockIFileReadTrackerMockRecorder) FileRead(ctx, ID any) *gomock.Call {
+func (mr *MockIFileReadTrackerMockRecorder) FileRead(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FileRead", reflect.TypeOf((*MockIFileReadTracker)(nil).FileRead), ctx, ID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FileRead", reflect.TypeOf((*MockIFileReadTracker)(nil).FileRead), ctx, id)
 }
 
 // UpsertFile mocks base method.
-func (m *MockIFileReadTracker) UpsertFile(ctx context.Context, ID string, status FileStatus) error {
+func (m *MockIFileReadTracker) UpsertFile(ctx context.Context, id string, status FileStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertFile", ctx, ID, status)
+	ret := m.ctrl.Call(m, "UpsertFile", ctx, id, status)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertFile indicates an expected call of UpsertFile.
-func (mr *MockIFileReadTrackerMockRecorder) UpsertFile(ctx, ID, status any) *gomock.Call {
+func (mr *MockIFileReadTrackerMockRecorder) UpsertFile(ctx, id, status any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertFile", reflect.TypeOf((*MockIFileReadTracker)(nil).UpsertFile), ctx, ID, status)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertFile", reflect.TypeOf((*MockIFileReadTracker)(nil).UpsertFile), ctx, id, status)
 }

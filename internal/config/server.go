@@ -9,11 +9,9 @@ import (
 )
 
 type ServerConfig struct {
-	Concurrency    int            `mapstructure:"concurrency"`
 	Debug          bool           `mapstructure:"debug"`
-	InPath         string         `mapstructure:"in_path"`
 	PollInterval   time.Duration  `mapstructure:"poll_interval"`
-	ReadFileConfig ReadFileConfig `mapstructure:"read_file_config"`
+	ReadFileConfig ReadFileConfig `mapstructure:"read_file"`
 }
 
 func NewServerConfig(ctx context.Context) ServerConfig {

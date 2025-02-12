@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mjl-/mox/dns"
+	"github.com/mjl-/mox/smtp"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stretchr/testify/assert"
@@ -26,8 +28,14 @@ func TestReadNextMail(t *testing.T) {
 				ID: "test1",
 			},
 			wantMail: &mail.Mail{
-				From: "sender@example.com",
-				To:   "recipient@example.com",
+				From: smtp.Address{
+					Localpart: "sender",
+					Domain:    dns.Domain{ASCII: "example.com"},
+				},
+				To: smtp.Address{
+					Localpart: "recipient",
+					Domain:    dns.Domain{ASCII: "example.com"},
+				},
 				Headers: map[string][]byte{
 					"Test1": []byte("test1"),
 				},
