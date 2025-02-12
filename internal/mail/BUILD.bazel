@@ -6,6 +6,7 @@ go_library(
         "body_headers.go",
         "factory.go",
         "interface.go",
+        "merge_body.go",
         "mock.go",
         "unixdos.go",
     ],
@@ -24,6 +25,7 @@ go_test(
     srcs = [
         "body_headers_test.go",
         "factory_test.go",
+        "merge_body_test.go",
         "unixdos_test.go",
     ],
     embed = [":mail"],

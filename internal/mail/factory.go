@@ -22,6 +22,7 @@ func NewDefaultMailProcessorFactory(
 	result.registry = make(map[string]reflect.Type)
 	result.registry[UnixDosProcessorType] = reflect.TypeOf(UnixDosProcessor{})
 	result.registry[BodyHeadersProcessorType] = reflect.TypeOf(BodyHeadersProcessor{})
+	result.registry[MergeBodyProcessorType] = reflect.TypeOf(MergeBodyProcessor{})
 	return result, nil
 }
 

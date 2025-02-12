@@ -18,5 +18,10 @@ func DefaultMailProcessorConfigs() []MailProcessorConfig {
 			Index: 1,
 			Type:  "bodyHeaders",
 		},
+		{
+			Args:  map[string]string{},
+			Index: 99,
+			Type:  "mergeBody",
+		},
 	}
 }
