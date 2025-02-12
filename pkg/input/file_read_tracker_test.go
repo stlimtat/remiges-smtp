@@ -36,7 +36,7 @@ func TestFileReadTracker(t *testing.T) {
 
 			expectSet := mock.ExpectSet(
 				"read_tracker_123",
-				FILE_STATUS_INIT,
+				int(FILE_STATUS_INIT),
 				6*time.Hour,
 			)
 			if tt.setErr != nil {

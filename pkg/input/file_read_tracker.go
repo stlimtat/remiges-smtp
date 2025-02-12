@@ -31,7 +31,7 @@ func (f *FileReadTracker) FileRead(
 	if getResult.Err() != nil {
 		return FILE_STATUS_ERROR, getResult.Err()
 	}
-	getResultInt, err := strconv.ParseInt(getResult.Val(), 10, 32)
+	getResultInt, err := strconv.ParseInt(getResult.Val(), 10, 8)
 	if err != nil {
 		return FILE_STATUS_ERROR, err
 	}
@@ -51,7 +51,7 @@ func (f *FileReadTracker) UpsertFile(
 	setResult := f.redisClient.Set(
 		ctx,
 		"read_tracker_"+id,
-		status,
+		int(status),
 		6*time.Hour,
 	)
 	if setResult.Err() != nil {
