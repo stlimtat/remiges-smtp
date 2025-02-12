@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/pkg/input"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 )
 
 type readFileCmd struct {
@@ -58,8 +58,8 @@ func newReadFileCmd(ctx context.Context) (*readFileCmd, *cobra.Command) {
 
 type ReadFileSvc struct {
 	Cfg             config.ReadFileConfig
-	FileReader      input.IFileReader
-	FileReadTracker input.IFileReadTracker
+	FileReader      file.IFileReader
+	FileReadTracker file.IFileReadTracker
 	RedisClient     *redis.Client
 }
 
@@ -75,8 +75,8 @@ func newReadFileSvc(
 	result.RedisClient = redis.NewClient(&redis.Options{
 		Addr: result.Cfg.RedisAddr,
 	})
-	result.FileReadTracker = input.NewFileReadTracker(ctx, result.RedisClient)
-	result.FileReader, err = input.NewDefaultFileReader(ctx, result.Cfg.InPath, result.FileReadTracker)
+	result.FileReadTracker = file.NewFileReadTracker(ctx, result.RedisClient)
+	result.FileReader, err = file.NewDefaultFileReader(ctx, result.Cfg.InPath, result.FileReadTracker)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newReadFileSvc.FileReader")
 	}

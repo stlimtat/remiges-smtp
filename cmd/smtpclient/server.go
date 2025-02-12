@@ -14,9 +14,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	rhttp "github.com/stlimtat/remiges-smtp/internal/http"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -53,11 +53,11 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 type Server struct {
 	AdminSvr        *http.Server
 	Cfg             config.ServerConfig
-	FileReader      input.IFileReader
-	FileReadTracker input.IFileReadTracker
-	FileService     *input.FileService
+	FileReader      file.IFileReader
+	FileReadTracker file.IFileReadTracker
+	FileService     *file.FileService
 	Gin             *gin.Engine
-	MailTransformer input.IMailTransformer
+	MailTransformer file.IMailTransformer
 	RedisClient     *redis.Client
 }
 
@@ -74,8 +74,8 @@ func newServer(
 	result.RedisClient = redis.NewClient(&redis.Options{
 		Addr: result.Cfg.ReadFileConfig.RedisAddr,
 	})
-	result.FileReadTracker = input.NewFileReadTracker(ctx, result.RedisClient)
-	result.FileReader, err = input.NewDefaultFileReader(
+	result.FileReadTracker = file.NewFileReadTracker(ctx, result.RedisClient)
+	result.FileReader, err = file.NewDefaultFileReader(
 		ctx,
 		result.Cfg.ReadFileConfig.InPath,
 		result.FileReadTracker,
@@ -83,8 +83,8 @@ func newServer(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newServer.FileReader")
 	}
-	result.MailTransformer = input.NewMailTransformer(ctx, result.Cfg.ReadFileConfig)
-	result.FileService = input.NewFileService(
+	result.MailTransformer = file.NewMailTransformer(ctx, result.Cfg.ReadFileConfig)
+	result.FileService = file.NewFileService(
 		ctx,
 		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,

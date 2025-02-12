@@ -14,11 +14,11 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//internal/config",
+        "//internal/file",
         "//internal/http",
         "//internal/mail",
         "//internal/sendmail",
         "//internal/telemetry",
-        "//pkg/input",
         "@com_github_gin_gonic_gin//:gin",
         "@com_github_go_mods_zerolog_gin//:zerolog-gin",
         "@com_github_mjl_mox//dns",

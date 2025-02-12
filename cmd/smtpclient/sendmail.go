@@ -14,10 +14,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/sendmail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 type sendMailCmd struct {
@@ -99,12 +99,12 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 type SendMailSvc struct {
 	Cfg                  config.SendMailConfig
 	DialerFactory        sendmail.INetDialerFactory
-	FileReader           input.IFileReader
-	FileReadTracker      input.IFileReadTracker
-	FileService          *input.FileService
+	FileReader           file.IFileReader
+	FileReadTracker      file.IFileReadTracker
+	FileService          *file.FileService
 	MailProcessorFactory *mail.DefaultMailProcessorFactory
 	MailSender           sendmail.IMailSender
-	MailTransformer      input.IMailTransformer
+	MailTransformer      file.IMailTransformer
 	RedisClient          *redis.Client
 	Resolver             dns.Resolver
 	Slogger              *slog.Logger
@@ -129,11 +129,11 @@ func newSendMailSvc(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.RedisClient.Ping")
 	}
-	result.FileReadTracker = input.NewFileReadTracker(
+	result.FileReadTracker = file.NewFileReadTracker(
 		ctx,
 		result.RedisClient,
 	)
-	result.FileReader, err = input.NewDefaultFileReader(
+	result.FileReader, err = file.NewDefaultFileReader(
 		ctx,
 		result.Cfg.ReadFileConfig.InPath,
 		result.FileReadTracker,
@@ -141,12 +141,12 @@ func newSendMailSvc(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.FileReader")
 	}
-	result.MailTransformer = input.NewMailTransformer(
+	result.MailTransformer = file.NewMailTransformer(
 		ctx,
 		result.Cfg.ReadFileConfig,
 	).WithToAddr(result.Cfg.ToAddr.String())
 
-	result.FileService = input.NewFileService(
+	result.FileService = file.NewFileService(
 		ctx,
 		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,

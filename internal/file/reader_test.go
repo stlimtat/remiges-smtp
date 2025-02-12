@@ -1,4 +1,4 @@
-package input
+package file
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	gomock "go.uber.org/mock/gomock"
@@ -63,18 +64,18 @@ func TestRefreshList(t *testing.T) {
 
 			frt := NewMockIFileReadTracker(ctrl)
 			frt.EXPECT().
-				UpsertFile(gomock.Any(), "123", FILE_STATUS_INIT).
+				UpsertFile(gomock.Any(), "123", input.FILE_STATUS_INIT).
 				Return(nil).
 				AnyTimes()
 			if tt.wantTrackerErr {
 				frt.EXPECT().
 					FileRead(gomock.Any(), "123").
-					Return(FILE_STATUS_ERROR, fmt.Errorf("test error")).
+					Return(input.FILE_STATUS_ERROR, fmt.Errorf("test error")).
 					AnyTimes()
 			} else {
 				frt.EXPECT().
 					FileRead(gomock.Any(), "123").
-					Return(FILE_STATUS_INIT, nil).
+					Return(input.FILE_STATUS_INIT, nil).
 					AnyTimes()
 			}
 
@@ -139,7 +140,7 @@ func TestReadNextFile(t *testing.T) {
 
 			frt := NewMockIFileReadTracker(ctrl)
 			frt.EXPECT().
-				UpsertFile(gomock.Any(), "123", FILE_STATUS_INIT).
+				UpsertFile(gomock.Any(), "123", input.FILE_STATUS_INIT).
 				Return(nil).
 				AnyTimes()
 

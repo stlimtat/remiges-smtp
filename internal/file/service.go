@@ -1,4 +1,4 @@
-package input
+package file
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 type FileService struct {
@@ -89,7 +90,7 @@ outerloop:
 				logger.Debug().Msg("no fileInfo found")
 				continue
 			}
-			fileInfo.Status = FILE_STATUS_BODY_READ
+			fileInfo.Status = input.FILE_STATUS_BODY_READ
 		case <-ctx.Done():
 			logger.Debug().Msg("ctx.Done")
 			break outerloop
@@ -113,14 +114,14 @@ func (fs *FileService) ReadNextMail(
 	logger.Info().
 		Str("fileInfo", fileInfo.ID).
 		Msg("ReadNextFile")
-	fileInfo.Status = FILE_STATUS_PROCESSING
+	fileInfo.Status = input.FILE_STATUS_PROCESSING
 	myMail, err := fs.MailTransformer.Transform(
 		ctx, fileInfo,
 	)
 	if err != nil {
 		return nil, nil, err
 	}
-	fileInfo.Status = FILE_STATUS_BODY_READ
+	fileInfo.Status = input.FILE_STATUS_BODY_READ
 
 	return fileInfo, myMail, nil
 }

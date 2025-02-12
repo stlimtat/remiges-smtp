@@ -1,4 +1,4 @@
-package input
+package file
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -114,7 +115,7 @@ func (_ *MailTransformer) ReadBody(
 	if err != nil {
 		return nil, err
 	}
-	fileInfo.Status = FILE_STATUS_BODY_READ
+	fileInfo.Status = input.FILE_STATUS_BODY_READ
 
 	return result, nil
 }
@@ -132,7 +133,7 @@ func (t *MailTransformer) ReadHeaders(
 	if err != nil {
 		return nil, err
 	}
-	fileInfo.Status = FILE_STATUS_HEADERS_READ
+	fileInfo.Status = input.FILE_STATUS_HEADERS_READ
 
 	// 2. split the bytes into lines
 	var lines [][]byte
@@ -155,7 +156,7 @@ func (t *MailTransformer) ReadHeaders(
 		value := bytes.TrimSpace(kvPair[1])
 		result[keyStr] = value
 	}
-	fileInfo.Status = FILE_STATUS_HEADERS_PARSE
+	fileInfo.Status = input.FILE_STATUS_HEADERS_PARSE
 
 	return result, nil
 }

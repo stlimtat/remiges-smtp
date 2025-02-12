@@ -1,4 +1,4 @@
-package input
+package file
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 type FileReadTracker struct {
@@ -22,26 +23,26 @@ func NewFileReadTracker(
 
 func (f *FileReadTracker) FileRead(
 	ctx context.Context, id string,
-) (FileStatus, error) {
+) (input.FileStatus, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Info().
 		Str("id", id).
 		Msg("FileRead")
 	getResult := f.redisClient.Get(ctx, "read_tracker_"+id)
 	if getResult.Err() != nil {
-		return FILE_STATUS_ERROR, getResult.Err()
+		return input.FILE_STATUS_ERROR, getResult.Err()
 	}
 	getResultInt, err := strconv.ParseInt(getResult.Val(), 10, 8)
 	if err != nil {
-		return FILE_STATUS_ERROR, err
+		return input.FILE_STATUS_ERROR, err
 	}
-	return FileStatus(getResultInt), nil
+	return input.FileStatus(getResultInt), nil
 }
 
 func (f *FileReadTracker) UpsertFile(
 	ctx context.Context,
 	id string,
-	status FileStatus,
+	status input.FileStatus,
 ) error {
 	logger := zerolog.Ctx(ctx)
 	logger.Info().

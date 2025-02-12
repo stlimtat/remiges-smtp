@@ -1,4 +1,4 @@
-package input
+package file
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,7 +41,7 @@ To: recipient@example.com
 Subject: test
 `,
 				)),
-				Status: FILE_STATUS_INIT,
+				Status: input.FILE_STATUS_INIT,
 			},
 			wantMail: &mail.Mail{
 				From: smtp.Address{
@@ -71,7 +72,7 @@ To: recipient@example.com
 Subject: test
 					`,
 				)),
-				Status: FILE_STATUS_INIT,
+				Status: input.FILE_STATUS_INIT,
 			},
 			wantMail: &mail.Mail{
 				From: smtp.Address{

@@ -1,4 +1,4 @@
-package input
+package file
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/rs/zerolog"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 type DefaultFileReader struct {
@@ -156,10 +157,10 @@ func (r *DefaultFileReader) RefreshList(
 			DfFilePath: filepath.Join(r.InPath, dfFileName),
 			ID:         id,
 			QfFilePath: filepath.Join(r.InPath, qfFileName),
-			Status:     FILE_STATUS_INIT,
+			Status:     input.FILE_STATUS_INIT,
 		}
 		result = append(result, fileInfo)
-		err = r.FileReadTracker.UpsertFile(ctx, id, FILE_STATUS_INIT)
+		err = r.FileReadTracker.UpsertFile(ctx, id, input.FILE_STATUS_INIT)
 		if err != nil {
 			logger.Error().Err(err).Msg("UpsertFile")
 			continue
@@ -200,13 +201,13 @@ func (r *DefaultFileReader) ReadNextFile(
 	logger.Info().
 		Int8("status", int8(status)).
 		Msg("ReadNextFile")
-	if slices.Contains([]FileStatus{
-		FILE_STATUS_ERROR,
-		FILE_STATUS_BODY_READ,
-		FILE_STATUS_PROCESSING,
-		FILE_STATUS_HEADERS_READ,
-		FILE_STATUS_HEADERS_PARSE,
-		FILE_STATUS_DONE,
+	if slices.Contains([]input.FileStatus{
+		input.FILE_STATUS_ERROR,
+		input.FILE_STATUS_BODY_READ,
+		input.FILE_STATUS_PROCESSING,
+		input.FILE_STATUS_HEADERS_READ,
+		input.FILE_STATUS_HEADERS_PARSE,
+		input.FILE_STATUS_DONE,
 	}, status) {
 		logger.Error().Msg("file is being processed")
 		return nil, fmt.Errorf("file is being processed")
