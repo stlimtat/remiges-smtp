@@ -1,32 +1,32 @@
 package config
 
-import (
-	"context"
-
-	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
-)
-
 type FileMailConfig struct {
 	Args  map[string]string `mapstructure:"args"`
 	Index int               `mapstructure:"index"`
 	Type  string            `mapstructure:"type"`
 }
 
-func NewFileMailConfig(ctx context.Context) FileMailConfig {
-	logger := zerolog.Ctx(ctx)
-	var err error
-
-	var result FileMailConfig
-	err = viper.Unmarshal(&result)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Unmarshal")
+func DefaultFileMailConfigs() []FileMailConfig {
+	return []FileMailConfig{
+		{
+			Args:  map[string]string{},
+			Index: 0,
+			Type:  "headers",
+		},
+		{
+			Args:  map[string]string{},
+			Index: 1,
+			Type:  "header_from",
+		},
+		{
+			Args:  map[string]string{},
+			Index: 2,
+			Type:  "header_to",
+		},
+		{
+			Args:  map[string]string{},
+			Index: 3,
+			Type:  "header_subject",
+		},
 	}
-
-	logger.Info().
-		Interface("viper.AllSettings", viper.AllSettings()).
-		Interface("result", result).
-		Msg("FileMailConfig init")
-
-	return result
 }
