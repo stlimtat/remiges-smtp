@@ -8,9 +8,9 @@ import (
 )
 
 type FileMailConfig struct {
-	Args  []string
-	Index int
-	Type  string
+	Args  map[string]string `mapstructure:"args"`
+	Index int               `mapstructure:"index"`
+	Type  string            `mapstructure:"type"`
 }
 
 func NewFileMailConfig(ctx context.Context) FileMailConfig {

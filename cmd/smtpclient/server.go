@@ -52,14 +52,14 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 }
 
 type Server struct {
-	AdminSvr        *http.Server
-	Cfg             config.ServerConfig
-	FileReader      file.IFileReader
-	FileReadTracker file.IFileReadTracker
-	FileService     *file_mail.FileMailService
-	Gin             *gin.Engine
-	MailTransformer file_mail.IMailTransformer
-	RedisClient     *redis.Client
+	AdminSvr               *http.Server
+	Cfg                    config.ServerConfig
+	FileReader             file.IFileReader
+	FileReadTracker        file.IFileReadTracker
+	FileService            *file_mail.FileMailService
+	Gin                    *gin.Engine
+	MailTransformerFactory *file_mail.MailTransformerFactory
+	RedisClient            *redis.Client
 }
 
 func newServer(
@@ -84,12 +84,12 @@ func newServer(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newServer.FileReader")
 	}
-	result.MailTransformer = file_mail.NewMailTransformer(ctx, result.Cfg.ReadFileConfig)
+	result.MailTransformerFactory = file_mail.NewMailTransformerFactory(ctx, result.Cfg.ReadFileConfig.FileMails)
 	result.FileService = file_mail.NewFileMailService(
 		ctx,
 		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,
-		result.MailTransformer,
+		result.MailTransformerFactory,
 		result.Cfg.PollInterval,
 	)
 

@@ -8,20 +8,24 @@ import (
 	"github.com/spf13/viper"
 )
 
-type FromType uint8
+type FromType int
 
 const (
 	FromTypeHeaders FromType = 0
 	FromTypeDefault FromType = 1
+
+	FromTypeHeadersStr = "headers"
+	FromTypeDefaultStr = "default"
 )
 
 type ReadFileConfig struct {
-	Concurrency  int           `json:"concurrency" mapstructure:"concurrency"`
-	DefaultFrom  string        `json:"from" mapstructure:"from"`
-	FromType     FromType      `json:"from_type" mapstructure:"from_type"`
-	InPath       string        `json:"in_path" mapstructure:"in_path"`
-	PollInterval time.Duration `json:"poll_interval" mapstructure:"poll_interval"`
-	RedisAddr    string        `json:"redis_addr" mapstructure:"redis_addr"`
+	Concurrency  int              `json:"concurrency" mapstructure:"concurrency"`
+	DefaultFrom  string           `json:"from" mapstructure:"from"`
+	FileMails    []FileMailConfig `json:"file_mails" mapstructure:"file_mails"`
+	FromType     FromType         `json:"from_type" mapstructure:"from_type"`
+	InPath       string           `json:"in_path" mapstructure:"in_path"`
+	PollInterval time.Duration    `json:"poll_interval" mapstructure:"poll_interval"`
+	RedisAddr    string           `json:"redis_addr" mapstructure:"redis_addr"`
 }
 
 func NewReadFileConfig(ctx context.Context) ReadFileConfig {

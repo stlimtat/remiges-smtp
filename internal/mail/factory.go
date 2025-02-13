@@ -4,21 +4,25 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 )
 
 type DefaultMailProcessorFactory struct {
-	cfgs       []config.MailProcessorConfig
+	Cfgs       []config.MailProcessorConfig
 	processors []IMailProcessor
 	registry   map[string]reflect.Type
 }
 
 func NewDefaultMailProcessorFactory(
 	_ context.Context,
+	cfgs []config.MailProcessorConfig,
 ) (*DefaultMailProcessorFactory, error) {
-	result := &DefaultMailProcessorFactory{}
+	result := &DefaultMailProcessorFactory{
+		Cfgs: cfgs,
+	}
 	result.registry = make(map[string]reflect.Type)
 	result.registry[UnixDosProcessorType] = reflect.TypeOf(UnixDosProcessor{})
 	result.registry[BodyHeadersProcessorType] = reflect.TypeOf(BodyHeadersProcessor{})
@@ -28,11 +32,12 @@ func NewDefaultMailProcessorFactory(
 
 func (f *DefaultMailProcessorFactory) Init(
 	ctx context.Context,
-	cfgs []config.MailProcessorConfig,
+	_ config.MailProcessorConfig,
 ) error {
+	var err error
+	// Ignore the config, we will use the cfgs from the NewFactory
 	// This is to map to the IMailProcessor interface
-	f.cfgs = cfgs
-	_, err := f.NewMailProcessor(ctx, cfgs[0])
+	f.processors, err = f.NewMailProcessors(ctx, f.Cfgs)
 	if err != nil {
 		return err
 	}
@@ -49,30 +54,30 @@ func (f *DefaultMailProcessorFactory) NewMailProcessors(
 	if len(cfgs) < 1 {
 		return nil, fmt.Errorf("no processors found")
 	}
-	f.cfgs = cfgs
-	rawProcessors := make([]IMailProcessor, 0)
+	f.Cfgs = cfgs
+
+	rawProcessors := make(map[int]IMailProcessor)
+	processorIndices := make([]int, 0)
 	for _, cfg := range cfgs {
 		processor, err := f.NewMailProcessor(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-		err = processor.Init(ctx, cfg)
-		if err != nil {
-			return nil, err
-		}
-		rawProcessors = append(rawProcessors, processor)
+		rawProcessors[processor.Index()] = processor
+		processorIndices = append(processorIndices, processor.Index())
 	}
 	// sort the processors by index
 	if len(rawProcessors) < 1 {
 		return nil, fmt.Errorf("no processors found")
 	}
-	f.processors = make([]IMailProcessor, len(rawProcessors))
-	for _, processor := range rawProcessors {
-		// TODO: need to handle when the index is not in order
-		f.processors[processor.Index()] = processor
+	result := make([]IMailProcessor, 0)
+	// get the list of indices, then sort them
+	sort.Ints(processorIndices)
+	for _, processorIdx := range processorIndices {
+		result = append(result, rawProcessors[processorIdx])
 	}
 
-	return f.processors, nil
+	return result, nil
 }
 
 func (f *DefaultMailProcessorFactory) NewMailProcessor(
@@ -89,13 +94,13 @@ func (f *DefaultMailProcessorFactory) NewMailProcessor(
 	if !ok {
 		return nil, fmt.Errorf("processor type cannot be found")
 	}
-	processor := reflect.New(processorType).Interface().(IMailProcessor)
+	result := reflect.New(processorType).Interface().(IMailProcessor)
 	// initialize the processor properly
-	err = processor.Init(ctx, cfg)
+	err = result.Init(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
-	return processor, nil
+	return result, nil
 }
 
 func (_ *DefaultMailProcessorFactory) Index() int {

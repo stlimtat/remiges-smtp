@@ -5,18 +5,20 @@ import (
 	"testing"
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDefaultMailProcessorFactory(t *testing.T) {
 	tests := []struct {
-		name    string
-		cfgs    []config.MailProcessorConfig
-		wantErr bool
+		name           string
+		cfgs           []config.MailProcessorConfig
+		wantInitErr    bool
+		wantProcessErr bool
 	}{
 		{
-			name: "happy",
+			name: "happy - single processor",
 			cfgs: []config.MailProcessorConfig{
 				{
 					Type:  UnixDosProcessorType,
@@ -24,12 +26,31 @@ func TestDefaultMailProcessorFactory(t *testing.T) {
 					Index: 0,
 				},
 			},
-			wantErr: false,
+			wantInitErr:    false,
+			wantProcessErr: false,
 		},
 		{
-			name:    "no processors",
-			cfgs:    []config.MailProcessorConfig{},
-			wantErr: true,
+			name: "happy - index not in sequence",
+			cfgs: []config.MailProcessorConfig{
+				{
+					Type:  UnixDosProcessorType,
+					Args:  map[string]string{},
+					Index: 50,
+				},
+				{
+					Type:  BodyHeadersProcessorType,
+					Args:  map[string]string{},
+					Index: 99,
+				},
+			},
+			wantInitErr:    false,
+			wantProcessErr: false,
+		},
+		{
+			name:           "no processors",
+			cfgs:           []config.MailProcessorConfig{},
+			wantInitErr:    true,
+			wantProcessErr: false,
 		},
 		{
 			name: "processor does not exist",
@@ -40,24 +61,23 @@ func TestDefaultMailProcessorFactory(t *testing.T) {
 					Index: 0,
 				},
 			},
-			wantErr: true,
+			wantInitErr:    true,
+			wantProcessErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory, err := NewDefaultMailProcessorFactory(context.Background())
+			ctx, _ := telemetry.InitLogger(context.Background())
+			factory, err := NewDefaultMailProcessorFactory(ctx, tt.cfgs)
 			require.NoError(t, err)
 
-			processors, err := factory.NewMailProcessors(
-				context.Background(),
-				tt.cfgs,
-			)
-			if tt.wantErr {
+			err = factory.Init(ctx, config.MailProcessorConfig{})
+			if tt.wantInitErr {
 				assert.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, len(tt.cfgs), len(processors))
+				return
 			}
+			require.NoError(t, err)
+			assert.Equal(t, len(tt.cfgs), len(factory.processors))
 		})
 	}
 }

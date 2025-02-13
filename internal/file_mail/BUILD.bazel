@@ -3,8 +3,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "file_mail",
     srcs = [
+        "factory.go",
+        "header_from.go",
+        "header_to.go",
+        "headers.go",
         "interface.go",
-        "mail_transform.go",
         "mock.go",
         "service.go",
     ],
@@ -17,8 +20,6 @@ go_library(
         "//pkg/input",
         "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
-        "@org_golang_x_text//cases",
-        "@org_golang_x_text//language",
         "@org_uber_go_mock//gomock",
     ],
 )
@@ -26,7 +27,10 @@ go_library(
 go_test(
     name = "file_mail_test",
     srcs = [
-        "mail_transform_test.go",
+        "factory_test.go",
+        "header_from_test.go",
+        "header_to_test.go",
+        "headers_test.go",
         "service_test.go",
     ],
     embed = [":file_mail"],
@@ -35,7 +39,6 @@ go_test(
         "//internal/file",
         "//internal/mail",
         "//internal/telemetry",
-        "//pkg/input",
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//smtp",
         "@com_github_stretchr_testify//assert",

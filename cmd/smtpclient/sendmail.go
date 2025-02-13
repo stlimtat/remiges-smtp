@@ -98,17 +98,17 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 }
 
 type SendMailSvc struct {
-	Cfg                  config.SendMailConfig
-	DialerFactory        sendmail.INetDialerFactory
-	FileReader           file.IFileReader
-	FileReadTracker      file.IFileReadTracker
-	FileService          *file_mail.FileMailService
-	MailProcessorFactory *mail.DefaultMailProcessorFactory
-	MailSender           sendmail.IMailSender
-	MailTransformer      file_mail.IMailTransformer
-	RedisClient          *redis.Client
-	Resolver             dns.Resolver
-	Slogger              *slog.Logger
+	Cfg                    config.SendMailConfig
+	DialerFactory          sendmail.INetDialerFactory
+	FileReader             file.IFileReader
+	FileReadTracker        file.IFileReadTracker
+	FileService            *file_mail.FileMailService
+	MailProcessorFactory   *mail.DefaultMailProcessorFactory
+	MailSender             sendmail.IMailSender
+	MailTransformerFactory *file_mail.MailTransformerFactory
+	RedisClient            *redis.Client
+	Resolver               dns.Resolver
+	Slogger                *slog.Logger
 }
 
 func newSendMailSvc(
@@ -142,23 +142,23 @@ func newSendMailSvc(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.FileReader")
 	}
-	result.MailTransformer = file_mail.NewMailTransformer(
+	result.MailTransformerFactory = file_mail.NewMailTransformerFactory(
 		ctx,
-		result.Cfg.ReadFileConfig,
-	).WithToAddr(result.Cfg.ToAddr.String())
+		result.Cfg.ReadFileConfig.FileMails,
+	)
 
 	result.FileService = file_mail.NewFileMailService(
 		ctx,
 		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,
-		result.MailTransformer,
+		result.MailTransformerFactory,
 		result.Cfg.ReadFileConfig.PollInterval,
 	)
-	result.MailProcessorFactory, err = mail.NewDefaultMailProcessorFactory(ctx)
+	result.MailProcessorFactory, err = mail.NewDefaultMailProcessorFactory(ctx, result.Cfg.MailProcessors)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory")
 	}
-	err = result.MailProcessorFactory.Init(ctx, result.Cfg.MailProcessors)
+	err = result.MailProcessorFactory.Init(ctx, config.MailProcessorConfig{})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory.Init")
 	}

@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	config "github.com/stlimtat/remiges-smtp/internal/config"
 	file "github.com/stlimtat/remiges-smtp/internal/file"
 	mail "github.com/stlimtat/remiges-smtp/internal/mail"
 	gomock "go.uber.org/mock/gomock"
@@ -40,6 +41,34 @@ func NewMockIMailTransformer(ctrl *gomock.Controller) *MockIMailTransformer {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIMailTransformer) EXPECT() *MockIMailTransformerMockRecorder {
 	return m.recorder
+}
+
+// Index mocks base method.
+func (m *MockIMailTransformer) Index() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Index")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Index indicates an expected call of Index.
+func (mr *MockIMailTransformerMockRecorder) Index() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Index", reflect.TypeOf((*MockIMailTransformer)(nil).Index))
+}
+
+// Init mocks base method.
+func (m *MockIMailTransformer) Init(ctx context.Context, cfg config.FileMailConfig) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Init", ctx, cfg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Init indicates an expected call of Init.
+func (mr *MockIMailTransformerMockRecorder) Init(ctx, cfg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Init", reflect.TypeOf((*MockIMailTransformer)(nil).Init), ctx, cfg)
 }
 
 // Transform mocks base method.

@@ -10,6 +10,8 @@ import (
 
 //go:generate mockgen -destination=mock.go -package=file_mail . IMailTransformer
 type IMailTransformer interface {
+	Init(ctx context.Context, cfg config.FileMailConfig) error
+	Index() int
 	Transform(ctx context.Context, fileInfo *file.FileInfo, myMail *mail.Mail) (*mail.Mail, error)
 }
 

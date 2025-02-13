@@ -31,6 +31,7 @@ go_test(
     embed = [":mail"],
     deps = [
         "//internal/config",
+        "//internal/telemetry",
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//smtp",
         "@com_github_stretchr_testify//assert",
