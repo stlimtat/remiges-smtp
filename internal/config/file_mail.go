@@ -9,7 +9,9 @@ type FileMailConfig struct {
 func DefaultFileMailConfigs() []FileMailConfig {
 	return []FileMailConfig{
 		{
-			Args:  map[string]string{},
+			Args: map[string]string{
+				"prefix": "H??",
+			},
 			Index: 0,
 			Type:  "headers",
 		},

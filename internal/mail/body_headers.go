@@ -34,12 +34,12 @@ func (_ *BodyHeadersProcessor) Process(
 	inMail *Mail,
 ) (outMail *Mail, err error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("BodyHeadersProcessor")
-
+	logger.Debug().Bytes("body", inMail.Body).Msg("BodyHeadersProcessor")
 	inMail.BodyHeaders = make(map[string][]byte)
 	// separate the mail header from the body
 	mailSections := bytes.Split(inMail.Body, []byte("\r\n\r\n"))
 	if len(mailSections) > 2 {
+		logger.Error().Int("mailSections", len(mailSections)).Msg("invalid mail body")
 		return nil, fmt.Errorf("invalid mail body")
 	}
 	if len(mailSections) == 2 {

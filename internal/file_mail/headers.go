@@ -15,10 +15,13 @@ import (
 
 const (
 	HeadersTransformerType = "headers"
+	HeaderPrefixKey        = "prefix"
 )
 
 type HeadersTransformer struct {
-	Cfg config.FileMailConfig
+	Cfg         config.FileMailConfig
+	PrefixStr   string
+	PrefixBytes []byte
 }
 
 func (h *HeadersTransformer) Init(
@@ -26,6 +29,12 @@ func (h *HeadersTransformer) Init(
 	cfg config.FileMailConfig,
 ) error {
 	h.Cfg = cfg
+	var ok bool
+	h.PrefixStr, ok = cfg.Args[HeaderPrefixKey]
+	if !ok {
+		h.PrefixStr = ""
+	}
+	h.PrefixBytes = []byte(h.PrefixStr)
 	return nil
 }
 
@@ -33,7 +42,7 @@ func (h *HeadersTransformer) Index() int {
 	return h.Cfg.Index
 }
 
-func (_ *HeadersTransformer) Transform(
+func (h *HeadersTransformer) Transform(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
 	inMail *mail.Mail,
@@ -76,6 +85,10 @@ func (_ *HeadersTransformer) Transform(
 
 		value := bytes.TrimSpace(kvPair[1])
 		inMail.Headers[keyStr] = value
+		// 5. if the key starts with the prefix, add it to the result map
+		keyPrefix := bytes.TrimPrefix(key, h.PrefixBytes)
+		keyPrefixStr := string(keyPrefix)
+		inMail.Headers[keyPrefixStr] = value
 	}
 	fileInfo.Status = input.FILE_STATUS_HEADERS_PARSE
 

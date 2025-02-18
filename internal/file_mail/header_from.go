@@ -2,7 +2,9 @@ package file_mail
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/mcnijman/go-emailaddress"
 	"github.com/mjl-/mox/smtp"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -70,7 +72,6 @@ func (t *HeaderFromTransformer) Transform(
 	logger := zerolog.Ctx(ctx).With().
 		Str("id", fileInfo.ID).
 		Logger()
-	logger.Info().Msg("HeaderFromTransformer")
 	var err error
 
 	from := t.From
@@ -80,8 +81,17 @@ func (t *HeaderFromTransformer) Transform(
 		if !ok {
 			return myMail, nil
 		}
+		logger.Debug().Bytes("fromValue", fromValue).Msg("HeaderFromTransformer")
 		// 2. parse from value
-		fromValueStr := string(fromValue)
+		// We have "From: Name of user <from@example.com>"
+		emails := emailaddress.FindWithIcannSuffix(fromValue, false)
+		if len(emails) == 0 {
+			return nil, fmt.Errorf("no email address found in from header")
+		}
+		var fromValueStr string
+		for _, email := range emails {
+			fromValueStr = email.String()
+		}
 		// 3. parse the header
 		from, err = smtp.ParseAddress(fromValueStr)
 		if err != nil {

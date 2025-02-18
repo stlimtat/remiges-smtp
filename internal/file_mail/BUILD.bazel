@@ -20,6 +20,7 @@ go_library(
         "//internal/file",
         "//internal/mail",
         "//pkg/input",
+        "@com_github_mcnijman_go_emailaddress//:go-emailaddress",
         "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",
