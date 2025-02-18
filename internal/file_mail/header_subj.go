@@ -2,7 +2,6 @@ package file_mail
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -16,8 +15,9 @@ const (
 )
 
 type HeaderSubjectTransformer struct {
-	Cfg        config.FileMailConfig
-	SubjectStr string
+	Cfg          config.FileMailConfig
+	SubjectBytes []byte
+	SubjectStr   string
 }
 
 func (t *HeaderSubjectTransformer) Init(
@@ -25,6 +25,12 @@ func (t *HeaderSubjectTransformer) Init(
 	cfg config.FileMailConfig,
 ) error {
 	t.Cfg = cfg
+	var ok bool
+	t.SubjectStr, ok = cfg.Args["default"]
+	if !ok {
+		t.SubjectStr = "no subject"
+	}
+	t.SubjectBytes = []byte(t.SubjectStr)
 	return nil
 }
 
@@ -32,7 +38,7 @@ func (t *HeaderSubjectTransformer) Index() int {
 	return t.Cfg.Index
 }
 
-func (_ *HeaderSubjectTransformer) Transform(
+func (t *HeaderSubjectTransformer) Transform(
 	ctx context.Context,
 	_ *file.FileInfo,
 	inMail *mail.Mail,
@@ -42,8 +48,7 @@ func (_ *HeaderSubjectTransformer) Transform(
 
 	subjectBytes, ok := inMail.Headers[HeaderSubjectKey]
 	if !ok {
-		logger.Error().Msg("subject header not found")
-		return nil, fmt.Errorf("subject header not found")
+		subjectBytes = t.SubjectBytes
 	}
 
 	subjectStr := string(subjectBytes)

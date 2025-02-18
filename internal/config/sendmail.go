@@ -27,7 +27,14 @@ func NewSendMailConfig(ctx context.Context) SendMailConfig {
 
 	viper.SetDefault("msg", "Test message\r\n")
 
-	var result SendMailConfig
+	result := SendMailConfig{
+		MailProcessors: DefaultMailProcessorConfigs(),
+		ReadFileConfig: ReadFileConfig{
+			FileMails: DefaultFileMailConfigs(),
+			InPath:    "inbox",
+		},
+	}
+
 	err = viper.Unmarshal(&result)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Unmarshal")

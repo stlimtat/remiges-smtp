@@ -110,11 +110,12 @@ func (_ *DefaultMailProcessorFactory) Index() int {
 func (f *DefaultMailProcessorFactory) Process(
 	ctx context.Context,
 	inMail *Mail,
-) (outMail *Mail, err error) {
+) (*Mail, error) {
 	logger := zerolog.Ctx(ctx)
+	var err error
 	// Builder function: process the mail through the processors
 	for _, processor := range f.processors {
-		logger.Info().Msgf("Processing mail through processor %d", processor.Index())
+		logger.Info().Int("idx", processor.Index()).Msg("Processing mail through processor")
 		inMail, err = processor.Process(ctx, inMail)
 		if err != nil {
 			return nil, err

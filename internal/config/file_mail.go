@@ -24,9 +24,16 @@ func DefaultFileMailConfigs() []FileMailConfig {
 			Type:  "header_to",
 		},
 		{
-			Args:  map[string]string{},
+			Args: map[string]string{
+				"default": "no subject",
+			},
 			Index: 3,
 			Type:  "header_subject",
+		},
+		{
+			Args:  map[string]string{},
+			Index: 4,
+			Type:  "body",
 		},
 	}
 }

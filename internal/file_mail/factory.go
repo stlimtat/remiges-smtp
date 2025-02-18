@@ -29,6 +29,8 @@ func NewMailTransformerFactory(
 	result.registry[HeadersTransformerType] = reflect.TypeOf(HeadersTransformer{})
 	result.registry[HeaderFromTransformerType] = reflect.TypeOf(HeaderFromTransformer{})
 	result.registry[HeaderToTransformerType] = reflect.TypeOf(HeaderToTransformer{})
+	result.registry[HeaderSubjectTransformerType] = reflect.TypeOf(HeaderSubjectTransformer{})
+	result.registry[BodyTransformerType] = reflect.TypeOf(BodyTransformer{})
 	return result
 }
 

@@ -102,7 +102,7 @@ type SendMailSvc struct {
 	DialerFactory          sendmail.INetDialerFactory
 	FileReader             file.IFileReader
 	FileReadTracker        file.IFileReadTracker
-	FileService            *file_mail.FileMailService
+	FileMailService        *file_mail.FileMailService
 	MailProcessorFactory   *mail.DefaultMailProcessorFactory
 	MailSender             sendmail.IMailSender
 	MailTransformerFactory *file_mail.MailTransformerFactory
@@ -146,8 +146,12 @@ func newSendMailSvc(
 		ctx,
 		result.Cfg.ReadFileConfig.FileMails,
 	)
+	err = result.MailTransformerFactory.Init(ctx, config.FileMailConfig{})
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newSendMailSvc.MailTransformerFactory.Init")
+	}
 
-	result.FileService = file_mail.NewFileMailService(
+	result.FileMailService = file_mail.NewFileMailService(
 		ctx,
 		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,
@@ -192,14 +196,14 @@ func (s *SendMailSvc) Run(
 	// refresh file list
 	_, err = s.FileReader.RefreshList(ctx)
 	if err != nil {
-		logger.Error().Err(err).Msg("FileReader.RefreshList")
+		logger.Error().Err(err).Msg("FileMailService.RefreshList")
 		return err
 	}
 
 	// read a file
-	fileInfo, myMail, err := s.FileService.ReadNextMail(ctx)
+	fileInfo, myMail, err := s.FileMailService.ReadNextMail(ctx)
 	if err != nil {
-		logger.Error().Err(err).Msg("FileService.ReadNextMail")
+		logger.Error().Err(err).Msg("FileMailService.ReadNextMail")
 		return err
 	}
 	logger.Info().
