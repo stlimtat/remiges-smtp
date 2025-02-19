@@ -24,9 +24,10 @@ func NewDefaultMailProcessorFactory(
 		Cfgs: cfgs,
 	}
 	result.registry = make(map[string]reflect.Type)
-	result.registry[UnixDosProcessorType] = reflect.TypeOf(UnixDosProcessor{})
 	result.registry[BodyHeadersProcessorType] = reflect.TypeOf(BodyHeadersProcessor{})
+	result.registry[BodyProcessorType] = reflect.TypeOf(BodyProcessor{})
 	result.registry[MergeBodyProcessorType] = reflect.TypeOf(MergeBodyProcessor{})
+	result.registry[UnixDosProcessorType] = reflect.TypeOf(UnixDosProcessor{})
 	return result, nil
 }
 
@@ -49,7 +50,9 @@ func (f *DefaultMailProcessorFactory) NewMailProcessors(
 	cfgs []config.MailProcessorConfig,
 ) ([]IMailProcessor, error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("Factory creating mail processors")
+	logger.Info().
+		Interface("cfgs", cfgs).
+		Msg("DefaultMailProcessorFactory")
 
 	if len(cfgs) < 1 {
 		return nil, fmt.Errorf("no processors found")
@@ -85,8 +88,12 @@ func (f *DefaultMailProcessorFactory) NewMailProcessor(
 	cfg config.MailProcessorConfig,
 ) (IMailProcessor, error) {
 	// create a single processor based on the processor config
-	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("Creating mail processor")
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", cfg.Type).
+		Int("index", cfg.Index).
+		Interface("args", cfg.Args).
+		Logger()
+	logger.Debug().Msg("Creating mail processor")
 	var err error
 
 	// use reflection to create the processor
@@ -115,7 +122,10 @@ func (f *DefaultMailProcessorFactory) Process(
 	var err error
 	// Builder function: process the mail through the processors
 	for _, processor := range f.processors {
-		logger.Info().Int("idx", processor.Index()).Msg("Processing mail through processor")
+		logger.Debug().
+			Int("idx", processor.Index()).
+			Str("processor", reflect.TypeOf(processor).String()).
+			Msg("Running processor")
 		inMail, err = processor.Process(ctx, inMail)
 		if err != nil {
 			return nil, err

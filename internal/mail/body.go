@@ -19,9 +19,15 @@ type BodyProcessor struct {
 }
 
 func (p *BodyProcessor) Init(
-	_ context.Context,
+	ctx context.Context,
 	cfg config.MailProcessorConfig,
 ) error {
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", BodyProcessorType).
+		Int("index", p.cfg.Index).
+		Interface("args", p.cfg.Args).
+		Logger()
+	logger.Debug().Msg("BodyProcessor Init")
 	p.cfg = cfg
 	return nil
 }

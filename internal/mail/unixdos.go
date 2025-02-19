@@ -1,8 +1,8 @@
 package mail
 
 import (
-	"bytes"
 	"context"
+	"regexp"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -33,30 +33,10 @@ func (_ *UnixDosProcessor) Process(
 	inMail *Mail,
 ) (outMail *Mail, err error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("UnixDosProcessor")
+	logger.Debug().Msg("UnixDosProcessor")
 
-	// Convert all \r\n to \n, then convert all \n to \r\n
-	if bytes.Contains(inMail.Body, []byte("\r\n")) {
-		inMail.Body = bytes.ReplaceAll(
-			inMail.Body,
-			[]byte("\r\n"),
-			[]byte("\n"),
-		)
-	}
-	if bytes.Contains(inMail.Body, []byte("\r")) {
-		inMail.Body = bytes.ReplaceAll(
-			inMail.Body,
-			[]byte("\r"),
-			[]byte("\n"),
-		)
-	}
-	if bytes.Contains(inMail.Body, []byte("\n")) {
-		inMail.Body = bytes.ReplaceAll(
-			inMail.Body,
-			[]byte("\n"),
-			[]byte("\r\n"),
-		)
-	}
+	re := regexp.MustCompile(`\r?\n`)
+	inMail.Body = re.ReplaceAll(inMail.Body, []byte("\r\n"))
 
 	return inMail, nil
 }

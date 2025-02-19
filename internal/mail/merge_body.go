@@ -16,9 +16,15 @@ type MergeBodyProcessor struct {
 }
 
 func (p *MergeBodyProcessor) Init(
-	_ context.Context,
+	ctx context.Context,
 	cfg config.MailProcessorConfig,
 ) error {
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", MergeBodyProcessorType).
+		Int("index", p.cfg.Index).
+		Interface("args", p.cfg.Args).
+		Logger()
+	logger.Debug().Msg("MergeBodyProcessor Init")
 	p.cfg = cfg
 	return nil
 }
@@ -32,7 +38,7 @@ func (_ *MergeBodyProcessor) Process(
 	inMail *Mail,
 ) (outMail *Mail, err error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("MergeBodyProcessor")
+	logger.Debug().Msg("MergeBodyProcessor")
 
 	mailBodyHeaders := make([]byte, 0)
 	for key, value := range inMail.BodyHeaders {
@@ -44,6 +50,8 @@ func (_ *MergeBodyProcessor) Process(
 
 	mailBodyHeaders = append(mailBodyHeaders, []byte("\r\n")...)
 	inMail.Body = append(mailBodyHeaders, inMail.Body...)
+	inMail.Body = append(inMail.Body, []byte("\r\n\r\n")...)
 
+	logger.Info().Bytes("body", inMail.Body).Msg("MergeBodyProcessor")
 	return inMail, nil
 }

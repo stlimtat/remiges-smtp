@@ -30,8 +30,12 @@ func (t *HeaderToTransformer) Init(
 	ctx context.Context,
 	cfg config.FileMailConfig,
 ) error {
-	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("HeaderToTransformer Init")
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", HeaderToTransformerType).
+		Int("index", t.Cfg.Index).
+		Interface("args", t.Cfg.Args).
+		Logger()
+	logger.Debug().Msg("HeaderToTransformer Init")
 
 	t.Cfg = cfg
 	toType := t.Cfg.Args[HeaderToConfigArgType]
@@ -68,11 +72,13 @@ func (t *HeaderToTransformer) Index() int {
 
 func (t *HeaderToTransformer) Transform(
 	ctx context.Context,
-	_ *file.FileInfo,
+	fileInfo *file.FileInfo,
 	inMail *mail.Mail,
 ) (*mail.Mail, error) {
-	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("HeaderToTransformer Transform")
+	logger := zerolog.Ctx(ctx).With().
+		Str("id", fileInfo.ID).
+		Logger()
+	logger.Debug().Msg("HeaderToTransformer")
 
 	if t.ToType == config.FromTypeDefault {
 		inMail.To = t.To
@@ -94,6 +100,9 @@ func (t *HeaderToTransformer) Transform(
 		}
 		inMail.To = append(inMail.To, to)
 	}
+	logger.Debug().
+		Interface("to", inMail.To).
+		Msg("HeaderToTransformer")
 
 	return inMail, nil
 }

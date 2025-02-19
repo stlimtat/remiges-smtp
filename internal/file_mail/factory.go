@@ -26,11 +26,12 @@ func NewMailTransformerFactory(
 		Cfgs: cfgs,
 	}
 	result.registry = make(map[string]reflect.Type)
-	result.registry[HeadersTransformerType] = reflect.TypeOf(HeadersTransformer{})
-	result.registry[HeaderFromTransformerType] = reflect.TypeOf(HeaderFromTransformer{})
-	result.registry[HeaderToTransformerType] = reflect.TypeOf(HeaderToTransformer{})
-	result.registry[HeaderSubjectTransformerType] = reflect.TypeOf(HeaderSubjectTransformer{})
 	result.registry[BodyTransformerType] = reflect.TypeOf(BodyTransformer{})
+	result.registry[HeadersTransformerType] = reflect.TypeOf(HeadersTransformer{})
+	result.registry[HeaderContentTypeTransformerType] = reflect.TypeOf(HeaderContentTypeTransformer{})
+	result.registry[HeaderFromTransformerType] = reflect.TypeOf(HeaderFromTransformer{})
+	result.registry[HeaderSubjectTransformerType] = reflect.TypeOf(HeaderSubjectTransformer{})
+	result.registry[HeaderToTransformerType] = reflect.TypeOf(HeaderToTransformer{})
 	return result
 }
 
@@ -51,7 +52,9 @@ func (f *MailTransformerFactory) NewMailTransformers(
 	cfgs []config.FileMailConfig,
 ) ([]IMailTransformer, error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("MailTransformerFactory")
+	logger.Info().
+		Interface("cfgs", cfgs).
+		Msg("MailTransformerFactory")
 
 	if len(cfgs) == 0 {
 		return nil, fmt.Errorf("no cfgs")
@@ -91,8 +94,12 @@ func (f *MailTransformerFactory) NewMailTransformer(
 	cfg config.FileMailConfig,
 ) (IMailTransformer, error) {
 	// create a single transformer based on the transformer config
-	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("Creating mail transformer")
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", cfg.Type).
+		Int("index", cfg.Index).
+		Interface("args", cfg.Args).
+		Logger()
+	logger.Debug().Msg("Creating mail transformer")
 	var err error
 
 	// use reflection to create the transformer
@@ -119,7 +126,7 @@ func (f *MailTransformerFactory) Transform(
 	inMail *mail.Mail,
 ) (outMail *mail.Mail, err error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("Transforming mail")
+	logger.Debug().Msg("Transforming mail")
 
 	for _, transformer := range f.transformers {
 		inMail, err = transformer.Transform(ctx, fileInfo, inMail)

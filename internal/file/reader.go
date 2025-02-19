@@ -198,8 +198,8 @@ func (r *DefaultFileReader) ReadNextFile(
 		logger.Error().Err(err).Msg("FileRead")
 		return nil, err
 	}
-	logger.Info().
-		Int8("status", int8(status)).
+	logger.Debug().
+		Interface("status", status).
 		Msg("ReadNextFile")
 	if slices.Contains([]input.FileStatus{
 		input.FILE_STATUS_ERROR,

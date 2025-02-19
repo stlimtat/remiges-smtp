@@ -16,9 +16,15 @@ type BodyHeadersProcessor struct {
 }
 
 func (p *BodyHeadersProcessor) Init(
-	_ context.Context,
+	ctx context.Context,
 	cfg config.MailProcessorConfig,
 ) error {
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", BodyHeadersProcessorType).
+		Int("index", p.cfg.Index).
+		Interface("args", p.cfg.Args).
+		Logger()
+	logger.Debug().Msg("BodyHeadersProcessor Init")
 	p.cfg = cfg
 	return nil
 }

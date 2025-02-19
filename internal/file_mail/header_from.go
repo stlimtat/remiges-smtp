@@ -30,8 +30,12 @@ func (t *HeaderFromTransformer) Init(
 	ctx context.Context,
 	cfg config.FileMailConfig,
 ) error {
-	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("HeaderFromTransformer Init")
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", HeaderFromTransformerType).
+		Int("index", t.Cfg.Index).
+		Interface("args", t.Cfg.Args).
+		Logger()
+	logger.Debug().Msg("HeaderFromTransformer Init")
 	var err error
 
 	t.Cfg = cfg
@@ -72,6 +76,7 @@ func (t *HeaderFromTransformer) Transform(
 	logger := zerolog.Ctx(ctx).With().
 		Str("id", fileInfo.ID).
 		Logger()
+	logger.Debug().Msg("HeaderFromTransformer")
 	var err error
 
 	from := t.From
@@ -99,6 +104,8 @@ func (t *HeaderFromTransformer) Transform(
 		}
 	}
 	myMail.From = from
-
+	logger.Debug().
+		Interface("from", myMail.From).
+		Msg("HeaderFromTransformer")
 	return myMail, nil
 }

@@ -25,7 +25,7 @@ func (f *FileReadTracker) FileRead(
 	ctx context.Context, id string,
 ) (input.FileStatus, error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().
+	logger.Debug().
 		Str("id", id).
 		Msg("FileRead")
 	getResult := f.redisClient.Get(ctx, "read_tracker_"+id)
@@ -45,7 +45,7 @@ func (f *FileReadTracker) UpsertFile(
 	status input.FileStatus,
 ) error {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().
+	logger.Debug().
 		Str("id", id).
 		Int("status", int(status)).
 		Msg("UpsertFile")

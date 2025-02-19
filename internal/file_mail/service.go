@@ -112,7 +112,7 @@ func (fs *FileMailService) ReadNextMail(
 		logger.Info().Msg("no fileInfo found")
 		return nil, nil, nil
 	}
-	logger.Info().
+	logger.Debug().
 		Str("fileInfo", fileInfo.ID).
 		Msg("ReadNextFile")
 	fileInfo.Status = input.FILE_STATUS_PROCESSING

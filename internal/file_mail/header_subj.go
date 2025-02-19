@@ -21,9 +21,15 @@ type HeaderSubjectTransformer struct {
 }
 
 func (t *HeaderSubjectTransformer) Init(
-	_ context.Context,
+	ctx context.Context,
 	cfg config.FileMailConfig,
 ) error {
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", HeaderSubjectTransformerType).
+		Int("index", t.Cfg.Index).
+		Interface("args", t.Cfg.Args).
+		Logger()
+	logger.Debug().Msg("HeaderSubjectTransformer Init")
 	t.Cfg = cfg
 	var ok bool
 	t.SubjectStr, ok = cfg.Args["default"]
@@ -40,11 +46,13 @@ func (t *HeaderSubjectTransformer) Index() int {
 
 func (t *HeaderSubjectTransformer) Transform(
 	ctx context.Context,
-	_ *file.FileInfo,
+	fileInfo *file.FileInfo,
 	inMail *mail.Mail,
 ) (*mail.Mail, error) {
-	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("HeaderSubjectTransformer")
+	logger := zerolog.Ctx(ctx).With().
+		Str("id", fileInfo.ID).
+		Logger()
+	logger.Debug().Msg("HeaderSubjectTransformer")
 
 	subjectBytes, ok := inMail.Metadata[HeaderSubjectKey]
 	if !ok {
@@ -52,6 +60,7 @@ func (t *HeaderSubjectTransformer) Transform(
 	}
 
 	inMail.Subject = subjectBytes
+	logger.Debug().Bytes("subject", inMail.Subject).Msg("HeaderSubjectTransformer")
 
 	return inMail, nil
 }

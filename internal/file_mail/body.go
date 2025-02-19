@@ -22,9 +22,15 @@ type BodyTransformer struct {
 }
 
 func (t *BodyTransformer) Init(
-	_ context.Context,
+	ctx context.Context,
 	cfg config.FileMailConfig,
 ) error {
+	logger := zerolog.Ctx(ctx).With().
+		Str("type", BodyTransformerType).
+		Int("index", t.Cfg.Index).
+		Interface("args", t.Cfg.Args).
+		Logger()
+	logger.Debug().Msg("BodyTransformer Init")
 	t.Cfg = cfg
 	return nil
 }
