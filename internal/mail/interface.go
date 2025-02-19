@@ -8,10 +8,11 @@ import (
 )
 
 type Mail struct {
+	ContentType []byte
 	From        smtp.Address
-	To          []smtp.Address
 	Subject     []byte
-	Headers     map[string][]byte
+	To          []smtp.Address
+	Metadata    map[string][]byte
 	BodyHeaders map[string][]byte
 	Body        []byte
 }

@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "mail",
     srcs = [
+        "body.go",
         "body_headers.go",
         "factory.go",
         "interface.go",
@@ -24,6 +25,7 @@ go_test(
     name = "mail_test",
     srcs = [
         "body_headers_test.go",
+        "body_test.go",
         "factory_test.go",
         "merge_body_test.go",
         "unixdos_test.go",

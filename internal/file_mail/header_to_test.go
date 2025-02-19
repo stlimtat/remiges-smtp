@@ -84,7 +84,7 @@ func TestHeaderToTransformer(t *testing.T) {
 				ctx,
 				&file.FileInfo{},
 				&mail.Mail{
-					Headers: tt.header,
+					Metadata: tt.header,
 				},
 			)
 			if tt.wantErr {

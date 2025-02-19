@@ -46,7 +46,7 @@ func (t *HeaderSubjectTransformer) Transform(
 	logger := zerolog.Ctx(ctx)
 	logger.Info().Msg("HeaderSubjectTransformer")
 
-	subjectBytes, ok := inMail.Headers[HeaderSubjectKey]
+	subjectBytes, ok := inMail.Metadata[HeaderSubjectKey]
 	if !ok {
 		subjectBytes = t.SubjectBytes
 	}

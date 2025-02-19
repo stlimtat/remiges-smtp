@@ -77,7 +77,7 @@ func (t *HeaderFromTransformer) Transform(
 	from := t.From
 	// 1. check if the header is present
 	if t.FromType == config.FromTypeHeaders {
-		fromValue, ok := myMail.Headers[HeaderFromKey]
+		fromValue, ok := myMail.Metadata[HeaderFromKey]
 		if !ok {
 			return myMail, nil
 		}

@@ -44,7 +44,7 @@ func TestHeaderSubjectTransformer(t *testing.T) {
 			}
 			require.NoError(t, err)
 			gotMail, err := transformer.Transform(ctx, nil, &mail.Mail{
-				Headers: tt.headers,
+				Metadata: tt.headers,
 			})
 			if tt.wantTransformErr {
 				assert.Error(t, err)

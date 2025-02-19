@@ -79,7 +79,7 @@ func (t *HeaderToTransformer) Transform(
 		return inMail, nil
 	}
 	// Handling if the totype is headers
-	headerTo, ok := inMail.Headers[HeaderToKey]
+	headerTo, ok := inMail.Metadata[HeaderToKey]
 	if !ok {
 		return nil, fmt.Errorf("header %s not found", HeaderToKey)
 	}

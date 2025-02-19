@@ -33,7 +33,7 @@ func TestHeadersTransformer(t *testing.T) {
 				QfReader:   bytes.NewReader([]byte("From: test@example.com\nTo: test@example.com\nSubject: test")),
 			},
 			wantMail: &mail.Mail{
-				Headers: map[string][]byte{
+				Metadata: map[string][]byte{
 					"From":    []byte("test@example.com"),
 					"To":      []byte("test@example.com"),
 					"Subject": []byte("test"),
@@ -55,7 +55,7 @@ func TestHeadersTransformer(t *testing.T) {
 				QfReader:   bytes.NewReader([]byte("H??From: test1@example.com\nH??To: test1@example.com\nH??Subject: test1\n")),
 			},
 			wantMail: &mail.Mail{
-				Headers: map[string][]byte{
+				Metadata: map[string][]byte{
 					"From":       []byte("test1@example.com"),
 					"H??From":    []byte("test1@example.com"),
 					"H??To":      []byte("test1@example.com"),

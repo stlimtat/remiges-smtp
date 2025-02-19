@@ -36,7 +36,7 @@ func TestReadNextMail(t *testing.T) {
 				To: []smtp.Address{
 					{Localpart: "recipient", Domain: dns.Domain{ASCII: "example.com"}},
 				},
-				Headers: map[string][]byte{
+				Metadata: map[string][]byte{
 					"Test1": []byte("test1"),
 				},
 				Body: []byte("test1"),

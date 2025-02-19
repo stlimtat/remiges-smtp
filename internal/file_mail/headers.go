@@ -57,7 +57,7 @@ func (h *HeadersTransformer) Transform(
 	}
 
 	// 1. initialize the headers map in the mail
-	inMail.Headers = make(map[string][]byte)
+	inMail.Metadata = make(map[string][]byte)
 
 	// 2. read all the bytes from the qf file
 	byteSlice, err := io.ReadAll(fileInfo.QfReader)
@@ -83,11 +83,11 @@ func (h *HeadersTransformer) Transform(
 		keyStr := string(key)
 
 		value := bytes.TrimSpace(kvPair[1])
-		inMail.Headers[keyStr] = value
+		inMail.Metadata[keyStr] = value
 		// 5. if the key starts with the prefix, add it to the result map
 		keyPrefix := bytes.TrimPrefix(key, h.PrefixBytes)
 		keyPrefixStr := string(keyPrefix)
-		inMail.Headers[keyPrefixStr] = value
+		inMail.Metadata[keyPrefixStr] = value
 	}
 	fileInfo.Status = input.FILE_STATUS_HEADERS_PARSE
 
