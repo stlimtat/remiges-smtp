@@ -15,7 +15,7 @@ import (
 
 const (
 	HeadersTransformerType = "headers"
-	HeaderPrefixKey        = "prefix"
+	HeadersConfigArgPrefix = "prefix"
 )
 
 type HeadersTransformer struct {
@@ -30,7 +30,7 @@ func (h *HeadersTransformer) Init(
 ) error {
 	h.Cfg = cfg
 	var ok bool
-	h.PrefixStr, ok = cfg.Args[HeaderPrefixKey]
+	h.PrefixStr, ok = cfg.Args[HeadersConfigArgPrefix]
 	if !ok {
 		h.PrefixStr = ""
 	}

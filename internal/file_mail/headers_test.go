@@ -16,12 +16,17 @@ import (
 func TestHeadersTransformer(t *testing.T) {
 	tests := []struct {
 		name     string
+		cfg      config.FileMailConfig
 		fileInfo *file.FileInfo
 		wantMail *mail.Mail
 		wantErr  bool
 	}{
 		{
-			name: "happy",
+			name: "happy - default headers",
+			cfg: config.FileMailConfig{
+				Type: HeadersTransformerType,
+				Args: map[string]string{},
+			},
 			fileInfo: &file.FileInfo{
 				ID:         "1",
 				QfFilePath: "testdata/test.qf",
@@ -32,6 +37,31 @@ func TestHeadersTransformer(t *testing.T) {
 					"From":    []byte("test@example.com"),
 					"To":      []byte("test@example.com"),
 					"Subject": []byte("test"),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "happy - with prefix",
+			cfg: config.FileMailConfig{
+				Type: HeadersTransformerType,
+				Args: map[string]string{
+					HeadersConfigArgPrefix: "H??",
+				},
+			},
+			fileInfo: &file.FileInfo{
+				ID:         "1",
+				QfFilePath: "testdata/test.qf",
+				QfReader:   bytes.NewReader([]byte("H??From: test1@example.com\nH??To: test1@example.com\nH??Subject: test1")),
+			},
+			wantMail: &mail.Mail{
+				Headers: map[string][]byte{
+					"From":       []byte("test1@example.com"),
+					"H??From":    []byte("test1@example.com"),
+					"H??To":      []byte("test1@example.com"),
+					"H??Subject": []byte("test1"),
+					"To":         []byte("test1@example.com"),
+					"Subject":    []byte("test1"),
 				},
 			},
 			wantErr: false,

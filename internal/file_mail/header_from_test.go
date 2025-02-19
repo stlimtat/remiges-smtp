@@ -57,6 +57,23 @@ func TestHeaderFromTransformer(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "happy - long from header",
+			cfg: config.FileMailConfig{
+				Type: HeaderFromTransformerType,
+				Args: map[string]string{
+					HeaderFromConfigArgType: config.FromTypeHeadersStr,
+				},
+			},
+			headers: map[string][]byte{
+				HeaderFromKey: []byte("Name of user <test@example.com>"),
+			},
+			wantFrom: smtp.Address{
+				Localpart: "test",
+				Domain:    dns.Domain{ASCII: "example.com"},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
