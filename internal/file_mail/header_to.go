@@ -2,7 +2,9 @@ package file_mail
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/mcnijman/go-emailaddress"
 	"github.com/mjl-/mox/smtp"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -19,7 +21,7 @@ const (
 
 type HeaderToTransformer struct {
 	Cfg    config.FileMailConfig
-	To     smtp.Address
+	To     []smtp.Address
 	ToStr  string
 	ToType config.FromType
 }
@@ -30,7 +32,6 @@ func (t *HeaderToTransformer) Init(
 ) error {
 	logger := zerolog.Ctx(ctx)
 	logger.Info().Msg("HeaderToTransformer Init")
-	var err error
 
 	t.Cfg = cfg
 	toType := t.Cfg.Args[HeaderToConfigArgType]
@@ -51,10 +52,11 @@ func (t *HeaderToTransformer) Init(
 	}
 	t.ToStr = toStr
 	if t.ToStr != "" {
-		t.To, err = smtp.ParseAddress(t.ToStr)
+		toAddress, err := smtp.ParseAddress(t.ToStr)
 		if err != nil {
 			return err
 		}
+		t.To = []smtp.Address{toAddress}
 	}
 
 	return nil
@@ -71,7 +73,6 @@ func (t *HeaderToTransformer) Transform(
 ) (*mail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Info().Msg("HeaderToTransformer Transform")
-	var err error
 
 	if t.ToType == config.FromTypeDefault {
 		inMail.To = t.To
@@ -79,12 +80,19 @@ func (t *HeaderToTransformer) Transform(
 	}
 	// Handling if the totype is headers
 	headerTo, ok := inMail.Headers[HeaderToKey]
-	if ok {
-		headerToStr := string(headerTo)
-		inMail.To, err = smtp.ParseAddress(headerToStr)
+	if !ok {
+		return nil, fmt.Errorf("header %s not found", HeaderToKey)
+	}
+	emails := emailaddress.FindWithIcannSuffix(headerTo, false)
+
+	inMail.To = make([]smtp.Address, 0)
+	for _, email := range emails {
+		emailStr := email.String()
+		to, err := smtp.ParseAddress(emailStr)
 		if err != nil {
 			return nil, err
 		}
+		inMail.To = append(inMail.To, to)
 	}
 
 	return inMail, nil

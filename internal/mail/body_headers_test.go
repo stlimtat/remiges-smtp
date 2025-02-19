@@ -19,60 +19,72 @@ func TestBodyHeadersProcessor(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name: "happy1",
+			name: "happy - default no body headers",
 			mail: &Mail{
-				From: smtp.Address{
-					Localpart: "john",
-					Domain:    dns.Domain{ASCII: "example.com"},
-				},
-				To: smtp.Address{
-					Localpart: "jane",
-					Domain:    dns.Domain{ASCII: "example.com"},
+				From: smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				To: []smtp.Address{
+					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
+					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
 				},
 				Body: []byte("Hello\r\nWorld"),
 			},
 			wantMail: &Mail{
-				From: smtp.Address{
-					Localpart: "john",
-					Domain:    dns.Domain{ASCII: "example.com"},
-				},
-				To: smtp.Address{
-					Localpart: "jane",
-					Domain:    dns.Domain{ASCII: "example.com"},
+				From: smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				To: []smtp.Address{
+					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
+					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
 				},
 				BodyHeaders: map[string][]byte{
-					"From": []byte("john@example.com"),
-					"To":   []byte("jane@example.com"),
+					"From": []byte("sender@example.com"),
+					"To":   []byte("john@example.com,jane@example.com"),
 				},
 				Body: []byte("Hello\r\nWorld"),
 			},
 			wantErr: false,
 		},
 		{
-			name: "happy2",
+			name: "happy - body already has from/to",
 			mail: &Mail{
-				From: smtp.Address{
-					Localpart: "john",
-					Domain:    dns.Domain{ASCII: "example.com"},
-				},
-				To: smtp.Address{
-					Localpart: "jane",
-					Domain:    dns.Domain{ASCII: "example.com"},
+				From: smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				To: []smtp.Address{
+					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
+					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
 				},
 				Body: []byte("From: a@example.com\r\nTo: b@example.com\r\n\r\nHello\r\nWorld"),
 			},
 			wantMail: &Mail{
-				From: smtp.Address{
-					Localpart: "john",
-					Domain:    dns.Domain{ASCII: "example.com"},
-				},
-				To: smtp.Address{
-					Localpart: "jane",
-					Domain:    dns.Domain{ASCII: "example.com"},
+				From: smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				To: []smtp.Address{
+					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
+					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
 				},
 				BodyHeaders: map[string][]byte{
-					"From": []byte("john@example.com"),
-					"To":   []byte("jane@example.com"),
+					"From": []byte("sender@example.com"),
+					"To":   []byte("john@example.com,jane@example.com"),
+				},
+				Body: []byte("Hello\r\nWorld"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "happy - body already has from/to - new lines",
+			mail: &Mail{
+				From: smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				To: []smtp.Address{
+					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
+					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
+				},
+				Body: []byte("From: a@example.com\nTo: b@example.com\n\nHello\r\nWorld"),
+			},
+			wantMail: &Mail{
+				From: smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				To: []smtp.Address{
+					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
+					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
+				},
+				BodyHeaders: map[string][]byte{
+					"From": []byte("sender@example.com"),
+					"To":   []byte("john@example.com,jane@example.com"),
 				},
 				Body: []byte("Hello\r\nWorld"),
 			},

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -36,6 +37,9 @@ func (_ *BodyHeadersProcessor) Process(
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Bytes("body", inMail.Body).Msg("BodyHeadersProcessor")
 	inMail.BodyHeaders = make(map[string][]byte)
+	// Forced operation to replace all \n with \r\n
+	re := regexp.MustCompile(`\r?\n`)
+	inMail.Body = re.ReplaceAll(inMail.Body, []byte("\r\n"))
 	// separate the mail header from the body
 	mailSections := bytes.Split(inMail.Body, []byte("\r\n\r\n"))
 	if len(mailSections) > 2 {
@@ -55,7 +59,12 @@ func (_ *BodyHeadersProcessor) Process(
 		inMail.Body = mailSections[1]
 	}
 	inMail.BodyHeaders["From"] = []byte(inMail.From.String())
-	inMail.BodyHeaders["To"] = []byte(inMail.To.String())
+	toBytes := []byte{}
+	for _, to := range inMail.To {
+		toBytes = append(toBytes, to.String()...)
+		toBytes = append(toBytes, ',')
+	}
+	inMail.BodyHeaders["To"] = toBytes[:len(toBytes)-1]
 
 	return inMail, nil
 }

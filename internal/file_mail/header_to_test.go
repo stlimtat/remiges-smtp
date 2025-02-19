@@ -19,7 +19,7 @@ func TestHeaderToTransformer(t *testing.T) {
 		name    string
 		cfg     config.FileMailConfig
 		header  map[string][]byte
-		wantTo  smtp.Address
+		wantTo  []smtp.Address
 		wantErr bool
 	}{
 		{
@@ -34,7 +34,9 @@ func TestHeaderToTransformer(t *testing.T) {
 			header: map[string][]byte{
 				"To": []byte("test@example.com"),
 			},
-			wantTo:  smtp.Address{Localpart: "default", Domain: dns.Domain{ASCII: "example.com"}},
+			wantTo: []smtp.Address{
+				{Localpart: "default", Domain: dns.Domain{ASCII: "example.com"}},
+			},
 			wantErr: false,
 		},
 		{
@@ -48,7 +50,26 @@ func TestHeaderToTransformer(t *testing.T) {
 			header: map[string][]byte{
 				"To": []byte("test@example.com"),
 			},
-			wantTo:  smtp.Address{Localpart: "test", Domain: dns.Domain{ASCII: "example.com"}},
+			wantTo: []smtp.Address{
+				{Localpart: "test", Domain: dns.Domain{ASCII: "example.com"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "happy - multiple headers",
+			cfg: config.FileMailConfig{
+				Type: HeaderToTransformerType,
+				Args: map[string]string{
+					HeaderToConfigArgType: config.FromTypeHeadersStr,
+				},
+			},
+			header: map[string][]byte{
+				"To": []byte("Example User <test1@example.com>, Example User 2 <test2@example.com>"),
+			},
+			wantTo: []smtp.Address{
+				{Localpart: "test1", Domain: dns.Domain{ASCII: "example.com"}},
+				{Localpart: "test2", Domain: dns.Domain{ASCII: "example.com"}},
+			},
 			wantErr: false,
 		},
 	}

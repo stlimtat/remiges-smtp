@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"regexp"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -64,14 +65,12 @@ func (h *HeadersTransformer) Transform(
 		return nil, err
 	}
 	fileInfo.Status = input.FILE_STATUS_HEADERS_READ
+	// Replace all \n with \r\n
+	re := regexp.MustCompile(`\r?\n`)
+	byteSlice = re.ReplaceAll(byteSlice, []byte("\r\n"))
 
 	// 3. split the bytes into lines
-	var lines [][]byte
-	if bytes.Contains(byteSlice, []byte("\r\n")) {
-		lines = bytes.Split(byteSlice, []byte("\r\n"))
-	} else {
-		lines = bytes.Split(byteSlice, []byte("\n"))
-	}
+	lines := bytes.Split(byteSlice, []byte("\r\n"))
 
 	// 4. iterate over the lines and add them to the result map
 	for _, line := range lines {

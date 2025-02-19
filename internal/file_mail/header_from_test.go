@@ -33,11 +33,8 @@ func TestHeaderFromTransformer(t *testing.T) {
 			headers: map[string][]byte{
 				HeaderFromKey: []byte("test@example.com"),
 			},
-			wantFrom: smtp.Address{
-				Localpart: "test",
-				Domain:    dns.Domain{ASCII: "example.com"},
-			},
-			wantErr: false,
+			wantFrom: smtp.Address{Localpart: "test", Domain: dns.Domain{ASCII: "example.com"}},
+			wantErr:  false,
 		},
 		{
 			name: "happy - default",
@@ -51,11 +48,8 @@ func TestHeaderFromTransformer(t *testing.T) {
 			headers: map[string][]byte{
 				HeaderFromKey: []byte("test@example.com"),
 			},
-			wantFrom: smtp.Address{
-				Localpart: "default",
-				Domain:    dns.Domain{ASCII: "example.com"},
-			},
-			wantErr: false,
+			wantFrom: smtp.Address{Localpart: "default", Domain: dns.Domain{ASCII: "example.com"}},
+			wantErr:  false,
 		},
 		{
 			name: "happy - long from header",
@@ -68,11 +62,8 @@ func TestHeaderFromTransformer(t *testing.T) {
 			headers: map[string][]byte{
 				HeaderFromKey: []byte("Name of user <test@example.com>"),
 			},
-			wantFrom: smtp.Address{
-				Localpart: "test",
-				Domain:    dns.Domain{ASCII: "example.com"},
-			},
-			wantErr: false,
+			wantFrom: smtp.Address{Localpart: "test", Domain: dns.Domain{ASCII: "example.com"}},
+			wantErr:  false,
 		},
 	}
 

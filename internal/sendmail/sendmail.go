@@ -137,44 +137,50 @@ func (m *MailSender) SendMail(
 ) error {
 	logger := zerolog.Ctx(ctx).
 		With().
-		Interface("mail", *myMail).
+		Str("from", myMail.From.String()).
 		Logger()
-
+	var err error
 	if m.Debug {
 		logger.Info().Msg("debug mode, not sending mail")
 		return nil
 	}
 
-	client, err := smtpclient.New(
-		ctx,
-		m.Slogger,
-		conn,
-		smtpclient.TLSOpportunistic,
-		false,
-		myMail.From.Domain,
-		myMail.To.Domain,
-		m.SmtpOpts,
-	)
-	if err != nil {
-		logger.Error().Err(err).Msg("smtpclient.New")
-		return err
-	}
-	err = client.Deliver(
-		ctx,
-		myMail.From.String(),
-		myMail.To.String(),
-		int64(len(myMail.Body)),
-		bytes.NewReader(myMail.Body),
-		true, false, false,
-	)
-	if err != nil {
-		if smtpclientErr, ok := err.(smtpclient.Error); ok {
-			logger.Error().
-				Err(err).
-				Interface("smtpclient_err", smtpclientErr).
-				Msg("smtpclient.Deliver")
-		} else {
-			logger.Error().Err(err).Msg("smtpclient.Deliver")
+	for _, to := range myMail.To {
+		sublogger := logger.With().Str("to", to.String()).Logger()
+		var client *smtpclient.Client
+		client, err = smtpclient.New(
+			ctx,
+			m.Slogger,
+			conn,
+			smtpclient.TLSOpportunistic,
+			false,
+			myMail.From.Domain,
+			to.Domain,
+			m.SmtpOpts,
+		)
+		if err != nil {
+			sublogger.Error().Err(err).
+				Msg("smtpclient.New")
+			return err
+		}
+		err = client.Deliver(
+			ctx,
+			myMail.From.String(),
+			to.String(),
+			int64(len(myMail.Body)),
+			bytes.NewReader(myMail.Body),
+			true, false, false,
+		)
+		if err != nil {
+			if smtpclientErr, ok := err.(smtpclient.Error); ok {
+				sublogger.Error().
+					Err(err).
+					Interface("smtpclient_err", smtpclientErr).
+					Msg("smtpclient.Deliver")
+			} else {
+				sublogger.Error().Err(err).
+					Msg("smtpclient.Deliver")
+			}
 		}
 	}
 	return err

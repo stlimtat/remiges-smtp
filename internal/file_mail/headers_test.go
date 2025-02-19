@@ -52,7 +52,7 @@ func TestHeadersTransformer(t *testing.T) {
 			fileInfo: &file.FileInfo{
 				ID:         "1",
 				QfFilePath: "testdata/test.qf",
-				QfReader:   bytes.NewReader([]byte("H??From: test1@example.com\nH??To: test1@example.com\nH??Subject: test1")),
+				QfReader:   bytes.NewReader([]byte("H??From: test1@example.com\nH??To: test1@example.com\nH??Subject: test1\n")),
 			},
 			wantMail: &mail.Mail{
 				Headers: map[string][]byte{
@@ -73,7 +73,7 @@ func TestHeadersTransformer(t *testing.T) {
 			ctx, _ := telemetry.InitLogger(context.Background())
 
 			transformer := &HeadersTransformer{}
-			err := transformer.Init(ctx, config.FileMailConfig{})
+			err := transformer.Init(ctx, tt.cfg)
 			require.NoError(t, err)
 
 			got, err := transformer.Transform(ctx, tt.fileInfo, &mail.Mail{})
