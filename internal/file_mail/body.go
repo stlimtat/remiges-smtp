@@ -1,9 +1,11 @@
 package file_mail
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"regexp"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -37,7 +39,9 @@ func (_ *BodyTransformer) Transform(
 	inMail *mail.Mail,
 ) (*mail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().Msg("BodyTransformer")
+	logger.Debug().
+		Str("df_file_path", fileInfo.DfFilePath).
+		Msg("BodyTransformer")
 	var err error
 
 	if fileInfo.DfReader == nil {
@@ -50,6 +54,9 @@ func (_ *BodyTransformer) Transform(
 		return nil, err
 	}
 	// Handling of unix new line to dos new line is done in mail Processor
+	re := regexp.MustCompile(`\r?\n`)
+	inMail.Body = re.ReplaceAll(inMail.Body, []byte("\r\n"))
+	inMail.Body = bytes.TrimSpace(inMail.Body)
 
 	return inMail, nil
 }

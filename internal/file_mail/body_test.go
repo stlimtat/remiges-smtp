@@ -23,10 +23,41 @@ func TestBodyTransformer(t *testing.T) {
 		wantTransformErr bool
 	}{
 		{
-			name:             "happy",
+			name:             "happy - simple body",
 			cfg:              config.FileMailConfig{},
 			body:             []byte("test body"),
 			wantBody:         []byte("test body"),
+			wantInitErr:      false,
+			wantTransformErr: false,
+		},
+		{
+			name: "happy - mime",
+			cfg:  config.FileMailConfig{},
+			body: []byte(`------=_Part_123
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+
+Hello
+World
+------=_Part_123--
+			`),
+			wantBody:         []byte("------=_Part_123\r\nContent-Type: text/plain\r\nContent-Transfer-Encoding: 7bit\r\n\r\nHello\r\nWorld\r\n------=_Part_123--"),
+			wantInitErr:      false,
+			wantTransformErr: false,
+		},
+		{
+			name: "happy - mime with first line as new line",
+			cfg:  config.FileMailConfig{},
+			body: []byte(`
+------=_Part_123
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+
+Hello
+World
+------=_Part_123--
+			`),
+			wantBody:         []byte("------=_Part_123\r\nContent-Type: text/plain\r\nContent-Transfer-Encoding: 7bit\r\n\r\nHello\r\nWorld\r\n------=_Part_123--"),
 			wantInitErr:      false,
 			wantTransformErr: false,
 		},
