@@ -16,7 +16,7 @@ func TestHeaderSubjectTransformer(t *testing.T) {
 		name             string
 		cfg              config.FileMailConfig
 		headers          map[string][]byte
-		wantSubject      string
+		wantSubject      []byte
 		wantInitErr      bool
 		wantTransformErr bool
 	}{
@@ -26,7 +26,7 @@ func TestHeaderSubjectTransformer(t *testing.T) {
 			headers: map[string][]byte{
 				"Subject": []byte("test subject"),
 			},
-			wantSubject:      "test subject",
+			wantSubject:      []byte("test subject"),
 			wantInitErr:      false,
 			wantTransformErr: false,
 		},

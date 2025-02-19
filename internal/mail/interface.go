@@ -10,7 +10,7 @@ import (
 type Mail struct {
 	From        smtp.Address
 	To          []smtp.Address
-	Subject     string
+	Subject     []byte
 	Headers     map[string][]byte
 	BodyHeaders map[string][]byte
 	Body        []byte

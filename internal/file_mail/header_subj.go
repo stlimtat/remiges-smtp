@@ -51,8 +51,7 @@ func (t *HeaderSubjectTransformer) Transform(
 		subjectBytes = t.SubjectBytes
 	}
 
-	subjectStr := string(subjectBytes)
-	inMail.Subject = subjectStr
+	inMail.Subject = subjectBytes
 
 	return inMail, nil
 }
