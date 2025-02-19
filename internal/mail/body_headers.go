@@ -2,6 +2,7 @@ package mail
 
 import (
 	"context"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -50,6 +51,8 @@ func (_ *BodyHeadersProcessor) Process(
 		inMail.BodyHeaders = make(map[string][]byte)
 	}
 	inMail.BodyHeaders[input.HeaderContentTypeKey] = inMail.ContentType
+	now := time.Now().Format(time.RFC1123Z)
+	inMail.BodyHeaders[input.HeaderDateKey] = []byte(now)
 	inMail.BodyHeaders[input.HeaderFromKey] = []byte(inMail.From.String())
 	inMail.BodyHeaders[input.HeaderMsgIDKey] = inMail.MsgID
 	inMail.BodyHeaders[input.HeaderSubjectKey] = inMail.Subject

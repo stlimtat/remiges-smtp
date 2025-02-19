@@ -138,6 +138,9 @@ func (m *MailSender) SendMail(
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("from", myMail.From.String()).
+		Bytes("msgid", myMail.MsgID).
+		Bytes("subject", myMail.Subject).
+		Bytes("content_type", myMail.ContentType).
 		Logger()
 	var err error
 	if m.Debug {
@@ -182,6 +185,7 @@ func (m *MailSender) SendMail(
 					Msg("smtpclient.Deliver")
 			}
 		}
+		sublogger.Info().Msg("smtpclient.Deliver done")
 	}
 	return err
 }

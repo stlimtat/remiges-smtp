@@ -38,15 +38,13 @@ func DefaultFileMailConfigs() []FileMailConfig {
 			Type:  "header_contenttype",
 		},
 		{
-			Args: map[string]string{
-				"type": "headers",
-			},
+			Args:  map[string]string{},
 			Index: 5,
 			Type:  "header_msgid",
 		},
 		{
 			Args:  map[string]string{},
-			Index: 5,
+			Index: 6,
 			Type:  "body",
 		},
 	}

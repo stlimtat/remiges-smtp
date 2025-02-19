@@ -30,6 +30,7 @@ func NewMailTransformerFactory(
 	result.registry[HeadersTransformerType] = reflect.TypeOf(HeadersTransformer{})
 	result.registry[HeaderContentTypeTransformerType] = reflect.TypeOf(HeaderContentTypeTransformer{})
 	result.registry[HeaderFromTransformerType] = reflect.TypeOf(HeaderFromTransformer{})
+	result.registry[HeaderMsgIDTransformerType] = reflect.TypeOf(HeaderMsgIDTransformer{})
 	result.registry[HeaderSubjectTransformerType] = reflect.TypeOf(HeaderSubjectTransformer{})
 	result.registry[HeaderToTransformerType] = reflect.TypeOf(HeaderToTransformer{})
 	return result
@@ -111,6 +112,7 @@ func (f *MailTransformerFactory) NewMailTransformer(
 	// initialize the transformer properly
 	err = result.Init(ctx, cfg)
 	if err != nil {
+		logger.Error().Err(err).Msg("transformer.Init")
 		return nil, err
 	}
 	return result, nil
