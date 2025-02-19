@@ -8,13 +8,14 @@ import (
 )
 
 type Mail struct {
+	Body        []byte
+	BodyHeaders map[string][]byte
 	ContentType []byte
 	From        smtp.Address
+	Metadata    map[string][]byte
+	MsgID       []byte
 	Subject     []byte
 	To          []smtp.Address
-	Metadata    map[string][]byte
-	BodyHeaders map[string][]byte
-	Body        []byte
 }
 
 //go:generate mockgen -destination=mock.go -package=mail github.com/stlimtat/remiges-smtp/internal/mail IMailProcessor,IMailProcessorFactory

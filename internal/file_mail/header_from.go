@@ -10,20 +10,18 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 const (
-	HeaderFromTransformerType  = "header_from"
-	HeaderFromKey              = "From"
-	HeaderFromConfigArgType    = "type"
-	HeaderFromConfigArgDefault = "default"
+	HeaderFromTransformerType = "header_from"
 )
 
 type HeaderFromTransformer struct {
 	Cfg      config.FileMailConfig
 	From     smtp.Address
 	FromStr  string
-	FromType config.FromType
+	FromType config.ConfigType
 }
 
 func (t *HeaderFromTransformer) Init(
@@ -39,26 +37,23 @@ func (t *HeaderFromTransformer) Init(
 	var err error
 
 	t.Cfg = cfg
-	fromTypeStr, ok := t.Cfg.Args[HeaderFromConfigArgType]
+	fromTypeStr, ok := t.Cfg.Args[HeaderConfigArgType]
 	if !ok {
-		fromTypeStr = config.FromTypeHeadersStr
+		fromTypeStr = config.ConfigTypeHeadersStr
 	}
 	switch fromTypeStr {
-	case config.FromTypeDefaultStr:
-		t.FromType = config.FromTypeDefault
-	case config.FromTypeHeadersStr:
-		t.FromType = config.FromTypeHeaders
-	default:
-		t.FromType = config.FromTypeHeaders
-	}
-
-	fromStr, ok := t.Cfg.Args[HeaderFromConfigArgDefault]
-	if t.FromType == config.FromTypeDefault && ok {
-		t.FromStr = fromStr
-		t.From, err = smtp.ParseAddress(fromStr)
-		if err != nil {
-			return err
+	case config.ConfigTypeDefaultStr:
+		t.FromType = config.ConfigTypeDefault
+		fromStr, ok := t.Cfg.Args[HeaderConfigArgDefault]
+		if ok {
+			t.FromStr = fromStr
+			t.From, err = smtp.ParseAddress(fromStr)
+			if err != nil {
+				return err
+			}
 		}
+	default:
+		t.FromType = config.ConfigTypeHeaders
 	}
 
 	return nil
@@ -78,11 +73,13 @@ func (t *HeaderFromTransformer) Transform(
 		Logger()
 	logger.Debug().Msg("HeaderFromTransformer")
 	var err error
-
-	from := t.From
-	// 1. check if the header is present
-	if t.FromType == config.FromTypeHeaders {
-		fromValue, ok := myMail.Metadata[HeaderFromKey]
+	var result smtp.Address
+	switch t.FromType {
+	case config.ConfigTypeDefault:
+		result = t.From
+	default:
+		// 1. check if the header is present
+		fromValue, ok := myMail.Metadata[input.HeaderFromKey]
 		if !ok {
 			return myMail, nil
 		}
@@ -98,14 +95,14 @@ func (t *HeaderFromTransformer) Transform(
 			fromValueStr = email.String()
 		}
 		// 3. parse the header
-		from, err = smtp.ParseAddress(fromValueStr)
+		result, err = smtp.ParseAddress(fromValueStr)
 		if err != nil {
 			return nil, err
 		}
 	}
-	myMail.From = from
+	myMail.From = result
 	logger.Debug().
-		Interface("from", myMail.From).
+		Interface(input.HeaderFromKey, myMail.From).
 		Msg("HeaderFromTransformer")
 	return myMail, nil
 }

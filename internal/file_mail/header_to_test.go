@@ -10,6 +10,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,12 +28,12 @@ func TestHeaderToTransformer(t *testing.T) {
 			cfg: config.FileMailConfig{
 				Type: HeaderToTransformerType,
 				Args: map[string]string{
-					HeaderToConfigArgType:    config.FromTypeDefaultStr,
-					HeaderToConfigArgDefault: "default@example.com",
+					HeaderConfigArgType:    config.ConfigTypeDefaultStr,
+					HeaderConfigArgDefault: "default@example.com",
 				},
 			},
 			header: map[string][]byte{
-				"To": []byte("test@example.com"),
+				input.HeaderToKey: []byte("test@example.com"),
 			},
 			wantTo: []smtp.Address{
 				{Localpart: "default", Domain: dns.Domain{ASCII: "example.com"}},
@@ -44,11 +45,11 @@ func TestHeaderToTransformer(t *testing.T) {
 			cfg: config.FileMailConfig{
 				Type: HeaderToTransformerType,
 				Args: map[string]string{
-					HeaderToConfigArgType: config.FromTypeHeadersStr,
+					HeaderConfigArgType: config.ConfigTypeHeadersStr,
 				},
 			},
 			header: map[string][]byte{
-				"To": []byte("test@example.com"),
+				input.HeaderToKey: []byte("test@example.com"),
 			},
 			wantTo: []smtp.Address{
 				{Localpart: "test", Domain: dns.Domain{ASCII: "example.com"}},
@@ -60,11 +61,11 @@ func TestHeaderToTransformer(t *testing.T) {
 			cfg: config.FileMailConfig{
 				Type: HeaderToTransformerType,
 				Args: map[string]string{
-					HeaderToConfigArgType: config.FromTypeHeadersStr,
+					HeaderConfigArgType: config.ConfigTypeHeadersStr,
 				},
 			},
 			header: map[string][]byte{
-				"To": []byte("Example User <test1@example.com>, Example User 2 <test2@example.com>"),
+				input.HeaderToKey: []byte("Example User <test1@example.com>, Example User 2 <test2@example.com>"),
 			},
 			wantTo: []smtp.Address{
 				{Localpart: "test1", Domain: dns.Domain{ASCII: "example.com"}},

@@ -7,61 +7,54 @@ import (
 	"github.com/mjl-/mox/dns"
 	"github.com/mjl-/mox/smtp"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBodyHeadersProcessor(t *testing.T) {
 	tests := []struct {
-		name     string
-		mail     *Mail
-		wantMail *Mail
-		wantErr  bool
+		name            string
+		inMail          *Mail
+		wantBodyHeaders map[string][]byte
+		wantErr         bool
 	}{
 		{
 			name: "happy - default",
-			mail: &Mail{
+			inMail: &Mail{
 				ContentType: []byte("text/plain"),
 				From:        smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				MsgID:       []byte("1234567890"),
 				Subject:     []byte("test"),
 				To: []smtp.Address{
 					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
 					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
 				},
 			},
-			wantMail: &Mail{
-				ContentType: []byte("text/plain"),
-				From:        smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
-				Subject:     []byte("test"),
-				To: []smtp.Address{
-					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
-					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
-				},
-				BodyHeaders: map[string][]byte{
-					"Content-Type": []byte("text/plain"),
-					"From":         []byte("sender@example.com"),
-					"Subject":      []byte("test"),
-					"To":           []byte("john@example.com,jane@example.com"),
-				},
+			wantBodyHeaders: map[string][]byte{
+				input.HeaderContentTypeKey: []byte("text/plain"),
+				input.HeaderFromKey:        []byte("sender@example.com"),
+				input.HeaderMsgIDKey:       []byte("1234567890"),
+				input.HeaderSubjectKey:     []byte("test"),
+				input.HeaderToKey:          []byte("john@example.com,jane@example.com"),
 			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx, _ := telemetry.InitLogger(context.Background())
 			processor := BodyHeadersProcessor{}
-			err := processor.Init(context.Background(), config.MailProcessorConfig{})
+			err := processor.Init(ctx, config.MailProcessorConfig{})
 			require.NoError(t, err)
-			got, err := processor.Process(context.Background(), tt.mail)
+			got, err := processor.Process(ctx, tt.inMail)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tt.wantMail.From, got.From)
-			require.Equal(t, tt.wantMail.To, got.To)
-			require.Equal(t, tt.wantMail.Subject, got.Subject)
-			require.Equal(t, tt.wantMail.BodyHeaders, got.BodyHeaders)
+			require.Equal(t, tt.wantBodyHeaders, got.BodyHeaders)
 		})
 	}
 }

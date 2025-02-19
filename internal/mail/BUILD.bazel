@@ -15,6 +15,7 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/config",
+        "//pkg/input",
         "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",
@@ -34,6 +35,7 @@ go_test(
     deps = [
         "//internal/config",
         "//internal/telemetry",
+        "//pkg/input",
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//smtp",
         "@com_github_stretchr_testify//assert",

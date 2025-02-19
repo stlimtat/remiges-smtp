@@ -7,6 +7,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 const (
@@ -32,7 +33,7 @@ func (t *HeaderSubjectTransformer) Init(
 	logger.Debug().Msg("HeaderSubjectTransformer Init")
 	t.Cfg = cfg
 	var ok bool
-	t.SubjectStr, ok = cfg.Args["default"]
+	t.SubjectStr, ok = cfg.Args[HeaderConfigArgDefault]
 	if !ok {
 		t.SubjectStr = "no subject"
 	}
@@ -54,13 +55,15 @@ func (t *HeaderSubjectTransformer) Transform(
 		Logger()
 	logger.Debug().Msg("HeaderSubjectTransformer")
 
-	subjectBytes, ok := inMail.Metadata[HeaderSubjectKey]
+	subjectBytes, ok := inMail.Metadata[input.HeaderSubjectKey]
 	if !ok {
 		subjectBytes = t.SubjectBytes
 	}
 
 	inMail.Subject = subjectBytes
-	logger.Debug().Bytes("subject", inMail.Subject).Msg("HeaderSubjectTransformer")
+	logger.Debug().
+		Bytes(HeaderSubjectKey, inMail.Subject).
+		Msg("HeaderSubjectTransformer")
 
 	return inMail, nil
 }

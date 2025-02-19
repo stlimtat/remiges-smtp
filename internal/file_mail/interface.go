@@ -8,6 +8,11 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 )
 
+const (
+	HeaderConfigArgType    = "type"
+	HeaderConfigArgDefault = "default"
+)
+
 //go:generate mockgen -destination=mock.go -package=file_mail . IMailTransformer
 type IMailTransformer interface {
 	Init(ctx context.Context, cfg config.FileMailConfig) error

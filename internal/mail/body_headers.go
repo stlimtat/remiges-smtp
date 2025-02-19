@@ -5,6 +5,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 const (
@@ -40,23 +41,25 @@ func (_ *BodyHeadersProcessor) Process(
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().
 		Interface("from", inMail.From).
-		Interface("to", inMail.To).
+		Bytes("msgid", inMail.MsgID).
 		Bytes("subject", inMail.Subject).
+		Interface("to", inMail.To).
 		Msg("BodyHeadersProcessor")
 
 	if inMail.BodyHeaders == nil {
 		inMail.BodyHeaders = make(map[string][]byte)
 	}
-	inMail.BodyHeaders["Content-Type"] = inMail.ContentType
-	inMail.BodyHeaders["From"] = []byte(inMail.From.String())
-	inMail.BodyHeaders["Subject"] = inMail.Subject
+	inMail.BodyHeaders[input.HeaderContentTypeKey] = inMail.ContentType
+	inMail.BodyHeaders[input.HeaderFromKey] = []byte(inMail.From.String())
+	inMail.BodyHeaders[input.HeaderMsgIDKey] = inMail.MsgID
+	inMail.BodyHeaders[input.HeaderSubjectKey] = inMail.Subject
 
 	toBytes := []byte{}
 	for _, to := range inMail.To {
 		toBytes = append(toBytes, to.String()...)
 		toBytes = append(toBytes, ',')
 	}
-	inMail.BodyHeaders["To"] = toBytes[:len(toBytes)-1]
+	inMail.BodyHeaders[input.HeaderToKey] = toBytes[:len(toBytes)-1]
 
 	return inMail, nil
 }

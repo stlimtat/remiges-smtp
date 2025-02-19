@@ -10,6 +10,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,11 +28,11 @@ func TestHeaderFromTransformer(t *testing.T) {
 			cfg: config.FileMailConfig{
 				Type: HeaderFromTransformerType,
 				Args: map[string]string{
-					HeaderFromConfigArgType: config.FromTypeHeadersStr,
+					HeaderConfigArgType: config.ConfigTypeHeadersStr,
 				},
 			},
 			headers: map[string][]byte{
-				HeaderFromKey: []byte("test@example.com"),
+				input.HeaderFromKey: []byte("test@example.com"),
 			},
 			wantFrom: smtp.Address{Localpart: "test", Domain: dns.Domain{ASCII: "example.com"}},
 			wantErr:  false,
@@ -41,12 +42,12 @@ func TestHeaderFromTransformer(t *testing.T) {
 			cfg: config.FileMailConfig{
 				Type: HeaderFromTransformerType,
 				Args: map[string]string{
-					HeaderFromConfigArgType:    config.FromTypeDefaultStr,
-					HeaderFromConfigArgDefault: "default@example.com",
+					HeaderConfigArgType:    config.ConfigTypeDefaultStr,
+					HeaderConfigArgDefault: "default@example.com",
 				},
 			},
 			headers: map[string][]byte{
-				HeaderFromKey: []byte("test@example.com"),
+				input.HeaderFromKey: []byte("test@example.com"),
 			},
 			wantFrom: smtp.Address{Localpart: "default", Domain: dns.Domain{ASCII: "example.com"}},
 			wantErr:  false,
@@ -56,11 +57,11 @@ func TestHeaderFromTransformer(t *testing.T) {
 			cfg: config.FileMailConfig{
 				Type: HeaderFromTransformerType,
 				Args: map[string]string{
-					HeaderFromConfigArgType: config.FromTypeHeadersStr,
+					HeaderConfigArgType: config.ConfigTypeHeadersStr,
 				},
 			},
 			headers: map[string][]byte{
-				HeaderFromKey: []byte("Name of user <test@example.com>"),
+				input.HeaderFromKey: []byte("Name of user <test@example.com>"),
 			},
 			wantFrom: smtp.Address{Localpart: "test", Domain: dns.Domain{ASCII: "example.com"}},
 			wantErr:  false,

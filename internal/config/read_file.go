@@ -8,21 +8,20 @@ import (
 	"github.com/spf13/viper"
 )
 
-type FromType int
+type ConfigType int
 
 const (
-	FromTypeHeaders FromType = 0
-	FromTypeDefault FromType = 1
+	ConfigTypeHeaders ConfigType = 0
+	ConfigTypeDefault ConfigType = 1
 
-	FromTypeHeadersStr = "headers"
-	FromTypeDefaultStr = "default"
+	ConfigTypeHeadersStr = "headers"
+	ConfigTypeDefaultStr = "default"
 )
 
 type ReadFileConfig struct {
 	Concurrency  int              `json:"concurrency" mapstructure:"concurrency"`
 	DefaultFrom  string           `json:"from" mapstructure:"from"`
 	FileMails    []FileMailConfig `json:"file_mails" mapstructure:"file_mails"`
-	FromType     FromType         `json:"from_type" mapstructure:"from_type"`
 	InPath       string           `json:"in_path" mapstructure:"in_path"`
 	PollInterval time.Duration    `json:"poll_interval" mapstructure:"poll_interval"`
 	RedisAddr    string           `json:"redis_addr" mapstructure:"redis_addr"`

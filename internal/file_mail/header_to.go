@@ -10,11 +10,11 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 const (
 	HeaderToTransformerType  = "header_to"
-	HeaderToKey              = "To"
 	HeaderToConfigArgType    = "type"
 	HeaderToConfigArgDefault = "default"
 )
@@ -23,7 +23,7 @@ type HeaderToTransformer struct {
 	Cfg    config.FileMailConfig
 	To     []smtp.Address
 	ToStr  string
-	ToType config.FromType
+	ToType config.ConfigType
 }
 
 func (t *HeaderToTransformer) Init(
@@ -38,29 +38,27 @@ func (t *HeaderToTransformer) Init(
 	logger.Debug().Msg("HeaderToTransformer Init")
 
 	t.Cfg = cfg
-	toType := t.Cfg.Args[HeaderToConfigArgType]
-	if toType == "" {
-		toType = config.FromTypeHeadersStr
+	toTypeStr := t.Cfg.Args[HeaderToConfigArgType]
+	if toTypeStr == "" {
+		toTypeStr = config.ConfigTypeHeadersStr
 	}
-	switch toType {
-	case config.FromTypeDefaultStr:
-		t.ToType = config.FromTypeDefault
-	case config.FromTypeHeadersStr:
-		t.ToType = config.FromTypeHeaders
-	default:
-		t.ToType = config.FromTypeHeaders
-	}
-	toStr, ok := t.Cfg.Args[HeaderToConfigArgDefault]
-	if !ok {
-		toStr = ""
-	}
-	t.ToStr = toStr
-	if t.ToStr != "" {
-		toAddress, err := smtp.ParseAddress(t.ToStr)
-		if err != nil {
-			return err
+	switch toTypeStr {
+	case config.ConfigTypeDefaultStr:
+		t.ToType = config.ConfigTypeDefault
+		toStr, ok := t.Cfg.Args[HeaderToConfigArgDefault]
+		if !ok {
+			toStr = ""
 		}
-		t.To = []smtp.Address{toAddress}
+		t.ToStr = toStr
+		if t.ToStr != "" {
+			toAddress, err := smtp.ParseAddress(t.ToStr)
+			if err != nil {
+				return err
+			}
+			t.To = []smtp.Address{toAddress}
+		}
+	default:
+		t.ToType = config.ConfigTypeHeaders
 	}
 
 	return nil
@@ -80,28 +78,32 @@ func (t *HeaderToTransformer) Transform(
 		Logger()
 	logger.Debug().Msg("HeaderToTransformer")
 
-	if t.ToType == config.FromTypeDefault {
-		inMail.To = t.To
-		return inMail, nil
-	}
-	// Handling if the totype is headers
-	headerTo, ok := inMail.Metadata[HeaderToKey]
-	if !ok {
-		return nil, fmt.Errorf("header %s not found", HeaderToKey)
-	}
-	emails := emailaddress.FindWithIcannSuffix(headerTo, false)
+	var result []smtp.Address
 
-	inMail.To = make([]smtp.Address, 0)
-	for _, email := range emails {
-		emailStr := email.String()
-		to, err := smtp.ParseAddress(emailStr)
-		if err != nil {
-			return nil, err
+	switch t.ToType {
+	case config.ConfigTypeDefault:
+		result = t.To
+	default:
+		// Handling if the totype is headers
+		headerTo, ok := inMail.Metadata[input.HeaderToKey]
+		if !ok {
+			return nil, fmt.Errorf("header %s not found", input.HeaderToKey)
 		}
-		inMail.To = append(inMail.To, to)
+		emails := emailaddress.FindWithIcannSuffix(headerTo, false)
+
+		result = make([]smtp.Address, 0)
+		for _, email := range emails {
+			emailStr := email.String()
+			to, err := smtp.ParseAddress(emailStr)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, to)
+		}
 	}
+	inMail.To = result
 	logger.Debug().
-		Interface("to", inMail.To).
+		Interface(input.HeaderToKey, inMail.To).
 		Msg("HeaderToTransformer")
 
 	return inMail, nil

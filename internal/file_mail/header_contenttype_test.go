@@ -8,6 +8,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +28,7 @@ func TestHeaderContentTypeTransformer(t *testing.T) {
 				Args: map[string]string{},
 			},
 			headers: map[string][]byte{
-				HeaderContentTypeKey: []byte("text/plain"),
+				input.HeaderContentTypeKey: []byte("text/plain"),
 			},
 			wantContentType: []byte("text/plain"),
 			wantErr:         false,
@@ -39,7 +40,7 @@ func TestHeaderContentTypeTransformer(t *testing.T) {
 				Args: map[string]string{},
 			},
 			headers:         map[string][]byte{},
-			wantContentType: []byte(nil),
+			wantContentType: make([]byte, 0),
 			wantErr:         false,
 		},
 	}

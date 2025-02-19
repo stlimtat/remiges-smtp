@@ -7,6 +7,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
 const (
@@ -18,9 +19,9 @@ const (
 
 type HeaderContentTypeTransformer struct {
 	Cfg             config.FileMailConfig
-	ContentType     string
+	ContentType     []byte
 	ContentTypeStr  string
-	ContentTypeType config.FromType
+	ContentTypeType config.ConfigType
 }
 
 func (t *HeaderContentTypeTransformer) Init(
@@ -35,22 +36,20 @@ func (t *HeaderContentTypeTransformer) Init(
 	logger.Debug().Msg("HeaderContentTypeTransformer Init")
 
 	t.Cfg = cfg
-	fromTypeStr, ok := t.Cfg.Args[HeaderFromConfigArgType]
+	contentTypeTypeStr, ok := t.Cfg.Args[HeaderConfigArgType]
 	if !ok {
-		fromTypeStr = config.FromTypeHeadersStr
+		contentTypeTypeStr = config.ConfigTypeHeadersStr
 	}
-	switch fromTypeStr {
-	case config.FromTypeDefaultStr:
-		t.ContentTypeType = config.FromTypeDefault
-	case config.FromTypeHeadersStr:
-		t.ContentTypeType = config.FromTypeHeaders
+	switch contentTypeTypeStr {
+	case config.ConfigTypeDefaultStr:
+		t.ContentTypeType = config.ConfigTypeDefault
+		contentTypeStr, ok := t.Cfg.Args[HeaderConfigArgDefault]
+		if ok {
+			t.ContentTypeStr = contentTypeStr
+			t.ContentType = []byte(contentTypeStr)
+		}
 	default:
-		t.ContentTypeType = config.FromTypeHeaders
-	}
-
-	contentTypeStr, ok := t.Cfg.Args[HeaderContentTypeConfigArgDefault]
-	if t.ContentTypeType == config.FromTypeDefault && ok {
-		t.ContentTypeStr = contentTypeStr
+		t.ContentTypeType = config.ConfigTypeHeaders
 	}
 
 	return nil
@@ -60,7 +59,7 @@ func (t *HeaderContentTypeTransformer) Index() int {
 	return t.Cfg.Index
 }
 
-func (_ *HeaderContentTypeTransformer) Transform(
+func (t *HeaderContentTypeTransformer) Transform(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
 	myMail *mail.Mail,
@@ -69,14 +68,21 @@ func (_ *HeaderContentTypeTransformer) Transform(
 		Str("id", fileInfo.ID).
 		Logger()
 	logger.Debug().Msg("HeaderContentTypeTransformer")
+	var contentType []byte
 
-	contentType, ok := myMail.Metadata[HeaderContentTypeKey]
-	if !ok {
-		return myMail, nil
+	switch t.ContentTypeType {
+	case config.ConfigTypeDefault:
+		contentType = t.ContentType
+	default:
+		var ok bool
+		contentType, ok = myMail.Metadata[input.HeaderContentTypeKey]
+		if !ok {
+			contentType = make([]byte, 0)
+		}
 	}
 	myMail.ContentType = contentType
 	logger.Debug().
-		Interface("contentType", myMail.ContentType).
+		Bytes(HeaderContentTypeKey, myMail.ContentType).
 		Msg("HeaderContentTypeTransformer")
 	return myMail, nil
 }

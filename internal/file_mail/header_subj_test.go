@@ -5,30 +5,30 @@ import (
 	"testing"
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHeaderSubjectTransformer(t *testing.T) {
 	tests := []struct {
-		name             string
-		cfg              config.FileMailConfig
-		headers          map[string][]byte
-		wantSubject      []byte
-		wantInitErr      bool
-		wantTransformErr bool
+		name        string
+		cfg         config.FileMailConfig
+		headers     map[string][]byte
+		wantSubject []byte
+		wantErr     bool
 	}{
 		{
 			name: "happy",
 			cfg:  config.FileMailConfig{},
 			headers: map[string][]byte{
-				"Subject": []byte("test subject"),
+				input.HeaderSubjectKey: []byte("test subject"),
 			},
-			wantSubject:      []byte("test subject"),
-			wantInitErr:      false,
-			wantTransformErr: false,
+			wantSubject: []byte("test subject"),
+			wantErr:     false,
 		},
 	}
 
@@ -38,15 +38,11 @@ func TestHeaderSubjectTransformer(t *testing.T) {
 
 			transformer := &HeaderSubjectTransformer{}
 			err := transformer.Init(ctx, tt.cfg)
-			if tt.wantInitErr {
-				assert.Error(t, err)
-				return
-			}
 			require.NoError(t, err)
-			gotMail, err := transformer.Transform(ctx, nil, &mail.Mail{
+			gotMail, err := transformer.Transform(ctx, &file.FileInfo{}, &mail.Mail{
 				Metadata: tt.headers,
 			})
-			if tt.wantTransformErr {
+			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
