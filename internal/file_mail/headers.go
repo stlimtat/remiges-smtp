@@ -73,21 +73,37 @@ func (h *HeadersTransformer) Transform(
 	lines := bytes.Split(byteSlice, []byte("\r\n"))
 
 	// 4. iterate over the lines and add them to the result map
+	var key []byte
+	var keyStr string
+	var keyPrefixStr string
+	var value []byte
 	for _, line := range lines {
 		// 4. split the line into key and value with the colon as the delimiter
-		if len(line) < 1 || !bytes.Contains(line, []byte(":")) {
+		if len(line) < 1 {
+			continue
+		}
+		if !bytes.Contains(line, []byte(":")) {
+			// 5. if the line does not have a colon, attach the next line to the value
+			line = bytes.TrimSpace(line)
+			value = append(value, line...)
+			inMail.Metadata[keyStr] = value
+			if bytes.HasPrefix(key, h.PrefixBytes) {
+				inMail.Metadata[keyPrefixStr] = value
+			}
 			continue
 		}
 		kvPair := bytes.Split(line, []byte(":"))
-		key := bytes.TrimSpace(kvPair[0])
-		keyStr := string(key)
+		key = bytes.TrimSpace(kvPair[0])
+		value = bytes.TrimSpace(kvPair[1])
+		keyStr = string(key)
 
-		value := bytes.TrimSpace(kvPair[1])
 		inMail.Metadata[keyStr] = value
-		// 5. if the key starts with the prefix, add it to the result map
-		keyPrefix := bytes.TrimPrefix(key, h.PrefixBytes)
-		keyPrefixStr := string(keyPrefix)
-		inMail.Metadata[keyPrefixStr] = value
+		// 6. if the key starts with the prefix, add it to the result map
+		if bytes.HasPrefix(key, h.PrefixBytes) {
+			keyPrefix := bytes.TrimPrefix(key, h.PrefixBytes)
+			keyPrefixStr = string(keyPrefix)
+			inMail.Metadata[keyPrefixStr] = value
+		}
 	}
 	fileInfo.Status = input.FILE_STATUS_HEADERS_PARSE
 

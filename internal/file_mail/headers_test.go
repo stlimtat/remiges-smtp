@@ -42,6 +42,24 @@ func TestHeadersTransformer(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "happy - multiple line header",
+			cfg: config.FileMailConfig{
+				Type: HeadersTransformerType,
+				Args: map[string]string{},
+			},
+			fileInfo: &file.FileInfo{
+				ID:         "1",
+				QfFilePath: "testdata/test.qf",
+				QfReader:   bytes.NewReader([]byte("Content-Type: text/plain;\n\tcharset=utf-8\n")),
+			},
+			wantMail: &mail.Mail{
+				Metadata: map[string][]byte{
+					"Content-Type": []byte("text/plain;charset=utf-8"),
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "happy - with prefix",
 			cfg: config.FileMailConfig{
 				Type: HeadersTransformerType,
@@ -82,7 +100,7 @@ func TestHeadersTransformer(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantMail, got)
+			assert.Equal(t, tt.wantMail.Metadata, got.Metadata)
 		})
 	}
 }

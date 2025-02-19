@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "body.go",
         "factory.go",
+        "header_contenttype.go",
         "header_from.go",
         "header_subj.go",
         "header_to.go",

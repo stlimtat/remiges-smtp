@@ -41,15 +41,16 @@ func (_ *BodyHeadersProcessor) Process(
 	if inMail.BodyHeaders == nil {
 		inMail.BodyHeaders = make(map[string][]byte)
 	}
-
+	inMail.BodyHeaders["Content-Type"] = inMail.ContentType
 	inMail.BodyHeaders["From"] = []byte(inMail.From.String())
+	inMail.BodyHeaders["Subject"] = inMail.Subject
+
 	toBytes := []byte{}
 	for _, to := range inMail.To {
 		toBytes = append(toBytes, to.String()...)
 		toBytes = append(toBytes, ',')
 	}
 	inMail.BodyHeaders["To"] = toBytes[:len(toBytes)-1]
-	inMail.BodyHeaders["Subject"] = inMail.Subject
 
 	return inMail, nil
 }

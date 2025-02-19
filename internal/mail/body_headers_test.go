@@ -21,24 +21,27 @@ func TestBodyHeadersProcessor(t *testing.T) {
 		{
 			name: "happy - default",
 			mail: &Mail{
-				From:    smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
-				Subject: []byte("test"),
+				ContentType: []byte("text/plain"),
+				From:        smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				Subject:     []byte("test"),
 				To: []smtp.Address{
 					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
 					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
 				},
 			},
 			wantMail: &Mail{
-				From:    smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
-				Subject: []byte("test"),
+				ContentType: []byte("text/plain"),
+				From:        smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
+				Subject:     []byte("test"),
 				To: []smtp.Address{
 					{Localpart: "john", Domain: dns.Domain{ASCII: "example.com"}},
 					{Localpart: "jane", Domain: dns.Domain{ASCII: "example.com"}},
 				},
 				BodyHeaders: map[string][]byte{
-					"From":    []byte("sender@example.com"),
-					"To":      []byte("john@example.com,jane@example.com"),
-					"Subject": []byte("test"),
+					"Content-Type": []byte("text/plain"),
+					"From":         []byte("sender@example.com"),
+					"Subject":      []byte("test"),
+					"To":           []byte("john@example.com,jane@example.com"),
 				},
 			},
 			wantErr: false,
