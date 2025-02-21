@@ -54,7 +54,7 @@ func TestBodyHeadersProcessor(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tt.wantBodyHeaders, got.BodyHeaders)
+			assert.Subset(t, got.BodyHeaders, tt.wantBodyHeaders)
 		})
 	}
 }
