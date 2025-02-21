@@ -1,8 +1,9 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "config",
     srcs = [
+        "dkim.go",
         "file_mail.go",
         "lookupmx.go",
         "mail.go",
@@ -15,8 +16,23 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/telemetry",
+        "@com_github_mjl_mox//config",
+        "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
         "@com_github_spf13_viper//:viper",
+    ],
+)
+
+go_test(
+    name = "config_test",
+    srcs = ["dkim_test.go"],
+    embed = [":config"],
+    deps = [
+        "//internal/telemetry",
+        "@com_github_mjl_mox//config",
+        "@com_github_mjl_mox//dns",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

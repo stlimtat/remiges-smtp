@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "body.go",
         "body_headers.go",
+        "dkim.go",
         "factory.go",
         "interface.go",
         "merge_body.go",
@@ -18,6 +19,7 @@ go_library(
         "//pkg/input",
         "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
+        "@in_gopkg_yaml_v3//:yaml_v3",
         "@org_uber_go_mock//gomock",
     ],
 )
