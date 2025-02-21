@@ -37,17 +37,18 @@ func (t *HeaderFromTransformer) Init(
 	var err error
 
 	t.Cfg = cfg
-	fromTypeStr, ok := t.Cfg.Args[HeaderConfigArgType]
+	fromTypeAny, ok := t.Cfg.Args[HeaderConfigArgType]
 	if !ok {
-		fromTypeStr = config.ConfigTypeHeadersStr
+		fromTypeAny = config.ConfigTypeHeadersStr
 	}
+	fromTypeStr := fromTypeAny.(string)
 	switch fromTypeStr {
 	case config.ConfigTypeDefaultStr:
 		t.FromType = config.ConfigTypeDefault
-		fromStr, ok := t.Cfg.Args[HeaderConfigArgDefault]
+		fromAny, ok := t.Cfg.Args[HeaderConfigArgDefault]
 		if ok {
-			t.FromStr = fromStr
-			t.From, err = smtp.ParseAddress(fromStr)
+			t.FromStr = fromAny.(string)
+			t.From, err = smtp.ParseAddress(t.FromStr)
 			if err != nil {
 				return err
 			}

@@ -33,10 +33,11 @@ func (t *HeaderSubjectTransformer) Init(
 	logger.Debug().Msg("HeaderSubjectTransformer Init")
 	t.Cfg = cfg
 	var ok bool
-	t.SubjectStr, ok = cfg.Args[HeaderConfigArgDefault]
+	subjectAny, ok := cfg.Args[HeaderConfigArgDefault]
 	if !ok {
-		t.SubjectStr = "no subject"
+		subjectAny = "no subject"
 	}
+	t.SubjectStr = subjectAny.(string)
 	t.SubjectBytes = []byte(t.SubjectStr)
 	return nil
 }

@@ -26,7 +26,7 @@ func TestHeaderMsgIDTransformer(t *testing.T) {
 		{
 			name: "happy - default",
 			cfg: config.FileMailConfig{
-				Args: map[string]string{
+				Args: map[string]any{
 					HeaderConfigArgType:    config.ConfigTypeDefaultStr,
 					HeaderConfigArgDefault: "default msgid",
 				},
@@ -41,7 +41,7 @@ func TestHeaderMsgIDTransformer(t *testing.T) {
 		{
 			name: "happy - header",
 			cfg: config.FileMailConfig{
-				Args: map[string]string{
+				Args: map[string]any{
 					HeaderConfigArgType: config.ConfigTypeHeadersStr,
 				},
 			},
@@ -55,7 +55,7 @@ func TestHeaderMsgIDTransformer(t *testing.T) {
 		{
 			name: "happy - uuid",
 			cfg: config.FileMailConfig{
-				Args: map[string]string{
+				Args: map[string]any{
 					HeaderConfigArgType: HeaderMsgIDConfigArgUuid,
 				},
 			},
@@ -69,7 +69,7 @@ func TestHeaderMsgIDTransformer(t *testing.T) {
 		{
 			name: "alternate - header not found",
 			cfg: config.FileMailConfig{
-				Args: map[string]string{
+				Args: map[string]any{
 					HeaderConfigArgType: config.ConfigTypeHeadersStr,
 				},
 			},

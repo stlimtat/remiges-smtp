@@ -22,7 +22,7 @@ func TestDefaultMailProcessorFactory(t *testing.T) {
 			cfgs: []config.MailProcessorConfig{
 				{
 					Type:  UnixDosProcessorType,
-					Args:  map[string]string{},
+					Args:  map[string]any{},
 					Index: 0,
 				},
 			},
@@ -34,12 +34,12 @@ func TestDefaultMailProcessorFactory(t *testing.T) {
 			cfgs: []config.MailProcessorConfig{
 				{
 					Type:  UnixDosProcessorType,
-					Args:  map[string]string{},
+					Args:  map[string]any{},
 					Index: 50,
 				},
 				{
 					Type:  BodyHeadersProcessorType,
-					Args:  map[string]string{},
+					Args:  map[string]any{},
 					Index: 99,
 				},
 			},
@@ -57,7 +57,7 @@ func TestDefaultMailProcessorFactory(t *testing.T) {
 			cfgs: []config.MailProcessorConfig{
 				{
 					Type:  "processordoesnotexist",
-					Args:  map[string]string{},
+					Args:  map[string]any{},
 					Index: 0,
 				},
 			},

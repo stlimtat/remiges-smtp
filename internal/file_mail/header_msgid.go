@@ -41,16 +41,17 @@ func (t *HeaderMsgIDTransformer) Init(
 	logger.Debug().Msg("HeaderMsgIDTransformer Init")
 
 	t.Cfg = cfg
-	msgIDTypeStr, ok := t.Cfg.Args[HeaderConfigArgType]
+	msgIDTypeAny, ok := t.Cfg.Args[HeaderConfigArgType]
 	if !ok {
-		msgIDTypeStr = config.ConfigTypeHeadersStr
+		msgIDTypeAny = config.ConfigTypeHeadersStr
 	}
+	msgIDTypeStr := msgIDTypeAny.(string)
 	switch msgIDTypeStr {
 	case HeaderConfigArgDefault:
 		t.MsgIDType = MsgIDTypeDefault
-		msgIDStr, ok := t.Cfg.Args[HeaderConfigArgDefault]
+		msgIDAny, ok := t.Cfg.Args[HeaderConfigArgDefault]
 		if ok {
-			t.MsgIDStr = msgIDStr
+			t.MsgIDStr = msgIDAny.(string)
 		}
 	case HeaderMsgIDConfigArgUuid:
 		t.MsgIDType = MsgIDTypeUuid

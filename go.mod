@@ -9,6 +9,7 @@ require (
 	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/google/uuid v1.6.0
 	github.com/mcnijman/go-emailaddress v1.1.1
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mjl-/adns v0.0.0-20240624081245-1247f01fcf54
 	github.com/mjl-/mox v0.0.13
 	github.com/redis/go-redis/v9 v9.7.0
@@ -46,11 +47,8 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mjl-/autocert v0.0.0-20231214125928-31b7400acb05 // indirect
 	github.com/mjl-/bstore v0.0.6 // indirect
-	github.com/mjl-/sconf v0.0.7 // indirect
-	github.com/mjl-/xfmt v0.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/onsi/gomega v1.35.1 // indirect

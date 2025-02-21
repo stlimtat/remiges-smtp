@@ -27,7 +27,7 @@ func TestHeaderToTransformer(t *testing.T) {
 			name: "happy - default",
 			cfg: config.FileMailConfig{
 				Type: HeaderToTransformerType,
-				Args: map[string]string{
+				Args: map[string]any{
 					HeaderConfigArgType:    config.ConfigTypeDefaultStr,
 					HeaderConfigArgDefault: "default@example.com",
 				},
@@ -44,7 +44,7 @@ func TestHeaderToTransformer(t *testing.T) {
 			name: "happy - headers",
 			cfg: config.FileMailConfig{
 				Type: HeaderToTransformerType,
-				Args: map[string]string{
+				Args: map[string]any{
 					HeaderConfigArgType: config.ConfigTypeHeadersStr,
 				},
 			},
@@ -60,7 +60,7 @@ func TestHeaderToTransformer(t *testing.T) {
 			name: "happy - multiple headers",
 			cfg: config.FileMailConfig{
 				Type: HeaderToTransformerType,
-				Args: map[string]string{
+				Args: map[string]any{
 					HeaderConfigArgType: config.ConfigTypeHeadersStr,
 				},
 			},

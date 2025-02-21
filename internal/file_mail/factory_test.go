@@ -22,7 +22,7 @@ func TestMailTransformerFactory(t *testing.T) {
 			cfgs: []config.FileMailConfig{
 				{
 					Type: HeaderFromTransformerType,
-					Args: map[string]string{
+					Args: map[string]any{
 						HeaderConfigArgType:    config.ConfigTypeDefaultStr,
 						HeaderConfigArgDefault: "test@example.com",
 					},
@@ -37,14 +37,14 @@ func TestMailTransformerFactory(t *testing.T) {
 			cfgs: []config.FileMailConfig{
 				{
 					Type: HeaderFromTransformerType,
-					Args: map[string]string{
+					Args: map[string]any{
 						HeaderConfigArgType: config.ConfigTypeHeadersStr,
 					},
 					Index: 80,
 				},
 				{
 					Type: HeaderToTransformerType,
-					Args: map[string]string{
+					Args: map[string]any{
 						HeaderToConfigArgType: "headers",
 					},
 					Index: 99,

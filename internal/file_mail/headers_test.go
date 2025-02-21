@@ -25,7 +25,7 @@ func TestHeadersTransformer(t *testing.T) {
 			name: "happy - default headers",
 			cfg: config.FileMailConfig{
 				Type: HeadersTransformerType,
-				Args: map[string]string{},
+				Args: map[string]any{},
 			},
 			fileInfo: &file.FileInfo{
 				ID:         "1",
@@ -45,7 +45,7 @@ func TestHeadersTransformer(t *testing.T) {
 			name: "happy - multiple line header",
 			cfg: config.FileMailConfig{
 				Type: HeadersTransformerType,
-				Args: map[string]string{},
+				Args: map[string]any{},
 			},
 			fileInfo: &file.FileInfo{
 				ID:         "1",
@@ -63,7 +63,7 @@ func TestHeadersTransformer(t *testing.T) {
 			name: "happy - with prefix",
 			cfg: config.FileMailConfig{
 				Type: HeadersTransformerType,
-				Args: map[string]string{
+				Args: map[string]any{
 					HeadersConfigArgPrefix: "H??",
 				},
 			},

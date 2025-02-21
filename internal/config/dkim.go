@@ -10,20 +10,20 @@ import (
 )
 
 type DKIMConfig struct {
-	moxConfig.DKIM `mapstructure:",squash"`
-	MoxSelectors   map[string]MoxSelector `mapstructure:"selectors"`
-	MoxSign        []string               `mapstructure:"sign"`
+	moxConfig.DKIM `mapstructure:",omitempty"`
+	MoxSelectors   map[string]MoxSelector `mapstructure:"selectors,omitempty"`
+	MoxSign        []string               `mapstructure:"sign,omitempty"`
 }
 
 type MoxSelector struct {
 	Algorithm        string              `mapstructure:"algorithm"`
-	Canonicalization MoxCanonicalization `mapstructure:",omitempty"`
+	Canonicalization MoxCanonicalization `mapstructure:"canonicalization,omitempty"`
 	Domain           string              `mapstructure:"domain"`
-	DontSealHeaders  bool                `mapstructure:",omitempty"`
-	Expiration       string              `mapstructure:",omitempty"`
+	DontSealHeaders  bool                `mapstructure:"dont_seal_headers,omitempty"`
+	Expiration       string              `mapstructure:"expiration,omitempty"`
 	Hash             string              `mapstructure:"hash"`
-	Headers          []string            `mapstructure:",omitempty"`
-	PrivateKeyFile   string              `mapstructure:",omitempty"`
+	Headers          []string            `mapstructure:"headers,omitempty"`
+	PrivateKeyFile   string              `mapstructure:"private_key_file,omitempty"`
 }
 
 type MoxCanonicalization struct {
@@ -109,12 +109,14 @@ func (c *DKIMConfig) TransformSelector(
 	}
 	result.DontSealHeaders = moxSelector.DontSealHeaders
 	result.Expiration = moxSelector.Expiration
-	expiration, err := time.ParseDuration(moxSelector.Expiration)
-	if err != nil {
-		logger.Error().Err(err).Msg("TransformSelector.ParseDuration")
-		return err
+	if moxSelector.Expiration != "" {
+		expiration, err := time.ParseDuration(moxSelector.Expiration)
+		if err != nil {
+			logger.Error().Err(err).Msg("TransformSelector.ParseDuration")
+			return err
+		}
+		result.ExpirationSeconds = int(expiration.Seconds())
 	}
-	result.ExpirationSeconds = int(expiration.Seconds())
 	result.Hash = moxSelector.Hash
 	result.Headers = moxSelector.Headers
 

@@ -36,17 +36,18 @@ func (t *HeaderContentTypeTransformer) Init(
 	logger.Debug().Msg("HeaderContentTypeTransformer Init")
 
 	t.Cfg = cfg
-	contentTypeTypeStr, ok := t.Cfg.Args[HeaderConfigArgType]
+	contentTypeTypeAny, ok := t.Cfg.Args[HeaderConfigArgType]
 	if !ok {
-		contentTypeTypeStr = config.ConfigTypeHeadersStr
+		contentTypeTypeAny = config.ConfigTypeHeadersStr
 	}
+	contentTypeTypeStr := contentTypeTypeAny.(string)
 	switch contentTypeTypeStr {
 	case config.ConfigTypeDefaultStr:
 		t.ContentTypeType = config.ConfigTypeDefault
-		contentTypeStr, ok := t.Cfg.Args[HeaderConfigArgDefault]
+		contentTypeAny, ok := t.Cfg.Args[HeaderConfigArgDefault]
 		if ok {
-			t.ContentTypeStr = contentTypeStr
-			t.ContentType = []byte(contentTypeStr)
+			t.ContentTypeStr = contentTypeAny.(string)
+			t.ContentType = []byte(t.ContentTypeStr)
 		}
 	default:
 		t.ContentTypeType = config.ConfigTypeHeaders

@@ -25,7 +25,7 @@ func TestHeaderContentTypeTransformer(t *testing.T) {
 			name: "happy",
 			cfg: config.FileMailConfig{
 				Type: HeaderContentTypeTransformerType,
-				Args: map[string]string{},
+				Args: map[string]any{},
 			},
 			headers: map[string][]byte{
 				input.HeaderContentTypeKey: []byte("text/plain"),
@@ -37,7 +37,7 @@ func TestHeaderContentTypeTransformer(t *testing.T) {
 			name: "no content type",
 			cfg: config.FileMailConfig{
 				Type: HeaderContentTypeTransformerType,
-				Args: map[string]string{},
+				Args: map[string]any{},
 			},
 			headers:         map[string][]byte{},
 			wantContentType: make([]byte, 0),

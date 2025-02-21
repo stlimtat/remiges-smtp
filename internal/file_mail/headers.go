@@ -31,10 +31,11 @@ func (h *HeadersTransformer) Init(
 ) error {
 	h.Cfg = cfg
 	var ok bool
-	h.PrefixStr, ok = cfg.Args[HeadersConfigArgPrefix]
+	prefixAny, ok := cfg.Args[HeadersConfigArgPrefix]
 	if !ok {
-		h.PrefixStr = ""
+		prefixAny = ""
 	}
+	h.PrefixStr = prefixAny.(string)
 	h.PrefixBytes = []byte(h.PrefixStr)
 	return nil
 }

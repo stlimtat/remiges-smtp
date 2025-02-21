@@ -38,18 +38,19 @@ func (t *HeaderToTransformer) Init(
 	logger.Debug().Msg("HeaderToTransformer Init")
 
 	t.Cfg = cfg
-	toTypeStr := t.Cfg.Args[HeaderToConfigArgType]
-	if toTypeStr == "" {
-		toTypeStr = config.ConfigTypeHeadersStr
+	toTypeAny, ok := t.Cfg.Args[HeaderToConfigArgType]
+	if !ok {
+		toTypeAny = config.ConfigTypeHeadersStr
 	}
+	toTypeStr := toTypeAny.(string)
 	switch toTypeStr {
 	case config.ConfigTypeDefaultStr:
 		t.ToType = config.ConfigTypeDefault
-		toStr, ok := t.Cfg.Args[HeaderToConfigArgDefault]
+		toAny, ok := t.Cfg.Args[HeaderToConfigArgDefault]
 		if !ok {
-			toStr = ""
+			toAny = ""
 		}
-		t.ToStr = toStr
+		t.ToStr = toAny.(string)
 		if t.ToStr != "" {
 			toAddress, err := smtp.ParseAddress(t.ToStr)
 			if err != nil {

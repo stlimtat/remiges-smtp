@@ -17,9 +17,9 @@ go_library(
     deps = [
         "//internal/config",
         "//pkg/input",
+        "@com_github_mitchellh_mapstructure//:mapstructure",
         "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
-        "@in_gopkg_yaml_v3//:yaml_v3",
         "@org_uber_go_mock//gomock",
     ],
 )
@@ -29,6 +29,7 @@ go_test(
     srcs = [
         "body_headers_test.go",
         "body_test.go",
+        "dkim_test.go",
         "factory_test.go",
         "merge_body_test.go",
         "unixdos_test.go",
@@ -38,8 +39,10 @@ go_test(
         "//internal/config",
         "//internal/telemetry",
         "//pkg/input",
+        "@com_github_mjl_mox//config",
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//smtp",
+        "@com_github_spf13_viper//:viper",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],
