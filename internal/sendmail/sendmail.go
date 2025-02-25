@@ -3,11 +3,13 @@ package sendmail
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log/slog"
 	"net"
 
 	"github.com/mjl-/adns"
 	"github.com/mjl-/mox/dns"
+	"github.com/mjl-/mox/smtp"
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -133,92 +135,112 @@ func (m *MailSender) NewConn(
 func (m *MailSender) SendMail(
 	ctx context.Context,
 	myMail *mail.Mail,
-) error {
+) (results map[string][]Response, errs map[string]error) {
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("from", myMail.From.String()).
 		Bytes("msgid", myMail.MsgID).
-		Bytes("subject", myMail.Subject).
-		Bytes("content_type", myMail.ContentType).
+		Str("subject", string(myMail.Subject)).
 		Logger()
+	results = make(map[string][]Response, 0)
+	errs = make(map[string]error, 0)
 
 	for _, to := range myMail.To {
+		toStr := to.String()
 		hosts, err := m.LookupMX(ctx, to.Domain)
 		if err != nil {
-			logger.Error().Err(err).Msg("MailSender.LookupMX")
-			return err
+			errs[toStr] = err
+			continue
 		}
 		conn, err := m.NewConn(ctx, hosts)
 		if err != nil {
-			logger.Error().Err(err).Msg("MailSender.NewConn")
-			return err
+			errs[toStr] = err
+			continue
 		}
-		err = m.Deliver(ctx, conn, myMail)
+		result, err := m.Deliver(ctx, conn, myMail, to)
 		if err != nil {
-			logger.Error().Err(err).Msg("MailSender.Deliver")
-			return err
+			errs[toStr] = err
+			continue
 		}
+		results[toStr] = result
+		logger.Info().
+			AnErr("err", errs[toStr]).
+			Interface("result", result).
+			Str("to", toStr).
+			Msg("Delivery attempted")
 	}
 
-	return nil
+	return results, nil
 }
 
 func (m *MailSender) Deliver(
 	ctx context.Context,
 	conn net.Conn,
 	myMail *mail.Mail,
-) error {
+	to smtp.Address,
+) ([]Response, error) {
+	toStr := to.String()
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("from", myMail.From.String()).
+		Str("to", toStr).
 		Bytes("msgid", myMail.MsgID).
 		Bytes("subject", myMail.Subject).
 		Bytes("content_type", myMail.ContentType).
 		Logger()
-	var err error
 	if m.Debug {
 		logger.Info().Msg("debug mode, not sending mail")
-		return nil
+		return nil, nil
 	}
 
-	for _, to := range myMail.To {
-		sublogger := logger.With().Str("to", to.String()).Logger()
-		var client *smtpclient.Client
-		client, err = smtpclient.New(
-			ctx,
-			m.Slogger,
-			conn,
-			smtpclient.TLSOpportunistic,
-			false,
-			myMail.From.Domain,
-			to.Domain,
-			m.SmtpOpts,
-		)
-		if err != nil {
-			sublogger.Error().Err(err).
-				Msg("smtpclient.New")
-			return err
-		}
-		err = client.Deliver(
-			ctx,
-			myMail.From.String(),
-			to.String(),
-			int64(len(myMail.Body)),
-			bytes.NewReader(myMail.Body),
-			true, false, false,
-		)
-		if err != nil {
-			if smtpclientErr, ok := err.(smtpclient.Error); ok {
-				sublogger.Error().
-					Err(err).
-					Interface("smtpclient_err", smtpclientErr).
-					Msg("smtpclient.Deliver")
-			} else {
-				sublogger.Error().Err(err).
-					Msg("smtpclient.Deliver")
-			}
-		}
-		sublogger.Info().Msg("smtpclient.Deliver done")
+	client, err := smtpclient.New(
+		ctx,
+		m.Slogger,
+		conn,
+		smtpclient.TLSOpportunistic,
+		false,
+		myMail.From.Domain,
+		to.Domain,
+		m.SmtpOpts,
+	)
+	if err != nil {
+		logger.Error().Err(err).
+			Msg("smtpclient.New")
+		return nil, err
 	}
-	return err
+	resps, err := client.DeliverMultiple(
+		ctx,
+		myMail.From.String(),
+		[]string{toStr},
+		int64(len(myMail.Body)),
+		bytes.NewReader(myMail.Body),
+		true, false, false,
+	)
+	if err != nil {
+		if smtpclientErr, ok := err.(smtpclient.Error); ok {
+			logger.Error().
+				Err(err).
+				Interface("smtpclient_err", smtpclientErr).
+				Msg("smtpclient.Deliver")
+		} else {
+			logger.Error().Err(err).
+				Msg("smtpclient.Deliver")
+		}
+		return nil, err
+	}
+
+	if len(resps) == 0 {
+		return nil, errors.New("no responses")
+	}
+	results := make([]Response, 0)
+	for _, resp := range resps {
+		logger.Info().
+			Interface("resp", resp).
+			Msg("smtpclient.Deliver response")
+		resp := Response{
+			Response: resp,
+		}
+		results = append(results, resp)
+	}
+	return results, nil
 }

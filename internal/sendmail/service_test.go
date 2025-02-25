@@ -88,8 +88,8 @@ func TestReadNextMail(t *testing.T) {
 			mailSender.EXPECT().
 				SendMail(ctx, gomock.Any()).
 				DoAndReturn(
-					func(_ context.Context, _ *mail.Mail) error {
-						return nil
+					func(_ context.Context, _ *mail.Mail) (map[string][]Response, map[string]error) {
+						return nil, nil
 					},
 				).AnyTimes()
 			mailTransformer := file_mail.NewMockIMailTransformer(ctrl)

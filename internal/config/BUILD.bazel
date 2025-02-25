@@ -21,6 +21,7 @@ go_library(
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//smtp",
         "@com_github_rs_zerolog//:zerolog",
+        "@com_github_spf13_cobra//:cobra",
         "@com_github_spf13_viper//:viper",
     ],
 )

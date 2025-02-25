@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/mjl-/mox/dns"
+	"github.com/mjl-/mox/smtp"
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 )
@@ -18,8 +19,12 @@ type INetDialerFactory interface {
 }
 
 type IMailSender interface {
-	Deliver(ctx context.Context, conn net.Conn, mail *mail.Mail) error
+	Deliver(ctx context.Context, conn net.Conn, mail *mail.Mail, to smtp.Address) ([]Response, error)
 	LookupMX(ctx context.Context, domain dns.Domain) ([]string, error)
 	NewConn(ctx context.Context, hosts []string) (net.Conn, error)
-	SendMail(ctx context.Context, mail *mail.Mail) error
+	SendMail(ctx context.Context, mail *mail.Mail) (map[string][]Response, map[string]error)
+}
+
+type Response struct {
+	smtpclient.Response
 }

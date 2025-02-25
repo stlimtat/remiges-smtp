@@ -90,7 +90,6 @@ outerloop:
 			logger.Info().Time("t", t).Msg("ProcessFileLoop.ticker.C")
 			fileInfo, _, err := s.ReadNextMail(ctx)
 			if err != nil {
-				logger.Error().Err(err).Msg("ProcessFile")
 				continue
 			}
 			if fileInfo == nil {
@@ -135,9 +134,23 @@ func (s *SendMailService) ReadNextMail(
 		return nil, nil, err
 	}
 	fileInfo.Status = input.FILE_STATUS_MAIL_PROCESS
-	err = s.MailSender.SendMail(ctx, myMail)
-	if err != nil {
+	responses, errs := s.MailSender.SendMail(ctx, myMail)
+	if errs != nil {
 		return nil, nil, err
+	}
+	for to, response := range responses {
+		if errs[to] != nil {
+			logger.Error().
+				AnErr("err", errs[to]).
+				Interface("response", response).
+				Str("to", to).
+				Msg("Delivery failed")
+			continue
+		}
+		logger.Info().
+			Interface("response", response).
+			Str("to", to).
+			Msg("Delivery done")
 	}
 	fileInfo.Status = input.FILE_STATUS_DELIVERED
 
