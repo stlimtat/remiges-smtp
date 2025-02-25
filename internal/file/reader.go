@@ -52,6 +52,23 @@ func (r *DefaultFileReader) ValidateInPath(
 ) error {
 	logger := zerolog.Ctx(ctx)
 	// 1. check that directory exists
+	if strings.HasPrefix(r.InPath, "./") {
+		wd, err := os.Getwd()
+		if err != nil {
+			logger.Error().Err(err).Msg("os.Getwd")
+			return err
+		}
+		r.InPath = filepath.Join(wd, r.InPath[2:])
+	}
+	if strings.HasPrefix(r.InPath, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			logger.Error().Err(err).Msg("os.UserHomeDir")
+			return err
+		}
+		r.InPath = filepath.Join(home, r.InPath[2:])
+	}
+	r.InPath = filepath.Clean(r.InPath)
 	fileInfo, err := os.Stat(r.InPath)
 	if err != nil {
 		logger.Error().Err(err).Msg("os.Stat")
