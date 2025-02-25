@@ -12,6 +12,7 @@ import (
 	zerologgin "github.com/go-mods/zerolog-gin"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+	"github.com/stlimtat/remiges-smtp/internal/config"
 	rhttp "github.com/stlimtat/remiges-smtp/internal/http"
 	"golang.org/x/sync/errgroup"
 )
@@ -33,9 +34,7 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 		Use:   "server",
 		Short: "Run the smtpclient",
 		Long:  `Runs the smtp client which performs several tasks`,
-		Args: func(_ *cobra.Command, _ []string) error {
-			return nil
-		},
+		Args:  config.CobraSendMailArgsFunc,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverCmd.server = newServer(cmd, args)
 			err = serverCmd.server.Run(cmd.Context())

@@ -9,3 +9,20 @@ services:
       start_period: 60s
     ports:
       - 6379:6379
+
+  smtpclientd:
+    build:
+      context: .
+      dockerfile: Dockerfile.smtpclientd
+    depends_on:
+      - redis
+    ports:
+      - 8000:8000
+    volumes:
+      - ./config:/app/config
+      - ./testdata:/app/data
+volumes:
+  config:
+    driver: local
+  data:
+    driver: local

@@ -1,0 +1,44 @@
+debug: false
+from: spteo@stlim.net
+mail_processors:
+  - type: unixdos
+    index: 1
+  - type: body
+    index: 2
+  - type: bodyHeaders
+    index: 3
+  - type: mergeBody
+    index: 99
+read_file:
+  concurrency: 1
+  file_mails:
+    - type: headers
+      index: 1
+      args:
+        prefix: "H??"
+    - type: header_from
+      index: 2
+      args:
+        type: default
+        default: "spteo@stlim.net"
+    - type: header_to
+      index: 3
+      args:
+        type: default
+        default: "st_lim+remiges-smtp@stlim.net"
+    - type: header_subject
+      index: 4
+    - type: header_contenttype
+      index: 5
+    - type: header_msgid
+      index: 6
+    - type: body
+      index: 7
+  from: spteo@stlim.net
+  in_path: /app/data
+  poll_interval: 60s
+  redis_addr: redis:6379
+to: st_lim+remiges-smtp@stlim.net
+urls:
+  urls:
+    - ws://127.0.0.1:9223/

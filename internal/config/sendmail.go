@@ -2,10 +2,13 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/mjl-/mox/smtp"
 	"github.com/rs/zerolog"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -17,8 +20,24 @@ type SendMailConfig struct {
 	ToAddr         smtp.Address          `mapstructure:",omitempty"`
 	Msg            string                `mapstructure:"msg"`
 	MsgBytes       []byte                `mapstructure:",omitempty"`
+	PollInterval   time.Duration         `mapstructure:"poll_interval"`
 	ReadFileConfig ReadFileConfig        `mapstructure:"read_file"`
 	MailProcessors []MailProcessorConfig `mapstructure:"mail_processors"`
+}
+
+func CobraSendMailArgsFunc(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
+	cmdLogger := zerolog.Ctx(ctx)
+	cfg := NewSendMailConfig(ctx)
+	if len(cfg.From) < 1 || len(cfg.To) < 1 {
+		cmdLogger.Fatal().
+			Err(fmt.Errorf("missing fields")).
+			Interface("cfg", cfg).
+			Msg("Missing fields")
+	}
+	ctx = SetContextConfig(ctx, cfg)
+	cmd.SetContext(ctx)
+	return nil
 }
 
 func NewSendMailConfig(ctx context.Context) SendMailConfig {

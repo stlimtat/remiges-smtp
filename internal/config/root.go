@@ -10,7 +10,10 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
 
-const CTX_KEY_CONFIG = "config"
+const (
+	CTX_KEY_CONFIG = "config"
+	CONFIG_PATH    = "/app/config"
+)
 
 func RootConfigInit() {
 	ctx := context.Background()
@@ -21,6 +24,7 @@ func RootConfigInit() {
 		logger.Fatal().Err(err).Msg("homedir.Dir")
 	}
 	viper.AddConfigPath(home)
+	viper.AddConfigPath(CONFIG_PATH)
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.SetEnvPrefix("REM")

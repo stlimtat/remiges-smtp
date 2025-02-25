@@ -1,0 +1,19 @@
+FROM golang:1.24.0-alpine AS builder
+
+WORKDIR /app
+
+COPY . .
+
+RUN go build -o smtpclient ./cmd/smtpclient/...
+
+FROM alpine:latest
+
+COPY --from=builder /app/smtpclient /usr/local/bin/smtpclient
+COPY ./config /app/config
+
+RUN addgroup -g 1000 -S smtpclient \
+    && adduser -G smtpclient -g 1000 -h /app/config -S -s /bin/sh -u 1000 -D smtpclient \
+    && mkdir -p /app/data \
+    && chown -R smtpclient:smtpclient /app
+
+ENTRYPOINT ["/usr/local/bin/smtpclient", "server"]

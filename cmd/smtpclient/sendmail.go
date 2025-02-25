@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -28,20 +27,7 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 		Use:   "sendmail",
 		Short: "Send a mail from a sender email, to a destination email, with a test message",
 		Long:  `Runs the smtp client which will run sendMail`,
-		Args: func(cmd *cobra.Command, _ []string) error {
-			ctx := cmd.Context()
-			cmdLogger := zerolog.Ctx(ctx)
-			cfg := config.NewSendMailConfig(ctx)
-			if len(cfg.From) < 1 || len(cfg.To) < 1 {
-				cmdLogger.Fatal().
-					Err(fmt.Errorf("missing fields")).
-					Interface("cfg", cfg).
-					Msg("Missing fields")
-			}
-			ctx = config.SetContextConfig(ctx, cfg)
-			cmd.SetContext(ctx)
-			return nil
-		},
+		Args:  config.CobraSendMailArgsFunc,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sendMailSvc := newSendMailSvc(cmd, args)
 			err = sendMailSvc.Run(cmd, args)
