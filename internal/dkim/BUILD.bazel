@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dkim",
+    srcs = ["sign.go"],
+    importpath = "github.com/stlimtat/remiges-smtp/internal/dkim",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/config",
+        "//internal/mail",
+        "@com_github_mjl_mox//dns",
+        "@com_github_mjl_mox//mox-",
+        "@com_github_rs_zerolog//:zerolog",
+    ],
+)

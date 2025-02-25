@@ -49,6 +49,8 @@ require (
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/mjl-/autocert v0.0.0-20231214125928-31b7400acb05 // indirect
 	github.com/mjl-/bstore v0.0.6 // indirect
+	github.com/mjl-/sconf v0.0.7 // indirect
+	github.com/mjl-/xfmt v0.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/onsi/gomega v1.35.1 // indirect

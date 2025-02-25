@@ -4,6 +4,7 @@ go_library(
     name = "config",
     srcs = [
         "dkim.go",
+        "domain.go",
         "file_mail.go",
         "lookupmx.go",
         "mail.go",
