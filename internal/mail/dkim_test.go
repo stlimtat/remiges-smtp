@@ -63,10 +63,10 @@ args:
 			processor := &DKIMProcessor{}
 			err = processor.Init(ctx, cfg)
 			require.NoError(t, err)
-			assert.Subset(t, processor.dkimCfg.Selectors, tt.wantDKIMConfig.Selectors)
-			assert.Subset(t, processor.dkimCfg.Sign, tt.wantDKIMConfig.Sign)
-			assert.Subset(t, processor.dkimCfg.MoxSelectors, tt.wantDKIMConfig.MoxSelectors)
-			assert.Subset(t, processor.dkimCfg.MoxSign, tt.wantDKIMConfig.MoxSign)
+			assert.Subset(t, processor.DkimCfg.Selectors, tt.wantDKIMConfig.Selectors)
+			assert.Subset(t, processor.DkimCfg.Sign, tt.wantDKIMConfig.Sign)
+			assert.Subset(t, processor.DkimCfg.MoxSelectors, tt.wantDKIMConfig.MoxSelectors)
+			assert.Subset(t, processor.DkimCfg.MoxSign, tt.wantDKIMConfig.MoxSign)
 		})
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/mitchellh/mapstructure"
+	moxConfig "github.com/mjl-/mox/config"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 )
@@ -13,8 +14,9 @@ const (
 )
 
 type DKIMProcessor struct {
-	cfg     config.MailProcessorConfig
-	dkimCfg config.DKIMConfig
+	Cfg       config.MailProcessorConfig
+	DkimCfg   config.DKIMConfig
+	DomainCfg moxConfig.Domain
 }
 
 func (p *DKIMProcessor) Init(
@@ -23,18 +25,18 @@ func (p *DKIMProcessor) Init(
 ) error {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("DKIMProcessor Init")
-	p.cfg = cfg
+	p.Cfg = cfg
 	dkimCfgAny, ok := cfg.Args[DKIMProcessorType]
 	if !ok {
 		logger.Fatal().Msg("DKIMProcessor: no config")
 	}
 	logger.Debug().Interface("dkimCfgAny", dkimCfgAny).Msg("DKIMProcessor: dkimCfgAny")
-	p.dkimCfg = config.DKIMConfig{}
-	err := mapstructure.Decode(dkimCfgAny, &p.dkimCfg)
+	p.DkimCfg = config.DKIMConfig{}
+	err := mapstructure.Decode(dkimCfgAny, &p.DkimCfg)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("DKIMProcessor: decode")
 	}
-	err = p.dkimCfg.Transform(ctx)
+	err = p.DkimCfg.Transform(ctx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("DKIMProcessor: transform")
 	}
@@ -42,10 +44,10 @@ func (p *DKIMProcessor) Init(
 }
 
 func (p *DKIMProcessor) Index() int {
-	return p.cfg.Index
+	return p.Cfg.Index
 }
 
-func (_ *DKIMProcessor) Process(
+func (p *DKIMProcessor) Process(
 	ctx context.Context,
 	inMail *Mail,
 ) (*Mail, error) {
@@ -53,6 +55,12 @@ func (_ *DKIMProcessor) Process(
 	logger.Debug().
 		Interface("from", inMail.From).
 		Msg("DKIMProcessor")
+
+	selectors := p.DkimCfg.Selectors
+	if len(selectors) == 0 {
+		logger.Debug().Msg("DKIMProcessor: no selectors")
+		return inMail, nil
+	}
 
 	// selectors := mox.DKIMSelectors(confDom.DKIM)
 	// if len(selectors) > 0 {
