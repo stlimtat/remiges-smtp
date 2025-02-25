@@ -10,14 +10,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	zerologgin "github.com/go-mods/zerolog-gin"
-	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
-	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/internal/file"
-	"github.com/stlimtat/remiges-smtp/internal/file_mail"
 	rhttp "github.com/stlimtat/remiges-smtp/internal/http"
-	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -52,51 +47,20 @@ func newServerCmd(ctx context.Context) (*serverCmd, *cobra.Command) {
 }
 
 type Server struct {
-	AdminSvr               *http.Server
-	Cfg                    config.ServerConfig
-	FileReader             file.IFileReader
-	FileReadTracker        file.IFileReadTracker
-	FileService            *file_mail.FileMailService
-	Gin                    *gin.Engine
-	MailTransformerFactory *file_mail.MailTransformerFactory
-	RedisClient            *redis.Client
+	AdminSvr *http.Server
+	*GenericSvc
+	Gin *gin.Engine
 }
 
 func newServer(
 	cmd *cobra.Command,
-	_ []string,
+	args []string,
 ) *Server {
-	ctx := cmd.Context()
-	logger := zerolog.Ctx(ctx)
 	var err error
 	result := &Server{}
-
-	result.Cfg = config.NewServerConfig(ctx)
-	result.RedisClient = redis.NewClient(&redis.Options{
-		Addr: result.Cfg.ReadFileConfig.RedisAddr,
-	})
-	result.FileReadTracker = file.NewFileReadTracker(ctx, result.RedisClient)
-	result.FileReader, err = file.NewDefaultFileReader(
-		ctx,
-		result.Cfg.ReadFileConfig.InPath,
-		result.FileReadTracker,
-	)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newServer.FileReader")
-	}
-	result.MailTransformerFactory = file_mail.NewMailTransformerFactory(ctx, result.Cfg.ReadFileConfig.FileMails)
-	result.FileService = file_mail.NewFileMailService(
-		ctx,
-		result.Cfg.ReadFileConfig.Concurrency,
-		result.FileReader,
-		result.MailTransformerFactory,
-		result.Cfg.PollInterval,
-	)
-
-	if result.Cfg.Debug {
-		telemetry.SetGlobalLogLevel(zerolog.DebugLevel)
-		gin.SetMode(gin.DebugMode)
-	}
+	result.GenericSvc = newGenericSvc(cmd, args)
+	ctx := cmd.Context()
+	logger := zerolog.Ctx(ctx)
 	result.Gin = gin.New()
 	result.Gin.Use(gin.Recovery())
 	result.Gin.Use(
@@ -148,7 +112,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	eg.Go(func() error {
 		// fileReader is able to stop based on ctx.Done
-		return s.FileService.Run(ctx)
+		return s.GenericSvc.SendMailService.Run(ctx)
 	})
 
 	err = eg.Wait()

@@ -70,18 +70,18 @@ func (mr *MockIMailProcessorMockRecorder) Init(ctx, cfg any) *gomock.Call {
 }
 
 // Process mocks base method.
-func (m *MockIMailProcessor) Process(ctx context.Context, inMail *Mail) (*Mail, error) {
+func (m *MockIMailProcessor) Process(ctx context.Context, myMail *Mail) (*Mail, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Process", ctx, inMail)
+	ret := m.ctrl.Call(m, "Process", ctx, myMail)
 	ret0, _ := ret[0].(*Mail)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Process indicates an expected call of Process.
-func (mr *MockIMailProcessorMockRecorder) Process(ctx, inMail any) *gomock.Call {
+func (mr *MockIMailProcessorMockRecorder) Process(ctx, myMail any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockIMailProcessor)(nil).Process), ctx, inMail)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockIMailProcessor)(nil).Process), ctx, myMail)
 }
 
 // MockIMailProcessorFactory is a mock of IMailProcessorFactory interface.

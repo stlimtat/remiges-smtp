@@ -82,6 +82,20 @@ func (m *MockIMailSender) EXPECT() *MockIMailSenderMockRecorder {
 	return m.recorder
 }
 
+// Deliver mocks base method.
+func (m *MockIMailSender) Deliver(ctx context.Context, conn net.Conn, mail *mail.Mail) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Deliver", ctx, conn, mail)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Deliver indicates an expected call of Deliver.
+func (mr *MockIMailSenderMockRecorder) Deliver(ctx, conn, mail any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Deliver", reflect.TypeOf((*MockIMailSender)(nil).Deliver), ctx, conn, mail)
+}
+
 // LookupMX mocks base method.
 func (m *MockIMailSender) LookupMX(ctx context.Context, domain dns.Domain) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -113,15 +127,15 @@ func (mr *MockIMailSenderMockRecorder) NewConn(ctx, hosts any) *gomock.Call {
 }
 
 // SendMail mocks base method.
-func (m *MockIMailSender) SendMail(ctx context.Context, conn net.Conn, mail *mail.Mail) error {
+func (m *MockIMailSender) SendMail(ctx context.Context, mail *mail.Mail) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendMail", ctx, conn, mail)
+	ret := m.ctrl.Call(m, "SendMail", ctx, mail)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendMail indicates an expected call of SendMail.
-func (mr *MockIMailSenderMockRecorder) SendMail(ctx, conn, mail any) *gomock.Call {
+func (mr *MockIMailSenderMockRecorder) SendMail(ctx, mail any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMail", reflect.TypeOf((*MockIMailSender)(nil).SendMail), ctx, conn, mail)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMail", reflect.TypeOf((*MockIMailSender)(nil).SendMail), ctx, mail)
 }

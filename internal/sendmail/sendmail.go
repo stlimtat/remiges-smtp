@@ -132,6 +132,39 @@ func (m *MailSender) NewConn(
 
 func (m *MailSender) SendMail(
 	ctx context.Context,
+	myMail *mail.Mail,
+) error {
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("from", myMail.From.String()).
+		Bytes("msgid", myMail.MsgID).
+		Bytes("subject", myMail.Subject).
+		Bytes("content_type", myMail.ContentType).
+		Logger()
+
+	for _, to := range myMail.To {
+		hosts, err := m.LookupMX(ctx, to.Domain)
+		if err != nil {
+			logger.Error().Err(err).Msg("MailSender.LookupMX")
+			return err
+		}
+		conn, err := m.NewConn(ctx, hosts)
+		if err != nil {
+			logger.Error().Err(err).Msg("MailSender.NewConn")
+			return err
+		}
+		err = m.Deliver(ctx, conn, myMail)
+		if err != nil {
+			logger.Error().Err(err).Msg("MailSender.Deliver")
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *MailSender) Deliver(
+	ctx context.Context,
 	conn net.Conn,
 	myMail *mail.Mail,
 ) error {

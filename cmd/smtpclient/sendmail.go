@@ -6,19 +6,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
-	"github.com/mjl-/mox/dns"
-	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/internal/file"
-	"github.com/stlimtat/remiges-smtp/internal/file_mail"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
-	"github.com/stlimtat/remiges-smtp/internal/sendmail"
-	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
 
 type sendMailCmd struct {
@@ -98,84 +90,15 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 }
 
 type SendMailSvc struct {
-	Cfg                    config.SendMailConfig
-	DialerFactory          sendmail.INetDialerFactory
-	FileReader             file.IFileReader
-	FileReadTracker        file.IFileReadTracker
-	FileMailService        *file_mail.FileMailService
-	MailProcessorFactory   *mail.DefaultMailProcessorFactory
-	MailSender             sendmail.IMailSender
-	MailTransformerFactory *file_mail.MailTransformerFactory
-	RedisClient            *redis.Client
-	Resolver               dns.Resolver
-	Slogger                *slog.Logger
+	*GenericSvc
 }
 
 func newSendMailSvc(
 	cmd *cobra.Command,
-	_ []string,
+	args []string,
 ) *SendMailSvc {
-	var err error
 	result := &SendMailSvc{}
-	ctx := cmd.Context()
-	logger := zerolog.Ctx(ctx)
-	result.Cfg = config.GetContextConfig(ctx).(config.SendMailConfig)
-	result.Slogger = telemetry.GetSLogger(ctx)
-	result.DialerFactory = sendmail.NewDefaultDialerFactory()
-	result.RedisClient = redis.NewClient(&redis.Options{
-		Addr: result.Cfg.ReadFileConfig.RedisAddr,
-	})
-	// Run a ping on the redis client to check if it's working
-	_, err = result.RedisClient.Ping(ctx).Result()
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newSendMailSvc.RedisClient.Ping")
-	}
-	result.FileReadTracker = file.NewFileReadTracker(
-		ctx,
-		result.RedisClient,
-	)
-	result.FileReader, err = file.NewDefaultFileReader(
-		ctx,
-		result.Cfg.ReadFileConfig.InPath,
-		result.FileReadTracker,
-	)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newSendMailSvc.FileReader")
-	}
-	result.MailTransformerFactory = file_mail.NewMailTransformerFactory(
-		ctx,
-		result.Cfg.ReadFileConfig.FileMails,
-	)
-	err = result.MailTransformerFactory.Init(ctx, config.FileMailConfig{})
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newSendMailSvc.MailTransformerFactory.Init")
-	}
-
-	result.FileMailService = file_mail.NewFileMailService(
-		ctx,
-		result.Cfg.ReadFileConfig.Concurrency,
-		result.FileReader,
-		result.MailTransformerFactory,
-		result.Cfg.ReadFileConfig.PollInterval,
-	)
-	result.MailProcessorFactory, err = mail.NewDefaultMailProcessorFactory(ctx, result.Cfg.MailProcessors)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory")
-	}
-	err = result.MailProcessorFactory.Init(ctx, config.MailProcessorConfig{})
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory.Init")
-	}
-	result.Resolver = dns.StrictResolver{
-		Log: result.Slogger,
-	}
-	result.MailSender = sendmail.NewMailSender(
-		ctx,
-		result.Cfg.Debug,
-		result.DialerFactory,
-		result.Resolver,
-		result.Slogger,
-	)
+	result.GenericSvc = newGenericSvc(cmd, args)
 	return result
 }
 
@@ -187,12 +110,6 @@ func (s *SendMailSvc) Run(
 	logger := zerolog.Ctx(ctx)
 	var err error
 
-	hosts, err := s.MailSender.LookupMX(ctx, s.Cfg.ToAddr.Domain)
-	if err != nil {
-		logger.Error().Err(err).Msg("MailSender.LookupMX")
-		return err
-	}
-
 	// refresh file list
 	_, err = s.FileReader.RefreshList(ctx)
 	if err != nil {
@@ -201,7 +118,7 @@ func (s *SendMailSvc) Run(
 	}
 
 	// read a file
-	fileInfo, myMail, err := s.FileMailService.ReadNextMail(ctx)
+	fileInfo, myMail, err := s.SendMailService.ReadNextMail(ctx)
 	if err != nil {
 		logger.Error().Err(err).Msg("FileMailService.ReadNextMail")
 		return err
@@ -210,25 +127,6 @@ func (s *SendMailSvc) Run(
 		Str("fileInfo", fileInfo.ID).
 		Str("from", myMail.From.String()).
 		Msg("ReadNextMail")
-
-	// process the mail
-	myMail, err = s.MailProcessorFactory.Process(ctx, myMail)
-	if err != nil {
-		logger.Error().Err(err).Msg("MailProcessorFactory.Process")
-		return err
-	}
-
-	conn, err := s.MailSender.NewConn(ctx, hosts)
-	if err != nil {
-		logger.Error().Err(err).Msg("MailSender.NewConn")
-		return err
-	}
-
-	err = s.MailSender.SendMail(ctx, conn, myMail)
-	if err != nil {
-		logger.Error().Err(err).Msg("MailSender.SendMail")
-		return err
-	}
 
 	return nil
 }

@@ -22,7 +22,7 @@ type Mail struct {
 type IMailProcessor interface {
 	Index() int
 	Init(ctx context.Context, cfg config.MailProcessorConfig) error
-	Process(ctx context.Context, inMail *Mail) (outMail *Mail, err error)
+	Process(ctx context.Context, myMail *Mail) (*Mail, error)
 }
 
 type IMailProcessorFactory interface {

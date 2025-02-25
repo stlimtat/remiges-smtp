@@ -8,14 +8,18 @@ go_library(
         "interface.go",
         "mock.go",
         "sendmail.go",
+        "service.go",
         "smtpclient_mock.go",
     ],
     importpath = "github.com/stlimtat/remiges-smtp/internal/sendmail",
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/config",
+        "//internal/file",
+        "//internal/file_mail",
         "//internal/mail",
         "//internal/utils",
+        "//pkg/input",
         "@com_github_mjl_adns//:adns",
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//smtpclient",
@@ -26,12 +30,18 @@ go_library(
 
 go_test(
     name = "sendmail_test",
-    srcs = ["sendmail_test.go"],
+    srcs = [
+        "sendmail_test.go",
+        "service_test.go",
+    ],
     embed = [":sendmail"],
     deps = [
+        "//internal/file",
+        "//internal/mail",
         "//internal/telemetry",
         "@com_github_mjl_adns//:adns",
         "@com_github_mjl_mox//dns",
+        "@com_github_mjl_mox//smtp",
         "@com_github_stretchr_testify//assert",
         "@org_uber_go_mock//gomock",
     ],

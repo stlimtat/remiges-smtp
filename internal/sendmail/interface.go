@@ -18,7 +18,8 @@ type INetDialerFactory interface {
 }
 
 type IMailSender interface {
+	Deliver(ctx context.Context, conn net.Conn, mail *mail.Mail) error
 	LookupMX(ctx context.Context, domain dns.Domain) ([]string, error)
 	NewConn(ctx context.Context, hosts []string) (net.Conn, error)
-	SendMail(ctx context.Context, conn net.Conn, mail *mail.Mail) error
+	SendMail(ctx context.Context, mail *mail.Mail) error
 }

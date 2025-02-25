@@ -8,6 +8,8 @@ const (
 	FILE_STATUS_BODY_READ     FileStatus = 3
 	FILE_STATUS_HEADERS_READ  FileStatus = 4
 	FILE_STATUS_HEADERS_PARSE FileStatus = 5
+	FILE_STATUS_MAIL_PROCESS  FileStatus = 6
+	FILE_STATUS_DELIVERED     FileStatus = 7
 	FILE_STATUS_DONE          FileStatus = 99
 	FILE_STATUS_ERROR         FileStatus = 0
 

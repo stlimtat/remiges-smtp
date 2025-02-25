@@ -13,7 +13,6 @@ go_library(
         "headers.go",
         "interface.go",
         "mock.go",
-        "service.go",
     ],
     importpath = "github.com/stlimtat/remiges-smtp/internal/file_mail",
     visibility = ["//:__subpackages__"],
@@ -41,7 +40,6 @@ go_test(
         "header_subj_test.go",
         "header_to_test.go",
         "headers_test.go",
-        "service_test.go",
     ],
     embed = [":file_mail"],
     deps = [
@@ -55,6 +53,5 @@ go_test(
         "@com_github_mjl_mox//smtp",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
-        "@org_uber_go_mock//gomock",
     ],
 )

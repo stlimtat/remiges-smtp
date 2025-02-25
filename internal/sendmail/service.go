@@ -1,4 +1,4 @@
-package file_mail
+package sendmail
 
 import (
 	"context"
@@ -7,56 +7,62 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/file"
+	"github.com/stlimtat/remiges-smtp/internal/file_mail"
 	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
-type FileMailService struct {
+type SendMailService struct {
 	Concurrency     int
 	FileReader      file.IFileReader
-	MailTransformer IMailTransformer
+	MailProcessor   mail.IMailProcessor
+	MailSender      IMailSender
+	MailTransformer file_mail.IMailTransformer
 	PollInterval    time.Duration
 	ticker          *time.Ticker
 }
 
-func NewFileMailService(
+func NewSendMailService(
 	_ context.Context,
 	concurrency int,
 	fileReader file.IFileReader,
-	mailTransformer IMailTransformer,
+	mailProcessor mail.IMailProcessor,
+	mailSender IMailSender,
+	mailTransformer file_mail.IMailTransformer,
 	pollInterval time.Duration,
-) *FileMailService {
-	result := &FileMailService{
+) *SendMailService {
+	result := &SendMailService{
 		Concurrency:     concurrency,
 		FileReader:      fileReader,
+		MailProcessor:   mailProcessor,
+		MailSender:      mailSender,
 		MailTransformer: mailTransformer,
 		PollInterval:    pollInterval,
 		ticker:          time.NewTicker(pollInterval),
 	}
-
 	return result
 }
 
-func (fs *FileMailService) Run(
+func (s *SendMailService) Run(
 	ctx context.Context,
 ) error {
-	defer fs.ticker.Stop()
+	defer s.ticker.Stop()
 	logger := zerolog.Ctx(ctx)
 
 	var wg sync.WaitGroup
-	for range fs.Concurrency {
+	for range s.Concurrency {
 		wg.Add(1)
-		go fs.ProcessFileLoop(ctx, &wg)
+		go s.ProcessFileLoop(ctx, &wg)
 	}
 
 	// https://blog.devtrovert.com/p/select-and-for-range-channel-i-bet
 outerloop:
 	for {
 		select {
-		case t := <-fs.ticker.C:
+		case t := <-s.ticker.C:
 			// check file exists
 			logger.Info().Time("t", t).Msg("Run.ticker.C")
-			_, err := fs.FileReader.RefreshList(ctx)
+			_, err := s.FileReader.RefreshList(ctx)
 			if err != nil {
 				logger.Error().Err(err).Msg("RefreshList")
 				continue
@@ -70,7 +76,7 @@ outerloop:
 	return nil
 }
 
-func (fs *FileMailService) ProcessFileLoop(
+func (s *SendMailService) ProcessFileLoop(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 ) {
@@ -80,9 +86,9 @@ func (fs *FileMailService) ProcessFileLoop(
 outerloop:
 	for {
 		select {
-		case t := <-fs.ticker.C:
+		case t := <-s.ticker.C:
 			logger.Info().Time("t", t).Msg("ProcessFileLoop.ticker.C")
-			fileInfo, _, err := fs.ReadNextMail(ctx)
+			fileInfo, _, err := s.ReadNextMail(ctx)
 			if err != nil {
 				logger.Error().Err(err).Msg("ProcessFile")
 				continue
@@ -91,7 +97,7 @@ outerloop:
 				logger.Debug().Msg("no fileInfo found")
 				continue
 			}
-			fileInfo.Status = input.FILE_STATUS_BODY_READ
+			fileInfo.Status = input.FILE_STATUS_DONE
 		case <-ctx.Done():
 			logger.Debug().Msg("ctx.Done")
 			break outerloop
@@ -99,30 +105,41 @@ outerloop:
 	}
 }
 
-func (fs *FileMailService) ReadNextMail(
+func (s *SendMailService) ReadNextMail(
 	ctx context.Context,
 ) (*file.FileInfo, *mail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 
-	fileInfo, err := fs.FileReader.ReadNextFile(ctx)
+	fileInfo, err := s.FileReader.ReadNextFile(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 	if fileInfo == nil {
-		logger.Info().Msg("no fileInfo found")
 		return nil, nil, nil
 	}
 	logger.Debug().
 		Str("fileInfo", fileInfo.ID).
 		Msg("ReadNextFile")
 	fileInfo.Status = input.FILE_STATUS_PROCESSING
-	myMail, err := fs.MailTransformer.Transform(
+	myMail, err := s.MailTransformer.Transform(
 		ctx, fileInfo, &mail.Mail{},
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 	fileInfo.Status = input.FILE_STATUS_BODY_READ
+
+	// process the mail
+	myMail, err = s.MailProcessor.Process(ctx, myMail)
+	if err != nil {
+		return nil, nil, err
+	}
+	fileInfo.Status = input.FILE_STATUS_MAIL_PROCESS
+	err = s.MailSender.SendMail(ctx, myMail)
+	if err != nil {
+		return nil, nil, err
+	}
+	fileInfo.Status = input.FILE_STATUS_DELIVERED
 
 	return fileInfo, myMail, nil
 }
