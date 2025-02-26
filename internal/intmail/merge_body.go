@@ -1,10 +1,11 @@
-package mail
+package intmail
 
 import (
 	"context"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 const (
@@ -35,8 +36,8 @@ func (p *MergeBodyProcessor) Index() int {
 
 func (_ *MergeBodyProcessor) Process(
 	ctx context.Context,
-	inMail *Mail,
-) (outMail *Mail, err error) {
+	inMail *mail.Mail,
+) (*mail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("MergeBodyProcessor")
 

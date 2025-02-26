@@ -1,4 +1,4 @@
-package mail
+package intmail
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,13 +14,13 @@ import (
 func TestMergeBodyProcessor(t *testing.T) {
 	tests := []struct {
 		name     string
-		inMail   *Mail
+		inMail   *mail.Mail
 		wantBody []byte
 		wantErr  bool
 	}{
 		{
 			name: "happy",
-			inMail: &Mail{
+			inMail: &mail.Mail{
 				BodyHeaders: map[string][]byte{"From": []byte("test@example.com")},
 				Body:        []byte("Hello, world!"),
 			},

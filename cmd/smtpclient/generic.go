@@ -3,14 +3,16 @@ package main
 import (
 	"log/slog"
 
-	"github.com/mjl-/mox/dns"
+	moxDns "github.com/mjl-/mox/dns"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/dns"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/file_mail"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/internal/intmail"
+	"github.com/stlimtat/remiges-smtp/internal/output"
 	"github.com/stlimtat/remiges-smtp/internal/sendmail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
@@ -21,11 +23,13 @@ type GenericSvc struct {
 	FileReader             file.IFileReader
 	FileReadTracker        file.IFileReadTracker
 	SendMailService        *sendmail.SendMailService
-	MailProcessorFactory   *mail.DefaultMailProcessorFactory
+	MailProcessor          intmail.IMailProcessor
 	MailSender             sendmail.IMailSender
 	MailTransformerFactory *file_mail.MailTransformerFactory
+	MyOutput               output.IOutput
 	RedisClient            *redis.Client
-	Resolver               dns.Resolver
+	MoxResolver            moxDns.Resolver
+	MyResolver             dns.IResolver
 	Slogger                *slog.Logger
 }
 
@@ -68,32 +72,45 @@ func newGenericSvc(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MailTransformerFactory.Init")
 	}
+	outputFactory := &output.OutputFactory{}
+	_, err = outputFactory.NewOutputs(ctx, result.Cfg.Outputs)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newSendMailSvc.MyOutput")
+	}
+	result.MyOutput = outputFactory
+
+	result.MailProcessor, err = intmail.NewDefaultMailProcessorFactory(ctx, result.Cfg.MailProcessors)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory")
+	}
+	err = result.MailProcessor.Init(ctx, config.MailProcessorConfig{})
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory.Init")
+	}
 
 	result.SendMailService = sendmail.NewSendMailService(
 		ctx,
 		result.Cfg.ReadFileConfig.Concurrency,
 		result.FileReader,
-		result.MailProcessorFactory,
+		result.MailProcessor,
 		result.MailSender,
 		result.MailTransformerFactory,
+		result.MyOutput,
 		result.Cfg.ReadFileConfig.PollInterval,
 	)
-	result.MailProcessorFactory, err = mail.NewDefaultMailProcessorFactory(ctx, result.Cfg.MailProcessors)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory")
-	}
-	err = result.MailProcessorFactory.Init(ctx, config.MailProcessorConfig{})
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory.Init")
-	}
-	result.Resolver = dns.StrictResolver{
+	result.MoxResolver = moxDns.StrictResolver{
 		Log: result.Slogger,
 	}
+	result.MyResolver = dns.NewResolver(
+		ctx,
+		result.MoxResolver,
+		result.Slogger,
+	)
 	result.MailSender = sendmail.NewMailSender(
 		ctx,
 		result.Cfg.Debug,
 		result.DialerFactory,
-		result.Resolver,
+		result.MyResolver,
 		result.Slogger,
 	)
 	return result

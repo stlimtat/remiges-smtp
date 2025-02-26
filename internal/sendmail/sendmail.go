@@ -7,14 +7,14 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/mjl-/adns"
-	"github.com/mjl-/mox/dns"
 	"github.com/mjl-/mox/smtp"
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/internal/dns"
 	"github.com/stlimtat/remiges-smtp/internal/utils"
+	"github.com/stlimtat/remiges-smtp/pkg/dn"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 const (
@@ -22,18 +22,11 @@ const (
 	TCP_NETWORK           string = "tcp"
 )
 
-type MXRecord struct {
-	ADNSResult adns.Result
-	Domain     string
-	Entries    []dns.IPDomain
-	Hosts      []string
-}
-
 type MailSender struct {
-	CachedMX      map[string]MXRecord
+	CachedMX      map[string]dn.MXRecord
 	Debug         bool
 	DialerFactory INetDialerFactory
-	Resolver      dns.Resolver
+	Resolver      dns.IResolver
 	Slogger       *slog.Logger
 	SmtpOpts      smtpclient.Opts
 }
@@ -42,11 +35,11 @@ func NewMailSender(
 	ctx context.Context,
 	debug bool,
 	dialerFactory INetDialerFactory,
-	resolver dns.Resolver,
+	resolver dns.IResolver,
 	slogger *slog.Logger,
 ) *MailSender {
 	result := &MailSender{
-		CachedMX:      make(map[string]MXRecord, 0),
+		CachedMX:      make(map[string]dn.MXRecord, 0),
 		Debug:         debug,
 		DialerFactory: dialerFactory,
 		Resolver:      resolver,
@@ -58,55 +51,6 @@ func NewMailSender(
 		},
 	}
 	return result
-}
-
-func (m *MailSender) LookupMX(
-	ctx context.Context,
-	domain dns.Domain,
-) ([]string, error) {
-	logger := zerolog.Ctx(ctx).
-		With().
-		Str("domain", domain.ASCII).
-		Logger()
-
-	// 1. check if mx already exists in cache
-	result, ok := m.CachedMX[domain.ASCII]
-	if !ok {
-		// 2. resolve the mx record for the domain
-		ipDomain := dns.IPDomain{
-			Domain: domain,
-		}
-
-		_, _, _, expandedNextHop, hosts, _, err := smtpclient.GatherDestinations(
-			ctx, m.Slogger, m.Resolver, ipDomain,
-		)
-		if err != nil {
-			logger.Error().Err(err).Msg("smtpclient.GatherDestinations")
-			return nil, err
-		}
-		// 3. convert from dns.IPDomain to string
-		hostStrSlice := []string{}
-		for _, host := range hosts {
-			hostStrSlice = append(hostStrSlice, host.String())
-		}
-		if expandedNextHop.ASCII != domain.ASCII {
-			m.CachedMX[expandedNextHop.ASCII] = MXRecord{
-				Domain:  expandedNextHop.ASCII,
-				Entries: hosts,
-				Hosts:   hostStrSlice,
-			}
-		}
-		m.CachedMX[domain.ASCII] = MXRecord{
-			Domain:  domain.ASCII,
-			Entries: hosts,
-			Hosts:   hostStrSlice,
-		}
-		result = m.CachedMX[domain.ASCII]
-	}
-	logger.Info().
-		Strs("hosts", result.Hosts).
-		Msg("lookupMX")
-	return result.Hosts, nil
 }
 
 func (m *MailSender) NewConn(
@@ -135,19 +79,19 @@ func (m *MailSender) NewConn(
 func (m *MailSender) SendMail(
 	ctx context.Context,
 	myMail *mail.Mail,
-) (results map[string][]Response, errs map[string]error) {
+) (results map[string][]mail.Response, errs map[string]error) {
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("from", myMail.From.String()).
 		Bytes("msgid", myMail.MsgID).
 		Str("subject", string(myMail.Subject)).
 		Logger()
-	results = make(map[string][]Response, 0)
+	results = make(map[string][]mail.Response, 0)
 	errs = make(map[string]error, 0)
 
 	for _, to := range myMail.To {
 		toStr := to.String()
-		hosts, err := m.LookupMX(ctx, to.Domain)
+		hosts, err := m.Resolver.LookupMX(ctx, to.Domain)
 		if err != nil {
 			errs[toStr] = err
 			continue
@@ -178,7 +122,7 @@ func (m *MailSender) Deliver(
 	conn net.Conn,
 	myMail *mail.Mail,
 	to smtp.Address,
-) ([]Response, error) {
+) ([]mail.Response, error) {
 	toStr := to.String()
 	logger := zerolog.Ctx(ctx).
 		With().
@@ -232,12 +176,12 @@ func (m *MailSender) Deliver(
 	if len(resps) == 0 {
 		return nil, errors.New("no responses")
 	}
-	results := make([]Response, 0)
+	results := make([]mail.Response, 0)
 	for _, resp := range resps {
 		logger.Info().
 			Interface("resp", resp).
 			Msg("smtpclient.Deliver response")
-		resp := Response{
+		resp := mail.Response{
 			Response: resp,
 		}
 		results = append(results, resp)

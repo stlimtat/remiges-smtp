@@ -8,16 +8,19 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/file_mail"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/internal/intmail"
+	"github.com/stlimtat/remiges-smtp/internal/output"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 type SendMailService struct {
 	Concurrency     int
 	FileReader      file.IFileReader
-	MailProcessor   mail.IMailProcessor
+	MailProcessor   intmail.IMailProcessor
 	MailSender      IMailSender
 	MailTransformer file_mail.IMailTransformer
+	MyOutput        output.IOutput
 	PollInterval    time.Duration
 	ticker          *time.Ticker
 }
@@ -26,9 +29,10 @@ func NewSendMailService(
 	_ context.Context,
 	concurrency int,
 	fileReader file.IFileReader,
-	mailProcessor mail.IMailProcessor,
+	mailProcessor intmail.IMailProcessor,
 	mailSender IMailSender,
 	mailTransformer file_mail.IMailTransformer,
+	myOutput output.IOutput,
 	pollInterval time.Duration,
 ) *SendMailService {
 	result := &SendMailService{
@@ -37,6 +41,7 @@ func NewSendMailService(
 		MailProcessor:   mailProcessor,
 		MailSender:      mailSender,
 		MailTransformer: mailTransformer,
+		MyOutput:        myOutput,
 		PollInterval:    pollInterval,
 		ticker:          time.NewTicker(pollInterval),
 	}
@@ -153,6 +158,8 @@ func (s *SendMailService) ReadNextMail(
 			Msg("Delivery done")
 	}
 	fileInfo.Status = input.FILE_STATUS_DELIVERED
+
+	// write output to file
 
 	return fileInfo, myMail, nil
 }

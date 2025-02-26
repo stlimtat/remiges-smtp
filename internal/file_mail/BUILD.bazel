@@ -19,8 +19,8 @@ go_library(
     deps = [
         "//internal/config",
         "//internal/file",
-        "//internal/mail",
         "//pkg/input",
+        "//pkg/mail",
         "@com_github_google_uuid//:uuid",
         "@com_github_mcnijman_go_emailaddress//:go-emailaddress",
         "@com_github_mjl_mox//smtp",
@@ -45,9 +45,9 @@ go_test(
     deps = [
         "//internal/config",
         "//internal/file",
-        "//internal/mail",
         "//internal/telemetry",
         "//pkg/input",
+        "//pkg/mail",
         "@com_github_google_uuid//:uuid",
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//smtp",

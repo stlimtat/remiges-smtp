@@ -21,9 +21,9 @@ func TestNewOutputs(t *testing.T) {
 			name: "happy - file",
 			cfgs: []config.OutputConfig{
 				{
-					Type: ConfigOutputTypeFile,
+					Type: config.ConfigOutputTypeFile,
 					Args: map[string]any{
-						ConfigArgPath: "/tmp",
+						config.ConfigArgPath: "/tmp",
 					},
 				},
 			},
@@ -34,9 +34,9 @@ func TestNewOutputs(t *testing.T) {
 			name: "alternate - file path does not exist",
 			cfgs: []config.OutputConfig{
 				{
-					Type: ConfigOutputTypeFile,
+					Type: config.ConfigOutputTypeFile,
 					Args: map[string]any{
-						ConfigArgPath: "/tmp/does-not-exist",
+						config.ConfigArgPath: "/tmp/does-not-exist",
 					},
 				},
 			},

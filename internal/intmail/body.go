@@ -1,4 +1,4 @@
-package mail
+package intmail
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 const (
@@ -38,8 +39,8 @@ func (p *BodyProcessor) Index() int {
 
 func (_ *BodyProcessor) Process(
 	ctx context.Context,
-	inMail *Mail,
-) (*Mail, error) {
+	inMail *mail.Mail,
+) (*mail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("BodyProcessor")
 

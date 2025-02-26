@@ -6,8 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
-	"github.com/stlimtat/remiges-smtp/internal/sendmail"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 type OutputFactory struct {
@@ -51,7 +50,7 @@ func (_ *OutputFactory) NewOutput(
 	var result IOutput
 	var err error
 	switch cfg.Type {
-	case ConfigOutputTypeFile:
+	case config.ConfigOutputTypeFile:
 		logger.Debug().
 			Interface("cfg", cfg).
 			Msg("Creating file output")
@@ -68,7 +67,7 @@ func (_ *OutputFactory) NewOutput(
 func (f *OutputFactory) Write(
 	ctx context.Context,
 	myMail *mail.Mail,
-	resp []sendmail.Response,
+	resp []mail.Response,
 ) error {
 	for _, output := range f.Outputs {
 		err := output.Write(ctx, myMail, resp)

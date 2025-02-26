@@ -4,27 +4,20 @@ import (
 	"context"
 	"net"
 
-	"github.com/mjl-/mox/dns"
 	"github.com/mjl-/mox/smtp"
 	"github.com/mjl-/mox/smtpclient"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
-//go:generate mockgen -destination=smtpclient_mock.go -package=sendmail github.com/mjl-/mox/smtpclient Dialer
-//go:generate mockgen -destination=dns_mock.go -package=sendmail github.com/mjl-/mox/dns Resolver
-//go:generate mockgen -destination=mock.go -package=sendmail -source=interface.go
+//go:generate mockgen -destination=mox_mock.go -package=sendmail github.com/mjl-/mox/smtpclient Dialer
+//go:generate mockgen -destination=mock.go -package=sendmail . INetDialerFactory,IMailSender
 
 type INetDialerFactory interface {
 	NewDialer() smtpclient.Dialer
 }
 
 type IMailSender interface {
-	Deliver(ctx context.Context, conn net.Conn, mail *mail.Mail, to smtp.Address) ([]Response, error)
-	LookupMX(ctx context.Context, domain dns.Domain) ([]string, error)
+	Deliver(ctx context.Context, conn net.Conn, mail *mail.Mail, to smtp.Address) ([]mail.Response, error)
 	NewConn(ctx context.Context, hosts []string) (net.Conn, error)
-	SendMail(ctx context.Context, mail *mail.Mail) (map[string][]Response, map[string]error)
-}
-
-type Response struct {
-	smtpclient.Response
+	SendMail(ctx context.Context, mail *mail.Mail) (map[string][]mail.Response, map[string]error)
 }

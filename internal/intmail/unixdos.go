@@ -1,4 +1,4 @@
-package mail
+package intmail
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 const (
@@ -30,8 +31,8 @@ func (p *UnixDosProcessor) Index() int {
 
 func (_ *UnixDosProcessor) Process(
 	ctx context.Context,
-	inMail *Mail,
-) (outMail *Mail, err error) {
+	inMail *mail.Mail,
+) (*mail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("UnixDosProcessor")
 

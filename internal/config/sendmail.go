@@ -47,8 +47,10 @@ func NewSendMailConfig(ctx context.Context) SendMailConfig {
 
 	viper.SetDefault("msg", "Test message\r\n")
 
+	// setting up default values
 	result := SendMailConfig{
 		MailProcessors: DefaultMailProcessorConfigs(),
+		Outputs:        DefaultOutputConfig(ctx),
 		ReadFileConfig: ReadFileConfig{
 			FileMails: DefaultFileMailConfigs(),
 			InPath:    "inbox",

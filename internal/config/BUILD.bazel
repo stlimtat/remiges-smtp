@@ -8,6 +8,7 @@ go_library(
         "file_mail.go",
         "lookupmx.go",
         "mail.go",
+        "output.go",
         "read_file.go",
         "root.go",
         "sendmail.go",

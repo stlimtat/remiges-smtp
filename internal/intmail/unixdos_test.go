@@ -1,4 +1,4 @@
-package mail
+package intmail
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,20 +14,20 @@ import (
 func TestUnixDosProcessor(t *testing.T) {
 	tests := []struct {
 		name     string
-		mail     *Mail
-		wantMail *Mail
+		body     []byte
+		wantBody []byte
 		wantErr  bool
 	}{
 		{
 			name:     "happy1",
-			mail:     &Mail{Body: []byte("Hello\nWorld")},
-			wantMail: &Mail{Body: []byte("Hello\r\nWorld")},
+			body:     []byte("Hello\nWorld"),
+			wantBody: []byte("Hello\r\nWorld"),
 			wantErr:  false,
 		},
 		{
 			name:     "happy2",
-			mail:     &Mail{Body: []byte("Hello\r\nWorld")},
-			wantMail: &Mail{Body: []byte("Hello\r\nWorld")},
+			body:     []byte("Hello\r\nWorld"),
+			wantBody: []byte("Hello\r\nWorld"),
 			wantErr:  false,
 		},
 	}
@@ -36,13 +37,13 @@ func TestUnixDosProcessor(t *testing.T) {
 			processor := UnixDosProcessor{}
 			err := processor.Init(ctx, config.MailProcessorConfig{})
 			require.NoError(t, err)
-			got, err := processor.Process(ctx, tt.mail)
+			got, err := processor.Process(ctx, &mail.Mail{Body: tt.body})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tt.wantMail, got)
+			require.Equal(t, tt.wantBody, got.Body)
 		})
 	}
 }

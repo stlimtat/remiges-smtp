@@ -2,6 +2,11 @@ package config
 
 import "context"
 
+const (
+	ConfigOutputTypeFile string = "file"
+	ConfigArgPath        string = "path"
+)
+
 type OutputConfig struct {
 	Args map[string]any `mapstructure:"args,omitempty"`
 	Type string         `mapstructure:"type"`
@@ -9,11 +14,13 @@ type OutputConfig struct {
 
 func DefaultOutputConfig(
 	_ context.Context,
-) OutputConfig {
-	result := OutputConfig{
-		Type: "file",
-		Args: map[string]any{
-			"path": "output.log",
+) []OutputConfig {
+	result := []OutputConfig{
+		{
+			Type: ConfigOutputTypeFile,
+			Args: map[string]any{
+				ConfigArgPath: "~/",
+			},
 		},
 	}
 	return result

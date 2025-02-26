@@ -10,8 +10,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 const (

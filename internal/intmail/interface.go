@@ -1,28 +1,17 @@
-package mail
+package intmail
 
 import (
 	"context"
 
-	"github.com/mjl-/mox/smtp"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
-type Mail struct {
-	Body        []byte
-	BodyHeaders map[string][]byte
-	ContentType []byte
-	From        smtp.Address
-	Metadata    map[string][]byte
-	MsgID       []byte
-	Subject     []byte
-	To          []smtp.Address
-}
-
-//go:generate mockgen -destination=mock.go -package=mail github.com/stlimtat/remiges-smtp/internal/mail IMailProcessor,IMailProcessorFactory
+//go:generate mockgen -destination=mock.go -package=intmail . IMailProcessor,IMailProcessorFactory
 type IMailProcessor interface {
 	Index() int
 	Init(ctx context.Context, cfg config.MailProcessorConfig) error
-	Process(ctx context.Context, myMail *Mail) (*Mail, error)
+	Process(ctx context.Context, myMail *mail.Mail) (*mail.Mail, error)
 }
 
 type IMailProcessorFactory interface {

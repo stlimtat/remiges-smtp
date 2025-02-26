@@ -15,10 +15,12 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//internal/config",
+        "//internal/dns",
         "//internal/file",
         "//internal/file_mail",
         "//internal/http",
-        "//internal/mail",
+        "//internal/intmail",
+        "//internal/output",
         "//internal/sendmail",
         "//internal/telemetry",
         "@com_github_gin_gonic_gin//:gin",

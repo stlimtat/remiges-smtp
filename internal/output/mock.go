@@ -14,8 +14,7 @@ import (
 	reflect "reflect"
 
 	config "github.com/stlimtat/remiges-smtp/internal/config"
-	mail "github.com/stlimtat/remiges-smtp/internal/mail"
-	sendmail "github.com/stlimtat/remiges-smtp/internal/sendmail"
+	mail "github.com/stlimtat/remiges-smtp/pkg/mail"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -44,7 +43,7 @@ func (m *MockIOutput) EXPECT() *MockIOutputMockRecorder {
 }
 
 // Write mocks base method.
-func (m *MockIOutput) Write(ctx context.Context, myMail *mail.Mail, responses []sendmail.Response) error {
+func (m *MockIOutput) Write(ctx context.Context, myMail *mail.Mail, responses []mail.Response) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Write", ctx, myMail, responses)
 	ret0, _ := ret[0].(error)

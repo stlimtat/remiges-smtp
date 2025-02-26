@@ -15,7 +15,7 @@ import (
 
 	config "github.com/stlimtat/remiges-smtp/internal/config"
 	file "github.com/stlimtat/remiges-smtp/internal/file"
-	mail "github.com/stlimtat/remiges-smtp/internal/mail"
+	mail "github.com/stlimtat/remiges-smtp/pkg/mail"
 	gomock "go.uber.org/mock/gomock"
 )
 

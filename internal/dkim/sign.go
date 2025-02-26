@@ -7,7 +7,7 @@ import (
 	mox "github.com/mjl-/mox/mox-"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 type DKIMSigner struct {

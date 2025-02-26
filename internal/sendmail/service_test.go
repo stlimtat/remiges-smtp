@@ -10,8 +10,10 @@ import (
 	"github.com/mjl-/mox/smtp"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/file_mail"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
+	"github.com/stlimtat/remiges-smtp/internal/intmail"
+	"github.com/stlimtat/remiges-smtp/internal/output"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 	"github.com/stretchr/testify/assert"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -76,7 +78,7 @@ func TestReadNextMail(t *testing.T) {
 						return tt.wantFile, nil
 					},
 				).AnyTimes()
-			mailProcessor := mail.NewMockIMailProcessor(ctrl)
+			mailProcessor := intmail.NewMockIMailProcessor(ctrl)
 			mailProcessor.EXPECT().
 				Process(ctx, gomock.Any()).
 				DoAndReturn(
@@ -88,7 +90,7 @@ func TestReadNextMail(t *testing.T) {
 			mailSender.EXPECT().
 				SendMail(ctx, gomock.Any()).
 				DoAndReturn(
-					func(_ context.Context, _ *mail.Mail) (map[string][]Response, map[string]error) {
+					func(_ context.Context, _ *mail.Mail) (map[string][]mail.Response, map[string]error) {
 						return nil, nil
 					},
 				).AnyTimes()
@@ -100,7 +102,17 @@ func TestReadNextMail(t *testing.T) {
 						return tt.wantMail, nil
 					},
 				).AnyTimes()
-			sendMailService := NewSendMailService(ctx, 1, fileReader, mailProcessor, mailSender, mailTransformer, time.Second)
+			myOutput := output.NewMockIOutput(ctrl)
+			myOutput.EXPECT().
+				Write(ctx, gomock.Any(), gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, _ *mail.Mail, _ []mail.Response) error {
+						return nil
+					},
+				).AnyTimes()
+			sendMailService := NewSendMailService(
+				ctx, 1, fileReader, mailProcessor, mailSender, mailTransformer, myOutput, time.Second,
+			)
 			go func() {
 				err := sendMailService.Run(ctx)
 				assert.NoError(t, err)

@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/mjl-/mox/dns"
+	moxDns "github.com/mjl-/mox/dns"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/dns"
 	"github.com/stlimtat/remiges-smtp/internal/sendmail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
@@ -67,7 +68,8 @@ type LookupMXSvc struct {
 	Cfg           config.LookupMXConfig
 	DialerFactory sendmail.INetDialerFactory
 	MailSender    sendmail.IMailSender
-	Resolver      dns.Resolver
+	MoxResolver   moxDns.Resolver
+	MyResolver    dns.IResolver
 	Slogger       *slog.Logger
 }
 
@@ -79,17 +81,15 @@ func newLookupMXSvc(
 	ctx := cmd.Context()
 	result.Cfg = config.GetContextConfig(ctx).(config.LookupMXConfig)
 	result.Slogger = telemetry.GetSLogger(ctx)
-	result.Resolver = dns.StrictResolver{
+	result.MoxResolver = moxDns.StrictResolver{
 		Log: result.Slogger,
 	}
-	result.DialerFactory = sendmail.NewDefaultDialerFactory()
-	result.MailSender = sendmail.NewMailSender(
+	result.MyResolver = dns.NewResolver(
 		ctx,
-		true,
-		result.DialerFactory,
-		result.Resolver,
+		result.MoxResolver,
 		result.Slogger,
 	)
+	result.DialerFactory = sendmail.NewDefaultDialerFactory()
 	return result
 }
 
@@ -100,7 +100,7 @@ func (l *LookupMXSvc) Run(
 	ctx := cmd.Context()
 	logger := zerolog.Ctx(ctx)
 
-	result, err := l.MailSender.LookupMX(ctx, dns.Domain{ASCII: l.Cfg.Domain})
+	result, err := l.MyResolver.LookupMX(ctx, moxDns.Domain{ASCII: l.Cfg.Domain})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("mailSender.LookupMX")
 		return err

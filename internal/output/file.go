@@ -10,14 +10,11 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
-	"github.com/stlimtat/remiges-smtp/internal/sendmail"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 )
 
 const (
-	DEFAULT_FILE_NAME    string = "remiges-smtp-%s.csv"
-	ConfigOutputTypeFile string = "file"
-	ConfigArgPath        string = "path"
+	DEFAULT_FILE_NAME string = "remiges-smtp-%s.csv"
 )
 
 type FileOutput struct {
@@ -35,7 +32,7 @@ func NewFileOutput(
 		Cfg: cfg,
 	}
 
-	path, ok := cfg.Args[ConfigArgPath]
+	path, ok := cfg.Args[config.ConfigArgPath]
 	if !ok {
 		logger.Error().
 			Msg("Path not found in config")
@@ -87,7 +84,7 @@ func NewFileOutput(
 func (f *FileOutput) Write(
 	ctx context.Context,
 	myMail *mail.Mail,
-	resp []sendmail.Response,
+	resp []mail.Response,
 ) error {
 	filePath := filepath.Join(f.Path, fmt.Sprintf(DEFAULT_FILE_NAME, myMail.MsgID))
 	logger := zerolog.Ctx(ctx).

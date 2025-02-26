@@ -11,9 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/internal/mail"
-	"github.com/stlimtat/remiges-smtp/internal/sendmail"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
+	"github.com/stlimtat/remiges-smtp/pkg/mail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,9 +27,9 @@ func TestFileOutput_Write(t *testing.T) {
 		{
 			name: "happy",
 			cfg: config.OutputConfig{
-				Type: ConfigOutputTypeFile,
+				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					ConfigArgPath: "/tmp",
+					config.ConfigArgPath: "/tmp",
 				},
 			},
 		},
@@ -50,7 +49,7 @@ func TestFileOutput_Write(t *testing.T) {
 			err = fo.Write(
 				ctx,
 				&mail.Mail{MsgID: []byte(msgID)},
-				[]sendmail.Response{
+				[]mail.Response{
 					{
 						Response: smtpclient.Response{
 							Code: 250,
@@ -65,7 +64,7 @@ func TestFileOutput_Write(t *testing.T) {
 			}
 			require.NoError(t, err)
 			// check that the file was created
-			filePath := filepath.Join(tt.cfg.Args[ConfigArgPath].(string), fmt.Sprintf(DEFAULT_FILE_NAME, msgID))
+			filePath := filepath.Join(tt.cfg.Args[config.ConfigArgPath].(string), fmt.Sprintf(DEFAULT_FILE_NAME, msgID))
 			_, err = os.Stat(filePath)
 			require.NoError(t, err)
 			// check that the file contains the correct data

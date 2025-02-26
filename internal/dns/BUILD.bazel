@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dns",
+    srcs = [
+        "interface.go",
+        "mock.go",
+        "mox_mock.go",
+        "resolver.go",
+    ],
+    importpath = "github.com/stlimtat/remiges-smtp/internal/dns",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//pkg/dn",
+        "@com_github_mjl_adns//:adns",
+        "@com_github_mjl_mox//dns",
+        "@com_github_mjl_mox//smtpclient",
+        "@com_github_rs_zerolog//:zerolog",
+        "@org_uber_go_mock//gomock",
+    ],
+)
+
+go_test(
+    name = "dns_test",
+    srcs = ["resolver_test.go"],
+    embed = [":dns"],
+    deps = [
+        "//internal/telemetry",
+        "@com_github_mjl_adns//:adns",
+        "@com_github_mjl_mox//dns",
+        "@com_github_stretchr_testify//assert",
+        "@org_uber_go_mock//gomock",
+    ],
+)
