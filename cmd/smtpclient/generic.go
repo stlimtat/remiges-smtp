@@ -88,16 +88,6 @@ func newGenericSvc(
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory.Init")
 	}
 
-	result.SendMailService = sendmail.NewSendMailService(
-		ctx,
-		result.Cfg.ReadFileConfig.Concurrency,
-		result.FileReader,
-		result.MailProcessor,
-		result.MailSender,
-		result.MailTransformerFactory,
-		result.MyOutput,
-		result.Cfg.ReadFileConfig.PollInterval,
-	)
 	result.MoxResolver = moxDns.StrictResolver{
 		Log: result.Slogger,
 	}
@@ -112,6 +102,17 @@ func newGenericSvc(
 		result.DialerFactory,
 		result.MyResolver,
 		result.Slogger,
+	)
+
+	result.SendMailService = sendmail.NewSendMailService(
+		ctx,
+		result.Cfg.ReadFileConfig.Concurrency,
+		result.FileReader,
+		result.MailProcessor,
+		result.MailSender,
+		result.MailTransformerFactory,
+		result.MyOutput,
+		result.Cfg.ReadFileConfig.PollInterval,
 	)
 	return result
 }
