@@ -48,7 +48,9 @@ func TestFileOutput_Write(t *testing.T) {
 
 			err = fo.Write(
 				ctx,
-				&mail.Mail{MsgID: []byte(msgID)},
+				&mail.Mail{
+					MsgID: []byte(msgID),
+				},
 				[]mail.Response{
 					{
 						Response: smtpclient.Response{
