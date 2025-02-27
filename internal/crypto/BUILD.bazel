@@ -3,6 +3,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "crypto",
     srcs = [
+        "ed25519.go",
+        "factory.go",
         "interface.go",
         "rsa.go",
     ],
@@ -13,10 +15,15 @@ go_library(
 
 go_test(
     name = "crypto_test",
-    srcs = ["rsa_test.go"],
+    srcs = [
+        "ed25519_test.go",
+        "factory_test.go",
+        "rsa_test.go",
+    ],
     embed = [":crypto"],
     deps = [
         "//internal/telemetry",
         "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )
