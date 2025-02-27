@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "crypto",
+    srcs = [
+        "interface.go",
+        "rsa.go",
+    ],
+    importpath = "github.com/stlimtat/remiges-smtp/internal/crypto",
+    visibility = ["//:__subpackages__"],
+    deps = ["@com_github_rs_zerolog//:zerolog"],
+)
+
+go_test(
+    name = "crypto_test",
+    srcs = ["rsa_test.go"],
+    embed = [":crypto"],
+    deps = [
+        "//internal/telemetry",
+        "@com_github_stretchr_testify//assert",
+    ],
+)
