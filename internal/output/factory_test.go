@@ -9,7 +9,7 @@ import (
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	gomock "go.uber.org/mock/gomock"
@@ -92,7 +92,7 @@ func TestNewOutputs(t *testing.T) {
 			myOutput := NewMockIOutput(ctrl)
 			myOutput.EXPECT().
 				Write(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ *mail.Mail, _ []mail.Response) error {
+				DoAndReturn(func(_ context.Context, _ *pmail.Mail, _ []pmail.Response) error {
 					if tt.wantWriteErr {
 						err = errors.New("test error")
 					}
@@ -102,10 +102,10 @@ func TestNewOutputs(t *testing.T) {
 
 			err = factory.Write(
 				ctx,
-				&mail.Mail{
+				&pmail.Mail{
 					MsgID: []byte(msgID),
 				},
-				[]mail.Response{
+				[]pmail.Response{
 					{
 						Response: smtpclient.Response{
 							Code: 250,

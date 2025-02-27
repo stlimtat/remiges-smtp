@@ -9,7 +9,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,14 +17,14 @@ import (
 func TestBodyProcessor(t *testing.T) {
 	tests := []struct {
 		name         string
-		inMail       *mail.Mail
+		inMail       *pmail.Mail
 		wantBody     []byte
 		wantMetadata map[string][]byte
 		wantErr      bool
 	}{
 		{
 			name: "happy - default no body headers",
-			inMail: &mail.Mail{
+			inMail: &pmail.Mail{
 				From:    smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
 				Subject: []byte("test"),
 				To: []smtp.Address{
@@ -39,7 +39,7 @@ func TestBodyProcessor(t *testing.T) {
 		},
 		{
 			name: "happy - body has from/to",
-			inMail: &mail.Mail{
+			inMail: &pmail.Mail{
 				From:    smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
 				Subject: []byte("test"),
 				To: []smtp.Address{
@@ -57,7 +57,7 @@ func TestBodyProcessor(t *testing.T) {
 		},
 		{
 			name: "happy - body already has from/to - new lines",
-			inMail: &mail.Mail{
+			inMail: &pmail.Mail{
 				From:    smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
 				Subject: []byte("test"),
 				To: []smtp.Address{
@@ -76,7 +76,7 @@ func TestBodyProcessor(t *testing.T) {
 		},
 		{
 			name: "happy - multipart message - with new line first line",
-			inMail: &mail.Mail{
+			inMail: &pmail.Mail{
 				From:    smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
 				Subject: []byte("test"),
 				To: []smtp.Address{
@@ -99,7 +99,7 @@ World
 		},
 		{
 			name: "happy - multipart message - with boundary first line",
-			inMail: &mail.Mail{
+			inMail: &pmail.Mail{
 				From:    smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
 				Subject: []byte("test"),
 				To: []smtp.Address{

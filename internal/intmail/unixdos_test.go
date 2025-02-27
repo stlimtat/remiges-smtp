@@ -6,7 +6,7 @@ import (
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,7 +37,7 @@ func TestUnixDosProcessor(t *testing.T) {
 			processor := UnixDosProcessor{}
 			err := processor.Init(ctx, config.MailProcessorConfig{})
 			require.NoError(t, err)
-			got, err := processor.Process(ctx, &mail.Mail{Body: tt.body})
+			got, err := processor.Process(ctx, &pmail.Mail{Body: tt.body})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

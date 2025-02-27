@@ -12,7 +12,7 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/config",
-        "//pkg/mail",
+        "//pkg/pmail",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",
     ],
@@ -28,7 +28,7 @@ go_test(
     deps = [
         "//internal/config",
         "//internal/telemetry",
-        "//pkg/mail",
+        "//pkg/pmail",
         "@com_github_google_uuid//:uuid",
         "@com_github_mjl_mox//smtpclient",
         "@com_github_stretchr_testify//assert",

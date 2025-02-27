@@ -5,7 +5,7 @@ import (
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 type IMailTransformer interface {
 	Init(ctx context.Context, cfg config.FileMailConfig) error
 	Index() int
-	Transform(ctx context.Context, fileInfo *file.FileInfo, myMail *mail.Mail) (*mail.Mail, error)
+	Transform(ctx context.Context, fileInfo *file.FileInfo, myMail *pmail.Mail) (*pmail.Mail, error)
 }
 
 type IMailTransformerFactory interface {

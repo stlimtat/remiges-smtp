@@ -8,13 +8,17 @@ import (
 
 type CryptoFactory struct {
 	keyGenerator IKeyGenerator
+	keyWriter    IKeyWriter
 }
 
-func (c *CryptoFactory) NewGenerator(
+func (c *CryptoFactory) Init(
 	ctx context.Context,
 	keyType string,
+	keyWriter IKeyWriter,
 ) (IKeyGenerator, error) {
 	logger := zerolog.Ctx(ctx).With().Str("key_type", keyType).Logger()
+
+	c.keyWriter = keyWriter
 
 	switch keyType {
 	case KeyTypeEd25519:
@@ -33,5 +37,23 @@ func (c *CryptoFactory) GenerateKey(
 	bitSize int,
 	id string,
 ) (publicKeyPEM, privateKeyPEM []byte, err error) {
-	return c.keyGenerator.GenerateKey(ctx, bitSize, id)
+	publicKeyPEM, privateKeyPEM, err = c.keyGenerator.GenerateKey(ctx, bitSize, id)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return publicKeyPEM, privateKeyPEM, nil
+}
+
+func (c *CryptoFactory) WriteKey(
+	ctx context.Context,
+	id string,
+	publicKeyPEM, privateKeyPEM []byte,
+) error {
+	err := c.keyWriter.WriteKey(ctx, id, publicKeyPEM, privateKeyPEM)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

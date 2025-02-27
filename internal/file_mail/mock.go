@@ -15,7 +15,7 @@ import (
 
 	config "github.com/stlimtat/remiges-smtp/internal/config"
 	file "github.com/stlimtat/remiges-smtp/internal/file"
-	mail "github.com/stlimtat/remiges-smtp/pkg/mail"
+	pmail "github.com/stlimtat/remiges-smtp/pkg/pmail"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -72,10 +72,10 @@ func (mr *MockIMailTransformerMockRecorder) Init(ctx, cfg any) *gomock.Call {
 }
 
 // Transform mocks base method.
-func (m *MockIMailTransformer) Transform(ctx context.Context, fileInfo *file.FileInfo, myMail *mail.Mail) (*mail.Mail, error) {
+func (m *MockIMailTransformer) Transform(ctx context.Context, fileInfo *file.FileInfo, myMail *pmail.Mail) (*pmail.Mail, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Transform", ctx, fileInfo, myMail)
-	ret0, _ := ret[0].(*mail.Mail)
+	ret0, _ := ret[0].(*pmail.Mail)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

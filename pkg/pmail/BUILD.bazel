@@ -1,9 +1,9 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "mail",
+    name = "pmail",
     srcs = ["structs.go"],
-    importpath = "github.com/stlimtat/remiges-smtp/pkg/mail",
+    importpath = "github.com/stlimtat/remiges-smtp/pkg/pmail",
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_mjl_mox//smtp",

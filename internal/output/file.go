@@ -10,7 +10,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 const (
@@ -83,8 +83,8 @@ func NewFileOutput(
 
 func (f *FileOutput) Write(
 	ctx context.Context,
-	myMail *mail.Mail,
-	resp []mail.Response,
+	myMail *pmail.Mail,
+	resp []pmail.Response,
 ) error {
 	filePath := filepath.Join(f.Path, fmt.Sprintf(DEFAULT_FILE_NAME, myMail.MsgID))
 	logger := zerolog.Ctx(ctx).

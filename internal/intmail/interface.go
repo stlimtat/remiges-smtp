@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 //go:generate mockgen -destination=mock.go -package=intmail . IMailProcessor,IMailProcessorFactory
 type IMailProcessor interface {
 	Index() int
 	Init(ctx context.Context, cfg config.MailProcessorConfig) error
-	Process(ctx context.Context, myMail *mail.Mail) (*mail.Mail, error)
+	Process(ctx context.Context, myMail *pmail.Mail) (*pmail.Mail, error)
 }
 
 type IMailProcessorFactory interface {

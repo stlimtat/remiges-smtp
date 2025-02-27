@@ -14,7 +14,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/dns"
 	"github.com/stlimtat/remiges-smtp/internal/utils"
 	"github.com/stlimtat/remiges-smtp/pkg/dn"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 const (
@@ -78,15 +78,15 @@ func (m *MailSender) NewConn(
 
 func (m *MailSender) SendMail(
 	ctx context.Context,
-	myMail *mail.Mail,
-) (results map[string][]mail.Response, errs map[string]error) {
+	myMail *pmail.Mail,
+) (results map[string][]pmail.Response, errs map[string]error) {
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("from", myMail.From.String()).
 		Bytes("msgid", myMail.MsgID).
 		Str("subject", string(myMail.Subject)).
 		Logger()
-	results = make(map[string][]mail.Response, 0)
+	results = make(map[string][]pmail.Response, 0)
 	errs = make(map[string]error, 0)
 
 	for _, to := range myMail.To {
@@ -120,9 +120,9 @@ func (m *MailSender) SendMail(
 func (m *MailSender) Deliver(
 	ctx context.Context,
 	conn net.Conn,
-	myMail *mail.Mail,
+	myMail *pmail.Mail,
 	to smtp.Address,
-) ([]mail.Response, error) {
+) ([]pmail.Response, error) {
 	toStr := to.String()
 	logger := zerolog.Ctx(ctx).
 		With().
@@ -176,12 +176,12 @@ func (m *MailSender) Deliver(
 	if len(resps) == 0 {
 		return nil, errors.New("no responses")
 	}
-	results := make([]mail.Response, 0)
+	results := make([]pmail.Response, 0)
 	for _, resp := range resps {
 		logger.Info().
 			Interface("resp", resp).
 			Msg("smtpclient.Deliver response")
-		resp := mail.Response{
+		resp := pmail.Response{
 			Response: resp,
 		}
 		results = append(results, resp)

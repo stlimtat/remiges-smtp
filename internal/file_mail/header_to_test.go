@@ -10,7 +10,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -84,7 +84,7 @@ func TestHeaderToTransformer(t *testing.T) {
 			got, err := transformer.Transform(
 				ctx,
 				&file.FileInfo{},
-				&mail.Mail{
+				&pmail.Mail{
 					Metadata: tt.header,
 				},
 			)

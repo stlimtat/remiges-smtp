@@ -16,7 +16,7 @@ import (
 
 	smtp "github.com/mjl-/mox/smtp"
 	smtpclient "github.com/mjl-/mox/smtpclient"
-	pmail "github.com/stlimtat/remiges-smtp/pkg/mail"
+	pmail "github.com/stlimtat/remiges-smtp/pkg/pmail"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -83,18 +83,18 @@ func (m *MockIMailSender) EXPECT() *MockIMailSenderMockRecorder {
 }
 
 // Deliver mocks base method.
-func (m *MockIMailSender) Deliver(ctx context.Context, conn net.Conn, mail *pmail.Mail, to smtp.Address) ([]pmail.Response, error) {
+func (m *MockIMailSender) Deliver(ctx context.Context, conn net.Conn, myMail *pmail.Mail, to smtp.Address) ([]pmail.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Deliver", ctx, conn, mail, to)
+	ret := m.ctrl.Call(m, "Deliver", ctx, conn, myMail, to)
 	ret0, _ := ret[0].([]pmail.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Deliver indicates an expected call of Deliver.
-func (mr *MockIMailSenderMockRecorder) Deliver(ctx, conn, mail, to any) *gomock.Call {
+func (mr *MockIMailSenderMockRecorder) Deliver(ctx, conn, myMail, to any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Deliver", reflect.TypeOf((*MockIMailSender)(nil).Deliver), ctx, conn, mail, to)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Deliver", reflect.TypeOf((*MockIMailSender)(nil).Deliver), ctx, conn, myMail, to)
 }
 
 // NewConn mocks base method.

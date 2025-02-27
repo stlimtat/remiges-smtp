@@ -8,7 +8,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,7 +75,7 @@ World
 			fileInfo := &file.FileInfo{
 				DfReader: bytes.NewReader(tt.body),
 			}
-			gotMail, err := transformer.Transform(ctx, fileInfo, &mail.Mail{})
+			gotMail, err := transformer.Transform(ctx, fileInfo, &pmail.Mail{})
 			if tt.wantTransformErr {
 				assert.Error(t, err)
 				return

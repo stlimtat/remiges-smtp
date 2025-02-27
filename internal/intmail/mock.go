@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	config "github.com/stlimtat/remiges-smtp/internal/config"
-	mail "github.com/stlimtat/remiges-smtp/pkg/mail"
+	pmail "github.com/stlimtat/remiges-smtp/pkg/pmail"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -71,10 +71,10 @@ func (mr *MockIMailProcessorMockRecorder) Init(ctx, cfg any) *gomock.Call {
 }
 
 // Process mocks base method.
-func (m *MockIMailProcessor) Process(ctx context.Context, myMail *mail.Mail) (*mail.Mail, error) {
+func (m *MockIMailProcessor) Process(ctx context.Context, myMail *pmail.Mail) (*pmail.Mail, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Process", ctx, myMail)
-	ret0, _ := ret[0].(*mail.Mail)
+	ret0, _ := ret[0].(*pmail.Mail)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

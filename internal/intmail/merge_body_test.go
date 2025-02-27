@@ -6,7 +6,7 @@ import (
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,13 +14,13 @@ import (
 func TestMergeBodyProcessor(t *testing.T) {
 	tests := []struct {
 		name     string
-		inMail   *mail.Mail
+		inMail   *pmail.Mail
 		wantBody []byte
 		wantErr  bool
 	}{
 		{
 			name: "happy",
-			inMail: &mail.Mail{
+			inMail: &pmail.Mail{
 				BodyHeaders: map[string][]byte{"From": []byte("test@example.com")},
 				Body:        []byte("Hello, world!"),
 			},

@@ -9,7 +9,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -85,7 +85,7 @@ func TestHeaderMsgIDTransformer(t *testing.T) {
 			transformer := &HeaderMsgIDTransformer{}
 			err := transformer.Init(ctx, tt.cfg)
 			require.NoError(t, err)
-			gotMail, err := transformer.Transform(ctx, &file.FileInfo{}, &mail.Mail{
+			gotMail, err := transformer.Transform(ctx, &file.FileInfo{}, &pmail.Mail{
 				Metadata: tt.headers,
 			})
 			if tt.wantErr {

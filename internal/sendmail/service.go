@@ -11,7 +11,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/intmail"
 	"github.com/stlimtat/remiges-smtp/internal/output"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 type SendMailService struct {
@@ -111,7 +111,7 @@ outerloop:
 
 func (s *SendMailService) ReadNextMail(
 	ctx context.Context,
-) (*file.FileInfo, *mail.Mail, error) {
+) (*file.FileInfo, *pmail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 
 	fileInfo, err := s.FileReader.ReadNextFile(ctx)
@@ -126,7 +126,7 @@ func (s *SendMailService) ReadNextMail(
 		Msg("ReadNextFile")
 	fileInfo.Status = input.FILE_STATUS_PROCESSING
 	myMail, err := s.MailTransformer.Transform(
-		ctx, fileInfo, &mail.Mail{},
+		ctx, fileInfo, &pmail.Mail{},
 	)
 	if err != nil {
 		return nil, nil, err

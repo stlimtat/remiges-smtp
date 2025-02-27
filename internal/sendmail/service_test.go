@@ -13,7 +13,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/intmail"
 	"github.com/stlimtat/remiges-smtp/internal/output"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -22,7 +22,7 @@ func TestReadNextMail(t *testing.T) {
 	tests := []struct {
 		name                string
 		wantFile            *file.FileInfo
-		wantMail            *mail.Mail
+		wantMail            *pmail.Mail
 		wantRefreshListErr  bool
 		wantReadNextFileErr bool
 	}{
@@ -31,7 +31,7 @@ func TestReadNextMail(t *testing.T) {
 			wantFile: &file.FileInfo{
 				ID: "test1",
 			},
-			wantMail: &mail.Mail{
+			wantMail: &pmail.Mail{
 				From: smtp.Address{
 					Localpart: "sender",
 					Domain:    dns.Domain{ASCII: "example.com"},
@@ -82,7 +82,7 @@ func TestReadNextMail(t *testing.T) {
 			mailProcessor.EXPECT().
 				Process(ctx, gomock.Any()).
 				DoAndReturn(
-					func(_ context.Context, _ *mail.Mail) (*mail.Mail, error) {
+					func(_ context.Context, _ *pmail.Mail) (*pmail.Mail, error) {
 						return tt.wantMail, nil
 					},
 				).AnyTimes()
@@ -90,7 +90,7 @@ func TestReadNextMail(t *testing.T) {
 			mailSender.EXPECT().
 				SendMail(ctx, gomock.Any()).
 				DoAndReturn(
-					func(_ context.Context, _ *mail.Mail) (map[string][]mail.Response, map[string]error) {
+					func(_ context.Context, _ *pmail.Mail) (map[string][]pmail.Response, map[string]error) {
 						return nil, nil
 					},
 				).AnyTimes()
@@ -98,7 +98,7 @@ func TestReadNextMail(t *testing.T) {
 			mailTransformer.EXPECT().
 				Transform(ctx, gomock.Any(), gomock.Any()).
 				DoAndReturn(
-					func(_ context.Context, _ *file.FileInfo, _ *mail.Mail) (*mail.Mail, error) {
+					func(_ context.Context, _ *file.FileInfo, _ *pmail.Mail) (*pmail.Mail, error) {
 						return tt.wantMail, nil
 					},
 				).AnyTimes()
@@ -106,7 +106,7 @@ func TestReadNextMail(t *testing.T) {
 			myOutput.EXPECT().
 				Write(ctx, gomock.Any(), gomock.Any()).
 				DoAndReturn(
-					func(_ context.Context, _ *mail.Mail, _ []mail.Response) error {
+					func(_ context.Context, _ *pmail.Mail, _ []pmail.Response) error {
 						return nil
 					},
 				).AnyTimes()

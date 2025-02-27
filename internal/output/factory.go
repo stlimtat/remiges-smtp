@@ -6,7 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 type OutputFactory struct {
@@ -66,8 +66,8 @@ func (_ *OutputFactory) NewOutput(
 
 func (f *OutputFactory) Write(
 	ctx context.Context,
-	myMail *mail.Mail,
-	resp []mail.Response,
+	myMail *pmail.Mail,
+	resp []pmail.Response,
 ) error {
 	for _, output := range f.Outputs {
 		err := output.Write(ctx, myMail, resp)

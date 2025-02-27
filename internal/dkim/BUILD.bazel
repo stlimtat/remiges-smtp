@@ -7,7 +7,7 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/config",
-        "//pkg/mail",
+        "//pkg/pmail",
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//mox-",
         "@com_github_rs_zerolog//:zerolog",

@@ -10,7 +10,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 const (
@@ -72,8 +72,8 @@ func (t *HeaderToTransformer) Index() int {
 func (t *HeaderToTransformer) Transform(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
-	inMail *mail.Mail,
-) (*mail.Mail, error) {
+	inMail *pmail.Mail,
+) (*pmail.Mail, error) {
 	logger := zerolog.Ctx(ctx).With().
 		Str("id", fileInfo.ID).
 		Logger()

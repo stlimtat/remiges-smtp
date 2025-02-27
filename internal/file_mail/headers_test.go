@@ -8,7 +8,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +18,7 @@ func TestHeadersTransformer(t *testing.T) {
 		name     string
 		cfg      config.FileMailConfig
 		fileInfo *file.FileInfo
-		wantMail *mail.Mail
+		wantMail *pmail.Mail
 		wantErr  bool
 	}{
 		{
@@ -32,7 +32,7 @@ func TestHeadersTransformer(t *testing.T) {
 				QfFilePath: "testdata/test.qf",
 				QfReader:   bytes.NewReader([]byte("From: test@example.com\nTo: test@example.com\nSubject: test")),
 			},
-			wantMail: &mail.Mail{
+			wantMail: &pmail.Mail{
 				Metadata: map[string][]byte{
 					"From":    []byte("test@example.com"),
 					"To":      []byte("test@example.com"),
@@ -52,7 +52,7 @@ func TestHeadersTransformer(t *testing.T) {
 				QfFilePath: "testdata/test.qf",
 				QfReader:   bytes.NewReader([]byte("Content-Type: text/plain;\n\tcharset=utf-8\n")),
 			},
-			wantMail: &mail.Mail{
+			wantMail: &pmail.Mail{
 				Metadata: map[string][]byte{
 					"Content-Type": []byte("text/plain;charset=utf-8"),
 				},
@@ -72,7 +72,7 @@ func TestHeadersTransformer(t *testing.T) {
 				QfFilePath: "testdata/test.qf",
 				QfReader:   bytes.NewReader([]byte("H??From: test1@example.com\nH??To: test1@example.com\nH??Subject: test1\n")),
 			},
-			wantMail: &mail.Mail{
+			wantMail: &pmail.Mail{
 				Metadata: map[string][]byte{
 					"From":       []byte("test1@example.com"),
 					"H??From":    []byte("test1@example.com"),
@@ -94,7 +94,7 @@ func TestHeadersTransformer(t *testing.T) {
 			err := transformer.Init(ctx, tt.cfg)
 			require.NoError(t, err)
 
-			got, err := transformer.Transform(ctx, tt.fileInfo, &mail.Mail{})
+			got, err := transformer.Transform(ctx, tt.fileInfo, &pmail.Mail{})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

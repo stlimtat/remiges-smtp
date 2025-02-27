@@ -7,7 +7,7 @@ import (
 	mox "github.com/mjl-/mox/mox-"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 type DKIMSigner struct {
@@ -30,8 +30,8 @@ func NewDKIMSigner(
 
 func (s *DKIMSigner) Sign(
 	ctx context.Context,
-	msg *mail.Mail,
-) (*mail.Mail, error) {
+	msg *pmail.Mail,
+) (*pmail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("DKIMSigner: Sign")
 

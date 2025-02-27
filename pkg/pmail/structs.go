@@ -1,4 +1,4 @@
-package mail
+package pmail
 
 import (
 	"github.com/mjl-/mox/smtp"

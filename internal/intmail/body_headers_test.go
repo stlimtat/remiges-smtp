@@ -9,7 +9,7 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,13 +17,13 @@ import (
 func TestBodyHeadersProcessor(t *testing.T) {
 	tests := []struct {
 		name            string
-		inMail          *mail.Mail
+		inMail          *pmail.Mail
 		wantBodyHeaders map[string][]byte
 		wantErr         bool
 	}{
 		{
 			name: "happy - default",
-			inMail: &mail.Mail{
+			inMail: &pmail.Mail{
 				ContentType: []byte("text/plain"),
 				From:        smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
 				MsgID:       []byte("1234567890"),

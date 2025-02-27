@@ -6,7 +6,7 @@ import (
 
 	"github.com/mjl-/mox/smtp"
 	"github.com/mjl-/mox/smtpclient"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 //go:generate mockgen -destination=mox_mock.go -package=sendmail github.com/mjl-/mox/smtpclient Dialer
@@ -17,7 +17,7 @@ type INetDialerFactory interface {
 }
 
 type IMailSender interface {
-	Deliver(ctx context.Context, conn net.Conn, mail *mail.Mail, to smtp.Address) ([]mail.Response, error)
+	Deliver(ctx context.Context, conn net.Conn, myMail *pmail.Mail, to smtp.Address) ([]pmail.Response, error)
 	NewConn(ctx context.Context, hosts []string) (net.Conn, error)
-	SendMail(ctx context.Context, mail *mail.Mail) (map[string][]mail.Response, map[string]error)
+	SendMail(ctx context.Context, mail *pmail.Mail) (map[string][]pmail.Response, map[string]error)
 }

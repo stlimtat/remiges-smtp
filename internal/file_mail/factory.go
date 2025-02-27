@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 type MailTransformerFactory struct {
@@ -125,8 +125,8 @@ func (_ *MailTransformerFactory) Index() int {
 func (f *MailTransformerFactory) Transform(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
-	inMail *mail.Mail,
-) (outMail *mail.Mail, err error) {
+	inMail *pmail.Mail,
+) (outMail *pmail.Mail, err error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("Transforming mail")
 

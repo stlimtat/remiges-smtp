@@ -12,7 +12,7 @@ import (
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,10 +48,10 @@ func TestFileOutput_Write(t *testing.T) {
 
 			err = fo.Write(
 				ctx,
-				&mail.Mail{
+				&pmail.Mail{
 					MsgID: []byte(msgID),
 				},
-				[]mail.Response{
+				[]pmail.Response{
 					{
 						Response: smtpclient.Response{
 							Code: 250,

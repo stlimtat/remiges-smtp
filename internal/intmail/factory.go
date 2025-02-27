@@ -8,7 +8,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
-	"github.com/stlimtat/remiges-smtp/pkg/mail"
+	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 type DefaultMailProcessorFactory struct {
@@ -117,8 +117,8 @@ func (_ *DefaultMailProcessorFactory) Index() int {
 
 func (f *DefaultMailProcessorFactory) Process(
 	ctx context.Context,
-	inMail *mail.Mail,
-) (*mail.Mail, error) {
+	inMail *pmail.Mail,
+) (*pmail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	var err error
 	// Builder function: process the mail through the processors
