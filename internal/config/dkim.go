@@ -19,16 +19,16 @@ type MoxSelector struct {
 	Algorithm        string              `mapstructure:"algorithm"`
 	Canonicalization MoxCanonicalization `mapstructure:"canonicalization,omitempty"`
 	Domain           string              `mapstructure:"domain"`
-	DontSealHeaders  bool                `mapstructure:"dont_seal_headers,omitempty"`
+	DontSealHeaders  bool                `mapstructure:"dont-seal-headers,omitempty"`
 	Expiration       string              `mapstructure:"expiration,omitempty"`
 	Hash             string              `mapstructure:"hash"`
 	Headers          []string            `mapstructure:"headers,omitempty"`
-	PrivateKeyFile   string              `mapstructure:"private_key_file,omitempty"`
+	PrivateKeyFile   string              `mapstructure:"private-key-file,omitempty"`
 }
 
 type MoxCanonicalization struct {
-	HeaderRelaxed bool `mapstructure:"header_relaxed"`
-	BodyRelaxed   bool `mapstructure:"body_relaxed"`
+	HeaderRelaxed bool `mapstructure:"header-relaxed"`
+	BodyRelaxed   bool `mapstructure:"body-relaxed"`
 }
 
 func DefaultDKIMConfig(

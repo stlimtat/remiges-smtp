@@ -57,12 +57,14 @@ func newRootCmd(ctx context.Context) *rootCmd {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag.config")
 	}
+	_, genDKIMCmd := newGenDKIMCmd(ctx)
 	_, lookupMXCmd := newLookupMXCmd(ctx)
 	_, readFileCmd := newReadFileCmd(ctx)
 	_, sendMailCmd := newSendMailCmd(ctx)
 	_, serverCmd := newServerCmd(ctx)
 
 	result.cmd.AddCommand(
+		genDKIMCmd,
 		lookupMXCmd,
 		readFileCmd,
 		sendMailCmd,

@@ -34,7 +34,7 @@ func RootConfigInit() {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("ReadInConfig")
 	}
-	logger.Info().
+	logger.Debug().
 		Interface("viper_AllSettings", viper.AllSettings()).
 		Msg("RootConfigInitialize...Done")
 }

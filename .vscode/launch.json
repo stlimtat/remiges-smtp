@@ -5,6 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "genDKIM",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/smtpclient",
+            "args": [
+                "genDKIM",
+                "--domain",
+                "stlim.net",
+                "--out-path",
+                "${workspaceFolder}/config",
+            ],
+            "env": {}
+        },
+        {
             "name": "lookupmx",
             "type": "go",
             "request": "launch",

@@ -10,8 +10,8 @@ import (
 
 type ServerConfig struct {
 	Debug          bool           `mapstructure:"debug"`
-	PollInterval   time.Duration  `mapstructure:"poll_interval"`
-	ReadFileConfig ReadFileConfig `mapstructure:"read_file"`
+	PollInterval   time.Duration  `mapstructure:"poll-interval"`
+	ReadFileConfig ReadFileConfig `mapstructure:"read-file"`
 }
 
 func NewServerConfig(ctx context.Context) ServerConfig {

@@ -19,12 +19,12 @@ const (
 )
 
 type ReadFileConfig struct {
-	Concurrency  int              `json:"concurrency" mapstructure:"concurrency"`
-	DefaultFrom  string           `json:"from" mapstructure:"from"`
-	FileMails    []FileMailConfig `json:"file_mails" mapstructure:"file_mails"`
-	InPath       string           `json:"in_path" mapstructure:"in_path"`
-	PollInterval time.Duration    `json:"poll_interval" mapstructure:"poll_interval"`
-	RedisAddr    string           `json:"redis_addr" mapstructure:"redis_addr"`
+	Concurrency  int              `mapstructure:"concurrency"`
+	DefaultFrom  string           `mapstructure:"from"`
+	FileMails    []FileMailConfig `mapstructure:"file-mails"`
+	InPath       string           `mapstructure:"in-path"`
+	PollInterval time.Duration    `mapstructure:"poll-interval"`
+	RedisAddr    string           `mapstructure:"redis-addr"`
 }
 
 func NewReadFileConfig(ctx context.Context) ReadFileConfig {

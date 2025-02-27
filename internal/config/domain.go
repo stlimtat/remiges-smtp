@@ -8,13 +8,13 @@ import (
 
 type DomainConfig struct {
 	moxConfig.Domain           `mapstructure:",omitempty"`
-	ClientSettingsDomain       string      `mapstructure:"client_settings_domain,omitempty"`
+	ClientSettingsDomain       string      `mapstructure:"client-settings-domain,omitempty"`
 	Description                string      `mapstructure:"description,omitempty"`
 	DomainStr                  string      `mapstructure:"domain,omitempty"`
 	DKIM                       *DKIMConfig `mapstructure:"dkim,omitempty"`
-	LocalpartCaseSensitive     bool        `mapstructure:"localpart_case_sensitive,omitempty"`
-	LocalpartCatchallSeparator string      `mapstructure:"localpart_catchall_separator,omitempty"`
-	ReportsOnly                bool        `mapstructure:"reports_only,omitempty"`
+	LocalpartCaseSensitive     bool        `mapstructure:"localpart-case-sensitive,omitempty"`
+	LocalpartCatchallSeparator string      `mapstructure:"localpart-catchall-separator,omitempty"`
+	ReportsOnly                bool        `mapstructure:"reports-only,omitempty"`
 	// Aliases                    map[string]Alias
 	// DMARC                      *DMARC
 	// MTASTS                     *MTASTS

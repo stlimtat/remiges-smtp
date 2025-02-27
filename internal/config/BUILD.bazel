@@ -6,6 +6,7 @@ go_library(
         "dkim.go",
         "domain.go",
         "file_mail.go",
+        "gen_dkim.go",
         "lookupmx.go",
         "mail.go",
         "output.go",

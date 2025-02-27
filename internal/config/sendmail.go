@@ -20,10 +20,10 @@ type SendMailConfig struct {
 	ToAddr         smtp.Address          `mapstructure:",omitempty"`
 	Msg            string                `mapstructure:"msg"`
 	MsgBytes       []byte                `mapstructure:",omitempty"`
-	MailProcessors []MailProcessorConfig `mapstructure:"mail_processors"`
+	MailProcessors []MailProcessorConfig `mapstructure:"mail-processors"`
 	Outputs        []OutputConfig        `mapstructure:"outputs"`
-	PollInterval   time.Duration         `mapstructure:"poll_interval"`
-	ReadFileConfig ReadFileConfig        `mapstructure:"read_file"`
+	PollInterval   time.Duration         `mapstructure:"poll-interval"`
+	ReadFileConfig ReadFileConfig        `mapstructure:"read-file"`
 }
 
 func CobraSendMailArgsFunc(cmd *cobra.Command, _ []string) error {
