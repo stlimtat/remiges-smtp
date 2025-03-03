@@ -50,12 +50,14 @@ func TestKeyWriter_Validate(t *testing.T) {
 			}
 			require.NoError(t, err)
 			randName := uuid.New().String()
-			err = k.WriteKey(ctx, randName, []byte("test-public-key"), []byte("test-private-key"))
+			gotPublicKeyPath, gotPrivateKeyPath, err := k.WriteKey(ctx, randName, []byte("test-public-key"), []byte("test-private-key"))
 			if tt.wantWriteErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+			assert.FileExists(t, gotPublicKeyPath)
+			assert.FileExists(t, gotPrivateKeyPath)
 			files, err := os.ReadDir(tt.outPath)
 			require.NoError(t, err)
 			assert.GreaterOrEqual(t, len(files), 2)

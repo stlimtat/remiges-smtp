@@ -1,4 +1,20 @@
 debug: false
+dns:
+  stlim.net:
+    domain: "stlim.net"
+    localpart-case-sensitive: true
+    localpart-catchall-separator: "+"
+    reports-only: true
+    dkim:
+      key001:
+        domain: "stlim.net"
+        algorithm: "rsa-sha256"
+        hash: "sha256"
+        headers:
+          - "from"
+          - "to"
+          - "subject"
+        private-key-file: "~/go/src/github.com/remiges-smtp/config/key001.pem"
 from: spteo@stlim.net
 mail_processors:
   - type: unixdos

@@ -49,11 +49,11 @@ func (c *CryptoFactory) WriteKey(
 	ctx context.Context,
 	id string,
 	publicKeyPEM, privateKeyPEM []byte,
-) error {
-	err := c.keyWriter.WriteKey(ctx, id, publicKeyPEM, privateKeyPEM)
+) (publicKeyPath, privateKeyPath string, err error) {
+	publicKeyPath, privateKeyPath, err = c.keyWriter.WriteKey(ctx, id, publicKeyPEM, privateKeyPEM)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
-	return nil
+	return publicKeyPath, privateKeyPath, nil
 }

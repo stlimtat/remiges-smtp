@@ -108,18 +108,20 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 
 			keyWriter.EXPECT().
 				WriteKey(ctx, tt.id, publicKeyPEM, privateKeyPEM).
-				DoAndReturn(func(_ context.Context, _ string, _, _ []byte) error {
+				DoAndReturn(func(_ context.Context, _ string, _, _ []byte) (string, string, error) {
 					if tt.wantWriteKeyErr {
-						return fmt.Errorf("error writing key")
+						return "", "", fmt.Errorf("error writing key")
 					}
-					return nil
+					return "public-key-path", "private-key-path", nil
 				})
-			err = factory.WriteKey(ctx, tt.id, publicKeyPEM, privateKeyPEM)
+			publicKeyPath, privateKeyPath, err := factory.WriteKey(ctx, tt.id, publicKeyPEM, privateKeyPEM)
 			if tt.wantWriteKeyErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+			require.Equal(t, "public-key-path", publicKeyPath)
+			require.Equal(t, "private-key-path", privateKeyPath)
 		})
 	}
 }

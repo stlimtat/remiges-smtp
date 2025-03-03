@@ -40,7 +40,7 @@ func DefaultDKIMConfig(
 			Selectors: make(map[string]moxConfig.Selector),
 		},
 		MoxSelectors: map[string]MoxSelector{
-			"google": {
+			"key001": {
 				Algorithm: "rsa-sha256",
 				Canonicalization: MoxCanonicalization{
 					HeaderRelaxed: true,

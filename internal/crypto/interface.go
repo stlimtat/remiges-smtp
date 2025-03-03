@@ -13,5 +13,5 @@ type IKeyGenerator interface {
 }
 
 type IKeyWriter interface {
-	WriteKey(ctx context.Context, id string, publicKeyPEM, privateKeyPEM []byte) error
+	WriteKey(ctx context.Context, id string, publicKeyPEM, privateKeyPEM []byte) (publicKeyPath, privateKeyPath string, err error)
 }

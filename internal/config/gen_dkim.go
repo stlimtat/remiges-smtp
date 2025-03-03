@@ -8,10 +8,11 @@ import (
 )
 
 type GenDKIMConfig struct {
-	BitSize int    `mapstructure:"bit-size,omitempty"`
-	Domain  string `mapstructure:"dkim-domain"`
-	KeyType string `mapstructure:"key-type,omitempty"`
-	OutPath string `mapstructure:"out-path"`
+	BitSize  int    `mapstructure:"bit-size,omitempty"`
+	Domain   string `mapstructure:"dkim-domain"`
+	KeyType  string `mapstructure:"key-type,omitempty"`
+	OutPath  string `mapstructure:"out-path"`
+	Selector string `mapstructure:"selector"`
 }
 
 func NewGenDKIMConfig(ctx context.Context) GenDKIMConfig {
@@ -24,9 +25,10 @@ func NewGenDKIMConfig(ctx context.Context) GenDKIMConfig {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Unmarshal")
 	}
+	allSettings := viper.AllSettings()
 
 	logger.Info().
-		Interface("viper.AllSettings", viper.AllSettings()).
+		Interface("allSettings", allSettings).
 		Interface("result", result).
 		Msg("GenDKIMConfig init")
 

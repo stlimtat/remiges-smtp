@@ -53,11 +53,8 @@ func newLookupMXCmd(
 		},
 	}
 
-	result.cmd.Flags().String(
-		"domain",
-		"", "Domain to lookup mx entries",
-	)
-	err = viper.BindPFlag("domain", result.cmd.Flags().Lookup("domain"))
+	result.cmd.Flags().StringP("lookup-domain", "l", "", "Domain to lookup mx entries")
+	err = viper.BindPFlag("domain", result.cmd.Flags().Lookup("lookup-domain"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag")
 	}

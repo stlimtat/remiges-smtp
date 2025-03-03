@@ -25,7 +25,7 @@ func TestDKIMConfig(t *testing.T) {
 			dkim: DefaultDKIMConfig(ctx),
 			wantDKIM: moxConfig.DKIM{
 				Selectors: map[string]moxConfig.Selector{
-					"google": {
+					"key001": {
 						Algorithm: "rsa-sha256",
 						Canonicalization: moxConfig.Canonicalization{
 							HeaderRelaxed: true,
@@ -53,6 +53,7 @@ func TestDKIMConfig(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantDKIM, tt.dkim.DKIM)
+			assert.Equal(t, dns.Domain{ASCII: "stlim.net"}, tt.dkim.DKIM.Selectors["key001"].Domain)
 		})
 	}
 }

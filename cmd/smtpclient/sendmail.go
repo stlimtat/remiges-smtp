@@ -35,31 +35,16 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 		},
 	}
 
-	result.cmd.Flags().StringP(
-		"from", "f",
-		"", "Send the test message from - sender email address",
-	)
-	result.cmd.Flags().StringP(
-		"path", "p",
-		"", "Path to the directory containing the df and qf files",
-	)
-	result.cmd.Flags().StringP(
-		"to", "t",
-		"", "Send the test message to - destination email address",
-	)
-	result.cmd.Flags().StringP(
-		"msg", "m",
-		"", "Test message",
-	)
-	result.cmd.Flags().StringP(
-		"redis_addr", "r",
-		"", "Redis address",
-	)
+	result.cmd.Flags().StringP("from", "f", "", "Send the test message from - sender email address")
+	result.cmd.Flags().StringP("path", "p", "", "Path to the directory containing the df and qf files")
+	result.cmd.Flags().StringP("to", "t", "", "Send the test message to - destination email address")
+	result.cmd.Flags().StringP("msg", "m", "", "Test message")
+	result.cmd.Flags().StringP("redis-addr", "r", "", "Redis address")
 	err = viper.BindPFlag("from", result.cmd.Flags().Lookup("from"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag.from")
 	}
-	err = viper.BindPFlag("in_path", result.cmd.Flags().Lookup("path"))
+	err = viper.BindPFlag("read-file.in-path", result.cmd.Flags().Lookup("path"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag.inpath")
 	}
@@ -70,6 +55,10 @@ func newSendMailCmd(ctx context.Context) (*sendMailCmd, *cobra.Command) {
 	err = viper.BindPFlag("msg", result.cmd.Flags().Lookup("msg"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag.msg")
+	}
+	err = viper.BindPFlag("read-file.redis-addr", result.cmd.Flags().Lookup("redis-addr"))
+	if err != nil {
+		logger.Fatal().Err(err).Msg("viper.BindPFlag.redis-addr")
 	}
 
 	return result, result.cmd

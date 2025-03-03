@@ -17,6 +17,7 @@ go_library(
     deps = [
         "//internal/config",
         "//internal/crypto",
+        "//internal/dkim",
         "//internal/dns",
         "//internal/file",
         "//internal/file_mail",

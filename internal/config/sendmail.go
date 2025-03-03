@@ -13,17 +13,18 @@ import (
 )
 
 type SendMailConfig struct {
-	Debug          bool                  `mapstructure:"debug"`
-	From           string                `mapstructure:"from"`
-	FromAddr       smtp.Address          `mapstructure:",omitempty"`
-	To             string                `mapstructure:"to"`
-	ToAddr         smtp.Address          `mapstructure:",omitempty"`
-	Msg            string                `mapstructure:"msg"`
-	MsgBytes       []byte                `mapstructure:",omitempty"`
-	MailProcessors []MailProcessorConfig `mapstructure:"mail-processors"`
-	Outputs        []OutputConfig        `mapstructure:"outputs"`
-	PollInterval   time.Duration         `mapstructure:"poll-interval"`
-	ReadFileConfig ReadFileConfig        `mapstructure:"read-file"`
+	Debug          bool                    `mapstructure:"debug"`
+	Dns            map[string]DomainConfig `mapstructure:"dns"`
+	From           string                  `mapstructure:"from"`
+	FromAddr       smtp.Address            `mapstructure:",omitempty"`
+	To             string                  `mapstructure:"to"`
+	ToAddr         smtp.Address            `mapstructure:",omitempty"`
+	Msg            string                  `mapstructure:"msg"`
+	MsgBytes       []byte                  `mapstructure:",omitempty"`
+	MailProcessors []MailProcessorConfig   `mapstructure:"mail-processors"`
+	Outputs        []OutputConfig          `mapstructure:"outputs"`
+	PollInterval   time.Duration           `mapstructure:"poll-interval"`
+	ReadFileConfig ReadFileConfig          `mapstructure:"read-file"`
 }
 
 func CobraSendMailArgsFunc(cmd *cobra.Command, _ []string) error {
@@ -62,8 +63,10 @@ func NewSendMailConfig(ctx context.Context) SendMailConfig {
 		logger.Fatal().Err(err).Msg("Unmarshal")
 	}
 
+	allSettings := viper.AllSettings()
+
 	logger.Info().
-		Interface("viper.AllSettings", viper.AllSettings()).
+		Interface("allSettings", allSettings).
 		Interface("result", result).
 		Msg("SendMailConfig init")
 

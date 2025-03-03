@@ -9,7 +9,33 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/crypto"
+	"github.com/stlimtat/remiges-smtp/internal/dkim"
 )
+
+const GenDKIMResult = `To enable DKIM for %s, add the following TXT record to your DNS:
+%s
+
+Then to ensure that DKIM is working for the smtpclient, you need to add the following to
+the smtpclient config:
+
+` + "```" + `yaml
+# The domain to use for DKIM
+dns:
+  %s:
+    domain: %s
+    dkim:
+      %s:
+        domain: %s
+        algorithm: rsa-sha256
+        hash: sha256
+        headers:
+          - from
+          - to
+          - subject
+        private-key-file: %s
+` + "```" + `
+Then restart the smtpclient.
+`
 
 type genDKIMCmd struct {
 	cmd *cobra.Command
@@ -55,31 +81,25 @@ func newGenDKIMCmd(
 		},
 	}
 
-	result.cmd.Flags().Int(
-		"bit-size",
-		2048, "Bit size of the DKIM keys",
-	)
+	result.cmd.Flags().Int("bit-size", 2048, "Bit size of the DKIM keys")
+	result.cmd.Flags().String("dkim-domain", "", "Domain to generate DKIM keys, dns record and config")
+	result.cmd.Flags().String("out-path", "~/config", "Path to write DKIM keys, dns record and config")
+	result.cmd.Flags().String("selector", "key001", "Selector for DKIM keys")
 	err = viper.BindPFlag("bit-size", result.cmd.Flags().Lookup("bit-size"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag - bit-size")
 	}
-
-	result.cmd.Flags().String(
-		"dkim-domain",
-		"", "Domain to generate DKIM keys, dns record and config",
-	)
 	err = viper.BindPFlag("dkim-domain", result.cmd.Flags().Lookup("dkim-domain"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag - dkim-domain")
 	}
-
-	result.cmd.Flags().String(
-		"out-path",
-		"~/config", "Path to write DKIM keys, dns record and config",
-	)
 	err = viper.BindPFlag("out-path", result.cmd.Flags().Lookup("out-path"))
 	if err != nil {
-		logger.Fatal().Err(err).Msg("viper.BindPFlag")
+		logger.Fatal().Err(err).Msg("viper.BindPFlag - out-path")
+	}
+	err = viper.BindPFlag("selector", result.cmd.Flags().Lookup("selector"))
+	if err != nil {
+		logger.Fatal().Err(err).Msg("viper.BindPFlag - selector")
 	}
 	return result, result.cmd
 }
@@ -105,10 +125,14 @@ func (_ *GenDKIMSvc) Run(
 	ctx := cmd.Context()
 	logger := zerolog.Ctx(ctx)
 
+	// Initialize the system
 	cfg := config.GetContextConfig(ctx).(config.GenDKIMConfig)
 
 	factory := &crypto.CryptoFactory{}
 	keyWriter := crypto.NewKeyWriter(ctx, cfg.OutPath)
+	txtGen := &dkim.TxtGen{}
+
+	// Perform the running
 	err := keyWriter.Validate(ctx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("crypto.KeyWriter.Validate")
@@ -123,10 +147,17 @@ func (_ *GenDKIMSvc) Run(
 		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.GenerateKey")
 	}
 
-	err = factory.WriteKey(ctx, cfg.Domain, publicKeyPEM, privateKeyPEM)
+	_, privateKeyPath, err := factory.WriteKey(ctx, cfg.Domain, publicKeyPEM, privateKeyPEM)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.WriteKey")
 	}
+
+	txtEntry, err := txtGen.Generate(ctx, cfg.Domain, cfg.KeyType, cfg.Selector, publicKeyPEM)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("dkim.TxtGen.Generate")
+	}
+
+	fmt.Printf(GenDKIMResult, cfg.Domain, txtEntry, cfg.Domain, cfg.Domain, cfg.Selector, cfg.Domain, privateKeyPath)
 
 	return nil
 }

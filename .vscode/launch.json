@@ -5,14 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "genDKIM",
+            "name": "gendkim",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/smtpclient",
             "args": [
-                "genDKIM",
-                "--domain",
+                "gendkim",
+                "--dkim-domain",
                 "stlim.net",
                 "--out-path",
                 "${workspaceFolder}/config",

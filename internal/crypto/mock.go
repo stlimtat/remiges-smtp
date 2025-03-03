@@ -81,11 +81,13 @@ func (m *MockIKeyWriter) EXPECT() *MockIKeyWriterMockRecorder {
 }
 
 // WriteKey mocks base method.
-func (m *MockIKeyWriter) WriteKey(ctx context.Context, id string, publicKeyPEM, privateKeyPEM []byte) error {
+func (m *MockIKeyWriter) WriteKey(ctx context.Context, id string, publicKeyPEM, privateKeyPEM []byte) (string, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WriteKey", ctx, id, publicKeyPEM, privateKeyPEM)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // WriteKey indicates an expected call of WriteKey.

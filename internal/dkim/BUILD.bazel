@@ -1,8 +1,11 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "dkim",
-    srcs = ["sign.go"],
+    srcs = [
+        "sign.go",
+        "txt_gen.go",
+    ],
     importpath = "github.com/stlimtat/remiges-smtp/internal/dkim",
     visibility = ["//:__subpackages__"],
     deps = [
@@ -11,5 +14,16 @@ go_library(
         "@com_github_mjl_mox//dns",
         "@com_github_mjl_mox//mox-",
         "@com_github_rs_zerolog//:zerolog",
+    ],
+)
+
+go_test(
+    name = "dkim_test",
+    srcs = ["txt_gen_test.go"],
+    embed = [":dkim"],
+    deps = [
+        "//internal/telemetry",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )
