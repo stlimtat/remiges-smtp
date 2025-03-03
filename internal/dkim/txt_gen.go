@@ -66,9 +66,9 @@ func (_ *TxtGen) Generate(
 	}
 
 	result := fmt.Sprintf("\"v=DKIM1; k=%s; p=%s\"", keyType, resultKey)
-	if len(result) > 256 {
-		result = result[:256] + "\" \"" + result[256:]
-	}
+	// if len(result) > 256 {
+	// 	result = result[:256] + "\" \"" + result[256:]
+	// }
 	result = fmt.Sprintf("%s._domainkey.%s IN TXT %s", selector, domain, result)
 
 	return []byte(result), nil

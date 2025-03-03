@@ -11,6 +11,7 @@ dns:
           domain: stlim.net
           algorithm: rsa-sha256
           hash: sha256
+          private-key-file: /Users/st_lim/go/src/github.com/stlimtat/remiges-smtp/config/key001.pem
           headers:
           - from
           - to
@@ -27,6 +28,22 @@ mail_processors:
     index: 3
   - type: mergeBody
     index: 99
+  - type: dkim
+    index: 100
+    args:
+      dkim:
+        selectors:
+          key001:
+            domain: stlim.net
+            algorithm: rsa-sha256
+            hash: sha256
+            private-key-file: /Users/st_lim/go/src/github.com/stlimtat/remiges-smtp/config/key001.pem
+            headers:
+            - from
+            - to
+            - subject
+        sign:
+          - key001
 read_file:
   concurrency: 1
   file_mails:
