@@ -1,23 +1,22 @@
 package intmail
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
 
 	"github.com/mitchellh/mapstructure"
-	moxConfig "github.com/mjl-/mox/config"
+	"github.com/mjl-/mox/dkim"
+	"github.com/mjl-/mox/mox-"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
-const (
-	DKIMProcessorType = "dkim"
-)
-
 type DKIMProcessor struct {
 	Cfg       config.MailProcessorConfig
-	DkimCfg   config.DKIMConfig
-	DomainCfg moxConfig.Domain
+	DomainCfg *config.DomainConfig
+	SLogger   *slog.Logger
 }
 
 func (p *DKIMProcessor) Init(
@@ -27,17 +26,14 @@ func (p *DKIMProcessor) Init(
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("DKIMProcessor Init")
 	p.Cfg = cfg
-	dkimCfgAny, ok := cfg.Args[DKIMProcessorType]
-	if !ok {
-		logger.Fatal().Msg("DKIMProcessor: no config")
-	}
-	logger.Debug().Interface("dkimCfgAny", dkimCfgAny).Msg("DKIMProcessor: dkimCfgAny")
-	p.DkimCfg = config.DKIMConfig{}
-	err := mapstructure.Decode(dkimCfgAny, &p.DkimCfg)
+
+	p.DomainCfg = &config.DomainConfig{}
+	err := mapstructure.Decode(p.Cfg.Args, p.DomainCfg)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("DKIMProcessor: decode")
 	}
-	err = p.DkimCfg.Transform(ctx)
+
+	err = p.DomainCfg.Transform(ctx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("DKIMProcessor: transform")
 	}
@@ -57,30 +53,30 @@ func (p *DKIMProcessor) Process(
 		Interface("from", inMail.From).
 		Msg("DKIMProcessor")
 
-	selectors := p.DkimCfg.Selectors
+	selectors := mox.DKIMSelectors(p.DomainCfg.DKIM.DKIM)
 	if len(selectors) == 0 {
 		logger.Debug().Msg("DKIMProcessor: no selectors")
 		return inMail, nil
 	}
 
-	// selectors := mox.DKIMSelectors(confDom.DKIM)
-	// if len(selectors) > 0 {
-	// 	canonical := mox.CanonicalLocalpart(msgFrom.Localpart, confDom)
-	// 	dkimHeaders, err := dkim.Sign(
-	// 		ctx,
-	// 		c.log.Logger,
-	// 		canonical,
-	// 		msgFrom.Domain,
-	// 		selectors,
-	// 		c.msgsmtputf8,
-	// 		store.FileMsgReader(msgPrefix, dataFile))
-	//  if err != nil {
-	// 		c.log.Errorx("dkim sign for domain", err, slog.Any("domain", msgFrom.Domain))
-	// 		metricServerErrors.WithLabelValues("dkimsign").Inc()
-	// 	} else {
-	// 		msgPrefix = append(msgPrefix, []byte(dkimHeaders)...)
-	// 	}
-	// }
+	canonical := mox.CanonicalLocalpart(inMail.From.Localpart, p.DomainCfg.Domain)
+
+	dkimHeaders, err := dkim.Sign(
+		ctx,
+		p.SLogger,
+		canonical,
+		inMail.From.Domain,
+		selectors,
+		true,
+		bytes.NewReader(inMail.Body),
+	)
+	if err != nil {
+		logger.Error().Err(err).Msg("DKIMProcessor: sign")
+		return inMail, err
+	}
+	// add dkim headers to the mail
+	inMail.DKIMHeaders = []byte(dkimHeaders)
+	inMail.Body = append(inMail.DKIMHeaders, inMail.Body...)
 
 	return inMail, nil
 }

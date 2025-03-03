@@ -24,28 +24,38 @@ func TestDKIMProcessorInit(t *testing.T) {
 			name: "happy",
 			cfgStr: []byte(`
 args:
+  domain-str: stlim.net
   dkim:
     selectors:
-      google:
-        domain: "stlim.net"
-      blah:
-        domain: "blah.com"
+      key001:
+        domain: stlim.net
+      key002:
+        domain: blah.com
+    sign:
+      - key001
+      - key002
 `),
 			wantDKIMConfig: config.DKIMConfig{
 				DKIM: moxConfig.DKIM{
 					Selectors: map[string]moxConfig.Selector{
-						"google": {
+						"key001": {
 							Domain: dns.Domain{ASCII: "stlim.net"},
 						},
+						"key002": {
+							Domain: dns.Domain{ASCII: "blah.com"},
+						},
 					},
-					Sign: []string{},
+					Sign: []string{"key001", "key002"},
 				},
 				MoxSelectors: map[string]config.MoxSelector{
-					"google": {
+					"key001": {
 						Domain: "stlim.net",
 					},
+					"key002": {
+						Domain: "blah.com",
+					},
 				},
-				MoxSign: []string{},
+				MoxSign: []string{"key001", "key002"},
 			},
 		},
 	}
@@ -63,10 +73,11 @@ args:
 			processor := &DKIMProcessor{}
 			err = processor.Init(ctx, cfg)
 			require.NoError(t, err)
-			assert.Subset(t, processor.DkimCfg.Selectors, tt.wantDKIMConfig.Selectors)
-			assert.Subset(t, processor.DkimCfg.Sign, tt.wantDKIMConfig.Sign)
-			assert.Subset(t, processor.DkimCfg.MoxSelectors, tt.wantDKIMConfig.MoxSelectors)
-			assert.Subset(t, processor.DkimCfg.MoxSign, tt.wantDKIMConfig.MoxSign)
+			dkimCfg := processor.DomainCfg.DKIM
+			assert.Subset(t, dkimCfg.Selectors, tt.wantDKIMConfig.Selectors)
+			assert.Subset(t, dkimCfg.Sign, tt.wantDKIMConfig.Sign)
+			assert.Subset(t, dkimCfg.MoxSelectors, tt.wantDKIMConfig.MoxSelectors)
+			assert.Subset(t, dkimCfg.MoxSign, tt.wantDKIMConfig.MoxSign)
 		})
 	}
 }
