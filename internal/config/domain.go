@@ -4,6 +4,8 @@ import (
 	"context"
 
 	moxConfig "github.com/mjl-/mox/config"
+	moxDns "github.com/mjl-/mox/dns"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -28,9 +30,10 @@ type DomainConfig struct {
 
 func DefaultDomainConfig(
 	ctx context.Context,
-) map[string]DomainConfig {
-	result := map[string]DomainConfig{
-		DomainStlimNet: {
+) map[string]*DomainConfig {
+	// yaml cannot have a map key with a dot, so we use a string key
+	result := map[string]*DomainConfig{
+		"stlimnet": {
 			ClientSettingsDomain:       "",
 			DKIM:                       DefaultDKIMConfig(ctx),
 			Domain:                     moxConfig.Domain{},
@@ -41,4 +44,37 @@ func DefaultDomainConfig(
 		},
 	}
 	return result
+}
+
+func (c *DomainConfig) Transform(
+	ctx context.Context,
+) error {
+	logger := zerolog.Ctx(ctx)
+	if c.DKIM != nil {
+		err := c.DKIM.Transform(ctx)
+		if err != nil {
+			logger.Error().Err(err).Msg("DomainConfig.Transform.DKIM")
+			return err
+		}
+		c.Domain.DKIM = c.DKIM.DKIM
+	}
+	if c.ClientSettingsDomain != "" {
+		c.Domain.ClientSettingsDomain = c.ClientSettingsDomain
+	}
+	if c.Description != "" {
+		c.Domain.Description = c.Description
+	}
+	if c.DomainStr != "" {
+		c.Domain.Domain = moxDns.Domain{ASCII: c.DomainStr}
+	}
+	if c.LocalpartCaseSensitive {
+		c.Domain.LocalpartCaseSensitive = c.LocalpartCaseSensitive
+	}
+	if c.LocalpartCatchallSeparator != "" {
+		c.Domain.LocalpartCatchallSeparator = c.LocalpartCatchallSeparator
+	}
+	if c.ReportsOnly {
+		c.Domain.ReportsOnly = c.ReportsOnly
+	}
+	return nil
 }

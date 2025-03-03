@@ -13,18 +13,18 @@ import (
 )
 
 type SendMailConfig struct {
-	Debug          bool                    `mapstructure:"debug"`
-	Dns            map[string]DomainConfig `mapstructure:"dns"`
-	From           string                  `mapstructure:"from"`
-	FromAddr       smtp.Address            `mapstructure:",omitempty"`
-	To             string                  `mapstructure:"to"`
-	ToAddr         smtp.Address            `mapstructure:",omitempty"`
-	Msg            string                  `mapstructure:"msg"`
-	MsgBytes       []byte                  `mapstructure:",omitempty"`
-	MailProcessors []MailProcessorConfig   `mapstructure:"mail-processors"`
-	Outputs        []OutputConfig          `mapstructure:"outputs"`
-	PollInterval   time.Duration           `mapstructure:"poll-interval"`
-	ReadFileConfig ReadFileConfig          `mapstructure:"read-file"`
+	Debug          bool                     `mapstructure:"debug"`
+	Dns            map[string]*DomainConfig `mapstructure:"dns"`
+	From           string                   `mapstructure:"from"`
+	FromAddr       smtp.Address             `mapstructure:",omitempty"`
+	To             string                   `mapstructure:"to"`
+	ToAddr         smtp.Address             `mapstructure:",omitempty"`
+	Msg            string                   `mapstructure:"msg"`
+	MsgBytes       []byte                   `mapstructure:",omitempty"`
+	MailProcessors []MailProcessorConfig    `mapstructure:"mail-processors"`
+	Outputs        []OutputConfig           `mapstructure:"outputs"`
+	PollInterval   time.Duration            `mapstructure:"poll-interval"`
+	ReadFileConfig ReadFileConfig           `mapstructure:"read-file"`
 }
 
 func CobraSendMailArgsFunc(cmd *cobra.Command, _ []string) error {
@@ -65,11 +65,6 @@ func NewSendMailConfig(ctx context.Context) SendMailConfig {
 
 	allSettings := viper.AllSettings()
 
-	logger.Info().
-		Interface("allSettings", allSettings).
-		Interface("result", result).
-		Msg("SendMailConfig init")
-
 	// converting from and to email address
 	result.FromAddr, err = smtp.ParseAddress(result.From)
 	if err != nil {
@@ -86,6 +81,17 @@ func NewSendMailConfig(ctx context.Context) SendMailConfig {
 	}
 
 	result.MsgBytes = []byte(result.Msg)
+	for _, domain := range result.Dns {
+		err := domain.Transform(ctx)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("DomainConfig.Transform")
+		}
+	}
+
+	logger.Info().
+		Interface("allSettings", allSettings).
+		Interface("result", result).
+		Msg("SendMailConfig init")
 
 	return result
 }
