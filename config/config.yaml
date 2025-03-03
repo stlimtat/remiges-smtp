@@ -1,20 +1,22 @@
-debug: false
+debug: true
 dns:
-  stlim.net:
-    domain: "stlim.net"
+  stlimnet:
+    domain-str: stlim.net
     localpart-case-sensitive: true
     localpart-catchall-separator: "+"
     reports-only: true
     dkim:
-      key001:
-        domain: "stlim.net"
-        algorithm: "rsa-sha256"
-        hash: "sha256"
-        headers:
-          - "from"
-          - "to"
-          - "subject"
-        private-key-file: "~/go/src/github.com/remiges-smtp/config/key001.pem"
+      selectors:
+        key001:
+          domain: stlim.net
+          algorithm: rsa-sha256
+          hash: sha256
+          headers:
+          - from
+          - to
+          - subject
+      sign:
+        - key001
 from: spteo@stlim.net
 mail_processors:
   - type: unixdos
@@ -51,7 +53,7 @@ read_file:
     - type: body
       index: 7
   from: spteo@stlim.net
-  in_path: /app/data
+  in_path: /Users/st_lim/go/src/github.com/stlimtat/remiges-smtp/testdata
   poll_interval: 60s
   redis_addr: redis:6379
 to: st_lim+remiges-smtp@stlim.net
