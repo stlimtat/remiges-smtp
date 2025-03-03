@@ -118,6 +118,8 @@ func (c *DKIMConfig) TransformSelector(
 		result.ExpirationSeconds = int(expiration.Seconds())
 	}
 	result.Hash = moxSelector.Hash
+	// This is used in mox/dkimsign.go:L23 - DKIMSelectors
+	result.HashEffective = moxSelector.Hash
 	result.Headers = moxSelector.Headers
 
 	c.DKIM.Selectors[selectorName] = result
