@@ -2,10 +2,12 @@ package crypto
 
 import (
 	"context"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"os"
 
 	"github.com/rs/zerolog"
 )
@@ -50,4 +52,31 @@ func (_ *RsaKeyGenerator) GenerateKey(
 		Bytes("private_key", privateKeyPEM).
 		Msg("generated key pair")
 	return publicKeyPEM, privateKeyPEM, nil
+}
+
+func (_ *RsaKeyGenerator) LoadPrivateKey(
+	ctx context.Context,
+	privateKeyPath string,
+) (crypto.Signer, error) {
+	logger := zerolog.Ctx(ctx).With().Str("private_key_path", privateKeyPath).Logger()
+
+	rawFileData, err := os.ReadFile(privateKeyPath)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to read private key")
+		return nil, err
+	}
+
+	privateKeyBlock, _ := pem.Decode(rawFileData)
+	if privateKeyBlock == nil {
+		logger.Error().Msg("failed to decode private key")
+		return nil, err
+	}
+
+	result, err := x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to parse private key")
+		return nil, err
+	}
+
+	return result, nil
 }

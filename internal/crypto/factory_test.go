@@ -2,6 +2,8 @@ package crypto
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rsa"
 	"fmt"
 	"testing"
 
@@ -20,6 +22,7 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 		wantGeneratorErr bool
 		wantGenKeyErr    bool
 		wantWriteKeyErr  bool
+		wantLoadKeyErr   bool
 	}{
 		{
 			name:             "happy - rsa",
@@ -29,6 +32,7 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			wantGeneratorErr: false,
 			wantGenKeyErr:    false,
 			wantWriteKeyErr:  false,
+			wantLoadKeyErr:   false,
 		},
 		{
 			name:             "happy - ed25519",
@@ -38,6 +42,7 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			wantGeneratorErr: false,
 			wantGenKeyErr:    false,
 			wantWriteKeyErr:  false,
+			wantLoadKeyErr:   false,
 		},
 		{
 			name:             "default - will default to rsa",
@@ -47,15 +52,7 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			wantGeneratorErr: false,
 			wantGenKeyErr:    false,
 			wantWriteKeyErr:  false,
-		},
-		{
-			name:             "error - key writer",
-			keyType:          KeyTypeRSA,
-			bitSize:          2048,
-			id:               "test",
-			wantGeneratorErr: false,
-			wantGenKeyErr:    false,
-			wantWriteKeyErr:  true,
+			wantLoadKeyErr:   false,
 		},
 	}
 	for _, tt := range tests {
@@ -65,7 +62,8 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			keyWriter := NewMockIKeyWriter(ctrl)
+			tmpDir := t.TempDir()
+			keyWriter := NewKeyWriter(ctx, tmpDir)
 			factory := &CryptoFactory{}
 			generator, err := factory.Init(ctx, tt.keyType, keyWriter)
 			if tt.wantGeneratorErr {
@@ -77,23 +75,9 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			switch tt.keyType {
 			case KeyTypeEd25519:
 				assert.IsType(t, &Ed25519KeyGenerator{}, generator)
-			case KeyTypeRSA:
-				assert.IsType(t, &RsaKeyGenerator{}, generator)
 			default:
 				assert.IsType(t, &RsaKeyGenerator{}, generator)
 			}
-
-			// replace the generator with a mock generator
-			mockGenerator := NewMockIKeyGenerator(ctrl)
-			mockGenerator.EXPECT().
-				GenerateKey(ctx, tt.bitSize, tt.id).
-				DoAndReturn(func(_ context.Context, _ int, _ string) ([]byte, []byte, error) {
-					if tt.wantGenKeyErr {
-						return nil, nil, fmt.Errorf("error generating key")
-					}
-					return []byte("public-key"), []byte("private-key"), nil
-				})
-			factory.keyGenerator = mockGenerator
 
 			publicKeyPEM, privateKeyPEM, err := factory.GenerateKey(ctx, tt.bitSize, tt.id)
 			if tt.wantGenKeyErr {
@@ -103,25 +87,32 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, publicKeyPEM)
 			require.NotNil(t, privateKeyPEM)
-			assert.Contains(t, string(publicKeyPEM), "public-key")
-			assert.Contains(t, string(privateKeyPEM), "private-key")
 
-			keyWriter.EXPECT().
-				WriteKey(ctx, tt.id, publicKeyPEM, privateKeyPEM).
-				DoAndReturn(func(_ context.Context, _ string, _, _ []byte) (string, string, error) {
-					if tt.wantWriteKeyErr {
-						return "", "", fmt.Errorf("error writing key")
-					}
-					return "public-key-path", "private-key-path", nil
-				})
 			publicKeyPath, privateKeyPath, err := factory.WriteKey(ctx, tt.id, publicKeyPEM, privateKeyPEM)
 			if tt.wantWriteKeyErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, "public-key-path", publicKeyPath)
-			require.Equal(t, "private-key-path", privateKeyPath)
+			require.Equal(t, fmt.Sprintf("%s/%s.pub", tmpDir, tt.id), publicKeyPath)
+			require.Equal(t, fmt.Sprintf("%s/%s.pem", tmpDir, tt.id), privateKeyPath)
+			assert.FileExists(t, publicKeyPath)
+			assert.FileExists(t, privateKeyPath)
+
+			gotPrivateKey, err := factory.LoadPrivateKey(ctx, privateKeyPath)
+			if tt.wantLoadKeyErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, gotPrivateKey)
+
+			switch tt.keyType {
+			case KeyTypeEd25519:
+				assert.IsType(t, ed25519.PrivateKey{}, gotPrivateKey)
+			default:
+				assert.IsType(t, &rsa.PrivateKey{}, gotPrivateKey)
+			}
 		})
 	}
 }

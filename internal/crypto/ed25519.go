@@ -2,9 +2,11 @@ package crypto
 
 import (
 	"context"
+	"crypto"
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/pem"
+	"os"
 
 	"github.com/rs/zerolog"
 )
@@ -43,4 +45,26 @@ func (_ *Ed25519KeyGenerator) GenerateKey(
 		Msg("generated ed25519 key pair")
 
 	return publicKeyPEM, privateKeyPEM, nil
+}
+
+func (_ *Ed25519KeyGenerator) LoadPrivateKey(
+	ctx context.Context,
+	privateKeyPath string,
+) (crypto.Signer, error) {
+	logger := zerolog.Ctx(ctx).With().Str("private_key_path", privateKeyPath).Logger()
+
+	rawFileData, err := os.ReadFile(privateKeyPath)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to read private key")
+		return nil, err
+	}
+
+	privateKeyBlock, _ := pem.Decode(rawFileData)
+	if privateKeyBlock == nil {
+		logger.Error().Msg("failed to decode private key")
+		return nil, err
+	}
+
+	result := ed25519.PrivateKey(privateKeyBlock.Bytes)
+	return result, nil
 }

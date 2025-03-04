@@ -2,34 +2,35 @@ package crypto
 
 import (
 	"context"
+	"crypto"
 
 	"github.com/rs/zerolog"
 )
 
 type CryptoFactory struct {
-	keyGenerator IKeyGenerator
-	keyWriter    IKeyWriter
+	Generator IKeyGenerator
+	Writer    IKeyWriter
 }
 
 func (c *CryptoFactory) Init(
 	ctx context.Context,
 	keyType string,
-	keyWriter IKeyWriter,
+	writer IKeyWriter,
 ) (IKeyGenerator, error) {
 	logger := zerolog.Ctx(ctx).With().Str("key_type", keyType).Logger()
 
-	c.keyWriter = keyWriter
+	c.Writer = writer
 
 	switch keyType {
 	case KeyTypeEd25519:
-		c.keyGenerator = &Ed25519KeyGenerator{}
+		c.Generator = &Ed25519KeyGenerator{}
 	default:
-		c.keyGenerator = &RsaKeyGenerator{}
+		c.Generator = &RsaKeyGenerator{}
 	}
 
 	logger.Info().Msg("new key generator created")
 
-	return c.keyGenerator, nil
+	return c.Generator, nil
 }
 
 func (c *CryptoFactory) GenerateKey(
@@ -37,7 +38,7 @@ func (c *CryptoFactory) GenerateKey(
 	bitSize int,
 	id string,
 ) (publicKeyPEM, privateKeyPEM []byte, err error) {
-	publicKeyPEM, privateKeyPEM, err = c.keyGenerator.GenerateKey(ctx, bitSize, id)
+	publicKeyPEM, privateKeyPEM, err = c.Generator.GenerateKey(ctx, bitSize, id)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -50,10 +51,23 @@ func (c *CryptoFactory) WriteKey(
 	id string,
 	publicKeyPEM, privateKeyPEM []byte,
 ) (publicKeyPath, privateKeyPath string, err error) {
-	publicKeyPath, privateKeyPath, err = c.keyWriter.WriteKey(ctx, id, publicKeyPEM, privateKeyPEM)
+	publicKeyPath, privateKeyPath, err = c.Writer.WriteKey(ctx, id, publicKeyPEM, privateKeyPEM)
 	if err != nil {
 		return "", "", err
 	}
 
 	return publicKeyPath, privateKeyPath, nil
+}
+
+func (c *CryptoFactory) LoadPrivateKey(
+	ctx context.Context,
+	privateKeyPath string,
+) (privateKey crypto.Signer, err error) {
+	loader := c.Generator.(IKeyLoader)
+	privateKey, err = loader.LoadPrivateKey(ctx, privateKeyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return privateKey, nil
 }

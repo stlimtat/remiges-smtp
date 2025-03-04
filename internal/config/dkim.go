@@ -46,11 +46,12 @@ func DefaultDKIMConfig(
 					HeaderRelaxed: true,
 					BodyRelaxed:   true,
 				},
-				Domain:          "stlim.net",
+				Domain:          "key001",
 				DontSealHeaders: true,
 				Expiration:      "24h",
 				Hash:            "sha256",
 				Headers:         nil,
+				PrivateKeyFile:  "~/go/src/github.com/stlimtat/remiges-smtp/config/key001.key",
 			},
 		},
 		MoxSign: make([]string, 0),
@@ -121,6 +122,8 @@ func (c *DKIMConfig) TransformSelector(
 	// This is used in mox/dkimsign.go:L23 - DKIMSelectors
 	result.HashEffective = moxSelector.Hash
 	result.Headers = moxSelector.Headers
+	// Used to load the private key
+	result.PrivateKeyFile = moxSelector.PrivateKeyFile
 
 	c.DKIM.Selectors[selectorName] = result
 	return nil
