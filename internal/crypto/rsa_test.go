@@ -83,7 +83,8 @@ func TestRsaKeyGenerator_LoadPrivateKey(t *testing.T) {
 			require.NoError(t, err)
 
 			tmpDir := t.TempDir()
-			keyWriter := NewKeyWriter(ctx, tmpDir)
+			keyWriter, err := NewKeyWriter(ctx, tmpDir)
+			require.NoError(t, err)
 			gotPublicKeyPath, gotPrivateKeyPath, err := keyWriter.WriteKey(ctx, tt.id, gotGeneratedPublicKeyPEM, gotGeneratedPrivateKeyPEM)
 			if tt.wantWriteErr {
 				assert.Error(t, err)

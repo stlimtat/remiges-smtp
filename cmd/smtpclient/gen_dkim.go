@@ -129,14 +129,13 @@ func (_ *GenDKIMSvc) Run(
 	cfg := config.GetContextConfig(ctx).(config.GenDKIMConfig)
 
 	factory := &crypto.CryptoFactory{}
-	keyWriter := crypto.NewKeyWriter(ctx, cfg.OutPath)
+	keyWriter, err := crypto.NewKeyWriter(ctx, cfg.OutPath)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("crypto.NewKeyWriter")
+	}
 	txtGen := &dkim.TxtGen{}
 
 	// Perform the running
-	err := keyWriter.Validate(ctx)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("crypto.KeyWriter.Validate")
-	}
 	_, err = factory.Init(ctx, keyWriter)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.Init")

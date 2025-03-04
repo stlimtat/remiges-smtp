@@ -68,7 +68,8 @@ func TestEd25519KeyGenerator_WriteThenLoad(t *testing.T) {
 			gotGeneratedPrivateKey := ed25519.PrivateKey(gotBlock.Bytes)
 
 			tmpDir := t.TempDir()
-			keyWriter := NewKeyWriter(ctx, tmpDir)
+			keyWriter, err := NewKeyWriter(ctx, tmpDir)
+			require.NoError(t, err)
 
 			publicKeyPath, privateKeyPath, err := keyWriter.WriteKey(ctx, "test", gotPublicKeyPEM, gotPrivateKeyPEM)
 			if tt.wantWriteErr {

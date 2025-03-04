@@ -38,7 +38,7 @@ type GenericSvc struct {
 	Slogger                *slog.Logger
 }
 
-func newGenericSvc(
+func newGenericSvc( //nolint:funlen // this sets up a generic application context
 	cmd *cobra.Command,
 	_ []string,
 ) *GenericSvc {
@@ -129,7 +129,10 @@ func newGenericSvc(
 		logger.Fatal().Err(err).Msg("newGenericSvc.MkdirTemp")
 	}
 	result.CryptoFactory = &crypto.CryptoFactory{}
-	result.KeyWriter = crypto.NewKeyWriter(ctx, tempDir)
+	result.KeyWriter, err = crypto.NewKeyWriter(ctx, tempDir)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newGenericSvc.KeyWriter")
+	}
 	_, err = result.CryptoFactory.Init(ctx, result.KeyWriter)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newGenericSvc.CryptoFactory.Init")

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/rs/zerolog"
+	"github.com/stlimtat/remiges-smtp/internal/utils"
 )
 
 type KeyWriter struct {
@@ -15,54 +15,18 @@ type KeyWriter struct {
 }
 
 func NewKeyWriter(
-	_ context.Context,
+	ctx context.Context,
 	outPath string,
-) *KeyWriter {
+) (*KeyWriter, error) {
+	err := utils.ValidateIO(ctx, outPath, false)
+	if err != nil {
+		return nil, err
+	}
 	result := &KeyWriter{
 		OutPath: outPath,
 	}
 
-	return result
-}
-
-func (k *KeyWriter) Validate(
-	ctx context.Context,
-) error {
-	logger := zerolog.Ctx(ctx).With().Str("out_path", k.OutPath).Logger()
-
-	if k.OutPath == "" {
-		logger.Error().Msg("out_path is required")
-		return fmt.Errorf("out_path is required")
-	}
-	if strings.HasPrefix(k.OutPath, "./") {
-		wd, err := os.Getwd()
-		if err != nil {
-			logger.Error().Err(err).Msg("failed to get working directory")
-			return fmt.Errorf("failed to get working directory: %w", err)
-		}
-		k.OutPath = filepath.Join(wd, k.OutPath[2:])
-	}
-	if strings.HasPrefix(k.OutPath, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			logger.Error().Err(err).Msg("failed to get user home directory")
-			return fmt.Errorf("failed to get user home directory: %w", err)
-		}
-		k.OutPath = filepath.Join(home, k.OutPath[2:])
-	}
-
-	filePath := filepath.Clean(k.OutPath)
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to get file info")
-		return fmt.Errorf("failed to get file info: %w", err)
-	}
-	if !fileInfo.IsDir() {
-		logger.Error().Msg("out_path is not a directory")
-		return fmt.Errorf("out_path is not a directory")
-	}
-
-	return nil
+	return result, nil
 }
 
 func (k *KeyWriter) WriteKey(

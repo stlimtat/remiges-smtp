@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/rs/zerolog"
+	"github.com/stlimtat/remiges-smtp/internal/utils"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
@@ -38,7 +39,7 @@ func NewDefaultFileReader(
 	}
 
 	// 1. check that directory exists
-	err = result.ValidateInPath(ctx)
+	err = utils.ValidateIO(ctx, result.InPath, false)
 	if err != nil {
 		logger.Error().Err(err).Msg("ValidateInPath")
 		return nil, err
@@ -47,68 +48,14 @@ func NewDefaultFileReader(
 	return result, nil
 }
 
-func (r *DefaultFileReader) ValidateInPath(
-	ctx context.Context,
-) error {
-	logger := zerolog.Ctx(ctx)
-	// 1. check that directory exists
-	if strings.HasPrefix(r.InPath, "./") {
-		wd, err := os.Getwd()
-		if err != nil {
-			logger.Error().Err(err).Msg("os.Getwd")
-			return err
-		}
-		r.InPath = filepath.Join(wd, r.InPath[2:])
-	}
-	if strings.HasPrefix(r.InPath, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			logger.Error().Err(err).Msg("os.UserHomeDir")
-			return err
-		}
-		r.InPath = filepath.Join(home, r.InPath[2:])
-	}
-	r.InPath = filepath.Clean(r.InPath)
-	fileInfo, err := os.Stat(r.InPath)
-	if err != nil {
-		logger.Error().Err(err).Msg("os.Stat")
-		return err
-	}
-	// 2. check that it is a directory
-	if !fileInfo.IsDir() {
-		logger.Error().Msg("InPath is not a directory")
-		return fmt.Errorf("InPath is not a directory")
-	}
-	return nil
-}
-
 func (r *DefaultFileReader) ValidateFile(
 	ctx context.Context,
 	fileName string,
 ) error {
 	// 1. file path
 	filePath := filepath.Join(r.InPath, fileName)
-	err := r.ValidateFilePath(ctx, filePath)
+	err := utils.ValidateIO(ctx, filePath, true)
 	return err
-}
-
-func (_ *DefaultFileReader) ValidateFilePath(
-	ctx context.Context,
-	filePath string,
-) error {
-	logger := zerolog.Ctx(ctx)
-	// 1. check that file exists
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		logger.Error().Err(err).Msg("os.Stat")
-		return err
-	}
-	// 2. check that it is a file
-	if fileInfo.IsDir() {
-		logger.Error().Msg("fileName is not a file")
-		return fmt.Errorf("fileName is not a file")
-	}
-	return nil
 }
 
 func (r *DefaultFileReader) GetQfFileName(
@@ -135,9 +82,8 @@ func (r *DefaultFileReader) RefreshList(
 	// 0. Reset the current list of files
 	result := make([]*FileInfo, 0)
 	// 1. validate directory
-	err := r.ValidateInPath(ctx)
+	err := utils.ValidateIO(ctx, r.InPath, false)
 	if err != nil {
-		logger.Error().Err(err).Msg("ValidateInPath")
 		return nil, err
 	}
 	// 2. read list of files in directory
@@ -230,7 +176,7 @@ func (r *DefaultFileReader) ReadNextFile(
 		return nil, fmt.Errorf("file is being processed")
 	}
 	// 3. validate the df file
-	err = r.ValidateFilePath(ctx, dfFilePath)
+	err = utils.ValidateIO(ctx, dfFilePath, true)
 	if err != nil {
 		logger.Error().Err(err).
 			Str("dfFilePath", dfFilePath).
@@ -238,7 +184,7 @@ func (r *DefaultFileReader) ReadNextFile(
 		return nil, err
 	}
 	// 4. validate the qf file
-	err = r.ValidateFilePath(ctx, qfFilePath)
+	err = utils.ValidateIO(ctx, qfFilePath, true)
 	if err != nil {
 		logger.Error().Err(err).
 			Str("qfFilePath", qfFilePath).

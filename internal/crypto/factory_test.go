@@ -63,7 +63,8 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			defer ctrl.Finish()
 
 			tmpDir := t.TempDir()
-			keyWriter := NewKeyWriter(ctx, tmpDir)
+			keyWriter, err := NewKeyWriter(ctx, tmpDir)
+			require.NoError(t, err)
 			factory := &CryptoFactory{}
 			generators, err := factory.Init(ctx, keyWriter)
 			if tt.wantGeneratorErr {

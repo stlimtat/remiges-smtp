@@ -14,6 +14,7 @@ import (
 )
 
 func TestKeyWriter_Validate(t *testing.T) {
+	tmpDir := t.TempDir()
 	tests := []struct {
 		name            string
 		outPath         string
@@ -22,19 +23,19 @@ func TestKeyWriter_Validate(t *testing.T) {
 	}{
 		{
 			name:            "happy",
-			outPath:         "/tmp",
+			outPath:         tmpDir,
 			wantValidateErr: false,
 			wantWriteErr:    false,
 		},
 		{
 			name:            "invalid out path",
-			outPath:         "/tmp/does-not-exist",
+			outPath:         filepath.Join(tmpDir, "does-not-exist"),
 			wantValidateErr: true,
 			wantWriteErr:    false,
 		},
 		{
 			name:            "out path is a file",
-			outPath:         "/tmp/key_writer_test.go",
+			outPath:         filepath.Join(tmpDir, "key_writer_test.go"),
 			wantValidateErr: true,
 			wantWriteErr:    false,
 		},
@@ -42,8 +43,7 @@ func TestKeyWriter_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, _ := telemetry.InitLogger(context.Background())
-			k := NewKeyWriter(ctx, tt.outPath)
-			err := k.Validate(ctx)
+			k, err := NewKeyWriter(ctx, tt.outPath)
 			if tt.wantValidateErr {
 				assert.Error(t, err)
 				return
