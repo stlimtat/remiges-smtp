@@ -8,37 +8,47 @@ import (
 )
 
 type CryptoFactory struct {
-	Generator IKeyGenerator
-	Writer    IKeyWriter
+	Generators map[string]IKeyGenerator
+	Writer     IKeyWriter
 }
 
 func (c *CryptoFactory) Init(
 	ctx context.Context,
-	keyType string,
 	writer IKeyWriter,
-) (IKeyGenerator, error) {
-	logger := zerolog.Ctx(ctx).With().Str("key_type", keyType).Logger()
+) (map[string]IKeyGenerator, error) {
+	logger := zerolog.Ctx(ctx)
 
 	c.Writer = writer
 
-	switch keyType {
-	case KeyTypeEd25519:
-		c.Generator = &Ed25519KeyGenerator{}
-	default:
-		c.Generator = &RsaKeyGenerator{}
+	c.Generators = map[string]IKeyGenerator{
+		KeyTypeEd25519: &Ed25519KeyGenerator{},
+		KeyTypeRSA:     &RsaKeyGenerator{},
 	}
 
-	logger.Info().Msg("new key generator created")
+	logger.Info().Msg("new key generators created")
 
-	return c.Generator, nil
+	return c.Generators, nil
 }
 
 func (c *CryptoFactory) GenerateKey(
 	ctx context.Context,
 	bitSize int,
 	id string,
+	keyType string,
 ) (publicKeyPEM, privateKeyPEM []byte, err error) {
-	publicKeyPEM, privateKeyPEM, err = c.Generator.GenerateKey(ctx, bitSize, id)
+	logger := zerolog.Ctx(ctx).
+		With().
+		Int("bit_size", bitSize).
+		Str("id", id).
+		Str("key_type", keyType).
+		Logger()
+	generator, ok := c.Generators[keyType]
+	if !ok {
+		logger.Error().Msg("key type not found")
+		keyType = KeyTypeRSA
+		generator = c.Generators[keyType]
+	}
+	publicKeyPEM, privateKeyPEM, err = generator.GenerateKey(ctx, bitSize, id, keyType)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -61,10 +71,22 @@ func (c *CryptoFactory) WriteKey(
 
 func (c *CryptoFactory) LoadPrivateKey(
 	ctx context.Context,
+	keyType string,
 	privateKeyPath string,
 ) (privateKey crypto.Signer, err error) {
-	loader := c.Generator.(IKeyLoader)
-	privateKey, err = loader.LoadPrivateKey(ctx, privateKeyPath)
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("key_type", keyType).
+		Str("private_key_path", privateKeyPath).
+		Logger()
+	generator, ok := c.Generators[keyType]
+	if !ok {
+		logger.Error().Msg("key type not found")
+		keyType = KeyTypeRSA
+		generator = c.Generators[keyType]
+	}
+	loader := generator.(IKeyLoader)
+	privateKey, err = loader.LoadPrivateKey(ctx, keyType, privateKeyPath)
 	if err != nil {
 		return nil, err
 	}

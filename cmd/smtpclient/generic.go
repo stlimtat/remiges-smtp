@@ -2,12 +2,15 @@ package main
 
 import (
 	"log/slog"
+	"os"
+	"reflect"
 
 	moxDns "github.com/mjl-/mox/dns"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/crypto"
 	"github.com/stlimtat/remiges-smtp/internal/dns"
 	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/file_mail"
@@ -19,17 +22,19 @@ import (
 
 type GenericSvc struct {
 	Cfg                    config.SendMailConfig
+	CryptoFactory          *crypto.CryptoFactory
 	DialerFactory          sendmail.INetDialerFactory
 	FileReader             file.IFileReader
 	FileReadTracker        file.IFileReadTracker
-	SendMailService        *sendmail.SendMailService
+	KeyWriter              crypto.IKeyWriter
 	MailProcessor          intmail.IMailProcessor
 	MailSender             sendmail.IMailSender
 	MailTransformerFactory *file_mail.MailTransformerFactory
-	MyOutput               output.IOutput
-	RedisClient            *redis.Client
 	MoxResolver            moxDns.Resolver
+	MyOutput               output.IOutput
 	MyResolver             dns.IResolver
+	RedisClient            *redis.Client
+	SendMailService        *sendmail.SendMailService
 	Slogger                *slog.Logger
 }
 
@@ -79,14 +84,15 @@ func newGenericSvc(
 	}
 	result.MyOutput = outputFactory
 
-	result.MailProcessor, err = intmail.NewDefaultMailProcessorFactory(ctx, result.Cfg.MailProcessors)
+	mailProcessorFactory, err := intmail.NewDefaultMailProcessorFactory(ctx, result.Cfg.MailProcessors)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory")
 	}
-	err = result.MailProcessor.Init(ctx, config.MailProcessorConfig{})
+	_, err = mailProcessorFactory.NewMailProcessors(ctx, result.Cfg.MailProcessors)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory.Init")
 	}
+	result.MailProcessor = mailProcessorFactory
 
 	result.MoxResolver = moxDns.StrictResolver{
 		Log: result.Slogger,
@@ -114,5 +120,29 @@ func newGenericSvc(
 		result.MyOutput,
 		result.Cfg.ReadFileConfig.PollInterval,
 	)
+
+	// We need to init the crypto factory
+	// for generic, we are not needing to write to a file
+	// so we can just use a temp directory
+	tempDir, err := os.MkdirTemp("", "remiges-smtp")
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newGenericSvc.MkdirTemp")
+	}
+	result.CryptoFactory = &crypto.CryptoFactory{}
+	result.KeyWriter = crypto.NewKeyWriter(ctx, tempDir)
+	_, err = result.CryptoFactory.Init(ctx, result.KeyWriter)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newGenericSvc.CryptoFactory.Init")
+	}
+	// This is a hack to inject the crypto factory into the dkim processor
+	for _, mailProcessor := range mailProcessorFactory.Processors {
+		if reflect.TypeOf(mailProcessor) == reflect.TypeOf(&intmail.DKIMProcessor{}) {
+			dkimProcessor := mailProcessor.(*intmail.DKIMProcessor)
+			err = dkimProcessor.InitDKIMCrypto(ctx, result.CryptoFactory)
+			if err != nil {
+				logger.Fatal().Err(err).Msg("newGenericSvc.DKIMProcessor.InitDKIMCrypto")
+			}
+		}
+	}
 	return result
 }

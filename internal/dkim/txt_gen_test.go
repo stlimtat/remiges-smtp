@@ -28,7 +28,7 @@ qAghANUoxBKk0nOUUknT1MzgVAl2bCrStQG7k5eg55okDfL5LW6zboM5oXB+/cWf
 UsaPSYFgsaUBaMluFjj9SG/fuj4+a7KQ1uR72x+Di9fXKO32PTqhCmSc2Xy8Lznw
 VAArBbos2eD1kbmJIOxYoKiZZBrQnrEMhQIDAQAB
 -----END RSA PUBLIC KEY-----`),
-			wantResult: []byte("selector._domainkey.example.com IN TXT \"v=DKIM1; k=rsa; p=MIIBCgKCAQEAtI17ucNsuiV4hUxDeLjIutR6hhR5RDcm7xeeBWTJbiNYzbr6Bt0Of4AXl0VJn1dj/lFXDKqq82ytV6aY8a0gQQkObvbh7uDo2+/fEo6e/7LLXL1dSq7NGttKrEGQjNxQQTSemeqptYY+t9MapywaU8PzSve+urgTJeuEsGUUZQ0SV4vEXuV0qAghANUoxBKk0nOUUknT1MzgVAl2bCrStQG7k5eg55okD\" \"fL5LW6zboM5oXB+/cWfUsaPSYFgsaUBaMluFjj9SG/fuj4+a7KQ1uR72x+Di9fXKO32PTqhCmSc2Xy8LznwVAArBbos2eD1kbmJIOxYoKiZZBrQnrEMhQIDAQAB\""),
+			wantResult: []byte("selector._domainkey.example.com IN TXT \"v=DKIM1; k=rsa; p=MIIBCgKCAQEAtI17ucNsuiV4hUxDeLjIutR6hhR5RDcm7xeeBWTJbiNYzbr6Bt0Of4AXl0VJn1dj/lFXDKqq82ytV6aY8a0gQQkObvbh7uDo2+/fEo6e/7LLXL1dSq7NGttKrEGQjNxQQTSemeqptYY+t9MapywaU8PzSve+urgTJeuEsGUUZQ0SV4vEXuV0qAghANUoxBKk0nOUUknT1MzgVAl2bCrStQG7k5eg55okDfL5LW6zboM5oXB+/cWfUsaPSYFgsaUBaMluFjj9SG/fuj4+a7KQ1uR72x+Di9fXKO32PTqhCmSc2Xy8LznwVAArBbos2eD1kbmJIOxYoKiZZBrQnrEMhQIDAQAB\""),
 			wantErr:    false,
 		},
 		{

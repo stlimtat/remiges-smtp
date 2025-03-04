@@ -65,21 +65,20 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			tmpDir := t.TempDir()
 			keyWriter := NewKeyWriter(ctx, tmpDir)
 			factory := &CryptoFactory{}
-			generator, err := factory.Init(ctx, tt.keyType, keyWriter)
+			generators, err := factory.Init(ctx, keyWriter)
 			if tt.wantGeneratorErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.NotNil(t, generator)
-			switch tt.keyType {
-			case KeyTypeEd25519:
-				assert.IsType(t, &Ed25519KeyGenerator{}, generator)
-			default:
-				assert.IsType(t, &RsaKeyGenerator{}, generator)
-			}
+			assert.NotNil(t, generators)
+			assert.Len(t, generators, 2)
+			assert.Contains(t, generators, KeyTypeRSA)
+			assert.Contains(t, generators, KeyTypeEd25519)
+			assert.IsType(t, &RsaKeyGenerator{}, generators[KeyTypeRSA])
+			assert.IsType(t, &Ed25519KeyGenerator{}, generators[KeyTypeEd25519])
 
-			publicKeyPEM, privateKeyPEM, err := factory.GenerateKey(ctx, tt.bitSize, tt.id)
+			publicKeyPEM, privateKeyPEM, err := factory.GenerateKey(ctx, tt.bitSize, tt.id, tt.keyType)
 			if tt.wantGenKeyErr {
 				assert.Error(t, err)
 				return
@@ -99,7 +98,7 @@ func TestCryptoFactory_GenerateKey(t *testing.T) {
 			assert.FileExists(t, publicKeyPath)
 			assert.FileExists(t, privateKeyPath)
 
-			gotPrivateKey, err := factory.LoadPrivateKey(ctx, privateKeyPath)
+			gotPrivateKey, err := factory.LoadPrivateKey(ctx, tt.keyType, privateKeyPath)
 			if tt.wantLoadKeyErr {
 				assert.Error(t, err)
 				return

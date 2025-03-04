@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/pem"
+	"fmt"
 	"os"
 
 	"github.com/rs/zerolog"
@@ -17,8 +18,19 @@ func (_ *Ed25519KeyGenerator) GenerateKey(
 	ctx context.Context,
 	bitSize int,
 	id string,
+	keyType string,
 ) (publicKeyPEM, privateKeyPEM []byte, err error) {
-	logger := zerolog.Ctx(ctx).With().Int("bit_size", bitSize).Str("id", id).Logger()
+	logger := zerolog.Ctx(ctx).
+		With().
+		Int("bit_size", bitSize).
+		Str("id", id).
+		Str("key_type", keyType).
+		Logger()
+
+	if keyType != KeyTypeEd25519 {
+		logger.Error().Msg("key type not supported")
+		return nil, nil, fmt.Errorf("key type %s not supported", keyType)
+	}
 
 	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -49,9 +61,19 @@ func (_ *Ed25519KeyGenerator) GenerateKey(
 
 func (_ *Ed25519KeyGenerator) LoadPrivateKey(
 	ctx context.Context,
+	keyType string,
 	privateKeyPath string,
 ) (crypto.Signer, error) {
-	logger := zerolog.Ctx(ctx).With().Str("private_key_path", privateKeyPath).Logger()
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("key_type", keyType).
+		Str("private_key_path", privateKeyPath).
+		Logger()
+
+	if keyType != KeyTypeEd25519 {
+		logger.Error().Msg("key type not supported")
+		return nil, fmt.Errorf("key type %s not supported", keyType)
+	}
 
 	rawFileData, err := os.ReadFile(privateKeyPath)
 	if err != nil {

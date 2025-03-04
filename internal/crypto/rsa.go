@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"os"
 
 	"github.com/rs/zerolog"
@@ -18,8 +19,13 @@ func (_ *RsaKeyGenerator) GenerateKey(
 	ctx context.Context,
 	bitSize int,
 	id string,
+	keyType string,
 ) (publicKeyPEM, privateKeyPEM []byte, err error) {
-	logger := zerolog.Ctx(ctx).With().Int("bit_size", bitSize).Str("id", id).Logger()
+	logger := zerolog.Ctx(ctx).With().Int("bit_size", bitSize).Str("id", id).Str("key_type", keyType).Logger()
+	if keyType != KeyTypeRSA {
+		logger.Error().Msg("key type not supported")
+		return nil, nil, fmt.Errorf("key type %s not supported", keyType)
+	}
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, bitSize)
 	if err != nil {
@@ -56,9 +62,19 @@ func (_ *RsaKeyGenerator) GenerateKey(
 
 func (_ *RsaKeyGenerator) LoadPrivateKey(
 	ctx context.Context,
+	keyType string,
 	privateKeyPath string,
 ) (crypto.Signer, error) {
-	logger := zerolog.Ctx(ctx).With().Str("private_key_path", privateKeyPath).Logger()
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("key_type", keyType).
+		Str("private_key_path", privateKeyPath).
+		Logger()
+
+	if keyType != KeyTypeRSA {
+		logger.Error().Msg("key type not supported")
+		return nil, fmt.Errorf("key type %s not supported", keyType)
+	}
 
 	rawFileData, err := os.ReadFile(privateKeyPath)
 	if err != nil {

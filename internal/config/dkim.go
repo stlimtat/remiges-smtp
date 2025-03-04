@@ -41,7 +41,7 @@ func DefaultDKIMConfig(
 		},
 		MoxSelectors: map[string]MoxSelector{
 			"key001": {
-				Algorithm: "rsa-sha256",
+				Algorithm: "rsa",
 				Canonicalization: MoxCanonicalization{
 					HeaderRelaxed: true,
 					BodyRelaxed:   true,

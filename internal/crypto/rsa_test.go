@@ -30,7 +30,7 @@ func TestRsaKeyGenerator_GenerateKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, _ := telemetry.InitLogger(context.Background())
 			r := &RsaKeyGenerator{}
-			gotPublic, gotPrivate, err := r.GenerateKey(ctx, tt.bitSize, tt.id)
+			gotPublic, gotPrivate, err := r.GenerateKey(ctx, tt.bitSize, tt.id, KeyTypeRSA)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -66,7 +66,7 @@ func TestRsaKeyGenerator_LoadPrivateKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, _ := telemetry.InitLogger(context.Background())
 			r := &RsaKeyGenerator{}
-			gotGeneratedPublicKeyPEM, gotGeneratedPrivateKeyPEM, err := r.GenerateKey(ctx, tt.bitSize, tt.id)
+			gotGeneratedPublicKeyPEM, gotGeneratedPrivateKeyPEM, err := r.GenerateKey(ctx, tt.bitSize, tt.id, KeyTypeRSA)
 			if tt.wantGenKeyErr {
 				assert.Error(t, err)
 				return
@@ -95,7 +95,7 @@ func TestRsaKeyGenerator_LoadPrivateKey(t *testing.T) {
 			assert.FileExists(t, gotPublicKeyPath)
 			assert.FileExists(t, gotPrivateKeyPath)
 
-			gotLoadedPrivateKey, err := r.LoadPrivateKey(ctx, gotPrivateKeyPath)
+			gotLoadedPrivateKey, err := r.LoadPrivateKey(ctx, KeyTypeRSA, gotPrivateKeyPath)
 			if tt.wantLoadErr {
 				assert.Error(t, err)
 				return

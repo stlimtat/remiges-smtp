@@ -12,11 +12,11 @@ const (
 
 //go:generate mockgen -destination=mock.go -package=crypto . IKeyGenerator,IKeyLoader,IKeyWriter
 type IKeyGenerator interface {
-	GenerateKey(ctx context.Context, bitSize int, id string) (publicKeyPEM, privateKeyPEM []byte, err error)
+	GenerateKey(ctx context.Context, bitSize int, id string, keyType string) (publicKeyPEM, privateKeyPEM []byte, err error)
 }
 
 type IKeyLoader interface {
-	LoadPrivateKey(ctx context.Context, privateKeyPath string) (crypto.Signer, error)
+	LoadPrivateKey(ctx context.Context, keyType string, privateKeyPath string) (crypto.Signer, error)
 }
 
 type IKeyWriter interface {

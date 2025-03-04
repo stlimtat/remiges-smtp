@@ -13,8 +13,8 @@ import (
 
 type DefaultMailProcessorFactory struct {
 	Cfgs       []config.MailProcessorConfig
-	processors []IMailProcessor
-	registry   map[string]reflect.Type
+	Processors []IMailProcessor
+	Registry   map[string]reflect.Type
 }
 
 func NewDefaultMailProcessorFactory(
@@ -24,11 +24,11 @@ func NewDefaultMailProcessorFactory(
 	result := &DefaultMailProcessorFactory{
 		Cfgs: cfgs,
 	}
-	result.registry = make(map[string]reflect.Type)
-	result.registry[BodyHeadersProcessorType] = reflect.TypeOf(BodyHeadersProcessor{})
-	result.registry[BodyProcessorType] = reflect.TypeOf(BodyProcessor{})
-	result.registry[MergeBodyProcessorType] = reflect.TypeOf(MergeBodyProcessor{})
-	result.registry[UnixDosProcessorType] = reflect.TypeOf(UnixDosProcessor{})
+	result.Registry = make(map[string]reflect.Type)
+	result.Registry[BodyHeadersProcessorType] = reflect.TypeOf(BodyHeadersProcessor{})
+	result.Registry[BodyProcessorType] = reflect.TypeOf(BodyProcessor{})
+	result.Registry[MergeBodyProcessorType] = reflect.TypeOf(MergeBodyProcessor{})
+	result.Registry[UnixDosProcessorType] = reflect.TypeOf(UnixDosProcessor{})
 	return result, nil
 }
 
@@ -39,7 +39,7 @@ func (f *DefaultMailProcessorFactory) Init(
 	var err error
 	// Ignore the config, we will use the cfgs from the NewFactory
 	// This is to map to the IMailProcessor interface
-	f.processors, err = f.NewMailProcessors(ctx, f.Cfgs)
+	f.Processors, err = f.NewMailProcessors(ctx, f.Cfgs)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (f *DefaultMailProcessorFactory) NewMailProcessor(
 	var err error
 
 	// use reflection to create the processor
-	processorType, ok := f.registry[cfg.Type]
+	processorType, ok := f.Registry[cfg.Type]
 	if !ok {
 		return nil, fmt.Errorf("processor type cannot be found")
 	}
@@ -122,7 +122,7 @@ func (f *DefaultMailProcessorFactory) Process(
 	logger := zerolog.Ctx(ctx)
 	var err error
 	// Builder function: process the mail through the processors
-	for _, processor := range f.processors {
+	for _, processor := range f.Processors {
 		logger.Debug().
 			Int("idx", processor.Index()).
 			Str("processor", reflect.TypeOf(processor).String()).

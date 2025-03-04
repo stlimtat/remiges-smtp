@@ -6,10 +6,11 @@ import (
 	"log/slog"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/mjl-/mox/dkim"
+	moxDkim "github.com/mjl-/mox/dkim"
 	"github.com/mjl-/mox/mox-"
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/crypto"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
@@ -37,11 +38,34 @@ func (p *DKIMProcessor) Init(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("DKIMProcessor: transform")
 	}
+
 	return nil
 }
 
 func (p *DKIMProcessor) Index() int {
 	return p.Cfg.Index
+}
+
+func (p *DKIMProcessor) InitDKIMCrypto(
+	ctx context.Context,
+	loader crypto.IKeyLoader,
+) error {
+	logger := zerolog.Ctx(ctx)
+	logger.Debug().Msg("DKIMProcessor: InitDKIMCrypto")
+
+	selectors := p.DomainCfg.DKIM.DKIM.Selectors
+
+	for selectorName, selector := range selectors { //nolint:gocritic // This was inherited from mox
+		signer, err := loader.LoadPrivateKey(ctx, selector.Algorithm, selector.PrivateKeyFile)
+		if err != nil {
+			logger.Error().Err(err).Msg("DKIMProcessor: InitDKIMCrypto: LoadPrivateKey")
+			return err
+		}
+		selector.Key = signer
+		p.DomainCfg.DKIM.DKIM.Selectors[selectorName] = selector
+	}
+
+	return nil
 }
 
 func (p *DKIMProcessor) Process(
@@ -61,7 +85,7 @@ func (p *DKIMProcessor) Process(
 
 	canonical := mox.CanonicalLocalpart(inMail.From.Localpart, p.DomainCfg.Domain)
 
-	dkimHeaders, err := dkim.Sign(
+	dkimHeaders, err := moxDkim.Sign(
 		ctx,
 		p.SLogger,
 		canonical,

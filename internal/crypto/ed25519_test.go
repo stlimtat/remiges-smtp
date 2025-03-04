@@ -29,7 +29,7 @@ func TestEd25519KeyGenerator_GenerateKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, _ := telemetry.InitLogger(context.Background())
 			generator := &Ed25519KeyGenerator{}
-			publicKeyPEM, privateKeyPEM, err := generator.GenerateKey(ctx, tt.bitSize, tt.id)
+			publicKeyPEM, privateKeyPEM, err := generator.GenerateKey(ctx, tt.bitSize, tt.id, KeyTypeEd25519)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -61,7 +61,7 @@ func TestEd25519KeyGenerator_WriteThenLoad(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, _ := telemetry.InitLogger(context.Background())
 			generator := &Ed25519KeyGenerator{}
-			gotPublicKeyPEM, gotPrivateKeyPEM, err := generator.GenerateKey(ctx, tt.bitSize, "test")
+			gotPublicKeyPEM, gotPrivateKeyPEM, err := generator.GenerateKey(ctx, tt.bitSize, "test", KeyTypeEd25519)
 			require.NoError(t, err)
 			gotBlock, _ := pem.Decode(gotPrivateKeyPEM)
 			assert.Equal(t, "ED25519 PRIVATE KEY", gotBlock.Type)
@@ -79,7 +79,7 @@ func TestEd25519KeyGenerator_WriteThenLoad(t *testing.T) {
 			assert.NotEmpty(t, publicKeyPath)
 			assert.NotEmpty(t, privateKeyPath)
 
-			gotLoadedPrivateKey, err := generator.LoadPrivateKey(ctx, privateKeyPath)
+			gotLoadedPrivateKey, err := generator.LoadPrivateKey(ctx, KeyTypeEd25519, privateKeyPath)
 			if tt.wantLoadErr {
 				assert.Error(t, err)
 				return

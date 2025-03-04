@@ -77,7 +77,7 @@ func TestDefaultMailProcessorFactory(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, len(tt.cfgs), len(factory.processors))
+			assert.Equal(t, len(tt.cfgs), len(factory.Processors))
 		})
 	}
 }

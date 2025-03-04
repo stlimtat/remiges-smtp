@@ -137,12 +137,12 @@ func (_ *GenDKIMSvc) Run(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("crypto.KeyWriter.Validate")
 	}
-	_, err = factory.Init(ctx, cfg.KeyType, keyWriter)
+	_, err = factory.Init(ctx, keyWriter)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.Init")
 	}
 
-	publicKeyPEM, privateKeyPEM, err := factory.GenerateKey(ctx, cfg.BitSize, cfg.Domain)
+	publicKeyPEM, privateKeyPEM, err := factory.GenerateKey(ctx, cfg.BitSize, cfg.Domain, cfg.KeyType)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.GenerateKey")
 	}
