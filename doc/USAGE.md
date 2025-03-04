@@ -7,11 +7,10 @@ The following are the basic capabilities of the smtpclient cli
   <summary>Table of Contents</summary>
   <ol>
     <li><a href="#basic-usage">Basic Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <ol>
+        <li><a href="#lookup-mx">LookupMX</a></li>
+        <li><a href="#gen-dkim">Gen DKIM</a></li>
+    </ol>
   </ol>
 </details>
 
@@ -33,6 +32,9 @@ bazel run //cmd/smtpclient help
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## Gen DKIM
+
+
 ## Lookup MX
 
 Lookup MX DNS records for provided domain
@@ -49,5 +51,3 @@ bazel run //cmd/smtpclient lookupmx -- --domain=remiges.tech.
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Gen DKIM
