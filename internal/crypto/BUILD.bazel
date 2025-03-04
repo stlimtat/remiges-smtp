@@ -13,6 +13,7 @@ go_library(
     importpath = "github.com/stlimtat/remiges-smtp/internal/crypto",
     visibility = ["//:__subpackages__"],
     deps = [
+        "//internal/utils",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",
     ],

@@ -11,6 +11,7 @@ go_library(
     importpath = "github.com/stlimtat/remiges-smtp/internal/file",
     visibility = ["//:__subpackages__"],
     deps = [
+        "//internal/utils",
         "//pkg/input",
         "@com_github_redis_go_redis_v9//:go-redis",
         "@com_github_rs_zerolog//:zerolog",

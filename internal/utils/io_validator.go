@@ -34,6 +34,9 @@ func ValidateIO(
 		}
 		path = filepath.Join(wd, path[2:])
 	} else if strings.HasPrefix(path, "~/") {
+		// TODO: when running in bazel, $HOME is not defined
+		// Workaround: add `test --test_env=HOME=$HOME` to $HOME/.bazelrc
+		// https://github.com/bazelbuild/rules_apple/issues/877
 		home, err := os.UserHomeDir()
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to get user home directory")
@@ -59,21 +62,30 @@ func ValidateIO(
 }
 
 func getWorkingDirRelativeToSourceRoot(
-	_ context.Context,
+	ctx context.Context,
 ) (string, error) {
+	logger := zerolog.Ctx(ctx)
 	wd, err := os.Getwd()
 	if err != nil {
+		logger.Error().Err(err).Msg("failed to get working directory")
 		return "", fmt.Errorf("failed to get working directory: %w", err)
 	}
 	wd = filepath.Clean(wd)
+	if strings.Contains(wd, "bazel-out") {
+		logger.Warn().Str("wd", wd).Msg("working directory is inside bazel-out")
+		return wd, nil
+	}
 	for strings.Contains(wd, "cmd") || strings.Contains(wd, "internal") || strings.Contains(wd, "pkg") {
 		wd = filepath.Dir(wd)
 	}
+	logger.Warn().Str("wd", wd).Msg("working directory")
+	fmt.Println("working directory", wd)
 
 	// We know this is the source root
 	// only if .git exists
 	gitDir := filepath.Join(wd, ".git")
 	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		logger.Error().Err(err).Msg("source root not found")
 		return "", fmt.Errorf("source root not found")
 	}
 

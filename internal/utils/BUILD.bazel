@@ -2,14 +2,25 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "utils",
-    srcs = ["rand.go"],
+    srcs = [
+        "io_validator.go",
+        "rand.go",
+    ],
     importpath = "github.com/stlimtat/remiges-smtp/internal/utils",
     visibility = ["//:__subpackages__"],
+    deps = ["@com_github_rs_zerolog//:zerolog"],
 )
 
 go_test(
     name = "utils_test",
-    srcs = ["rand_test.go"],
+    srcs = [
+        "io_validator_test.go",
+        "rand_test.go",
+    ],
     embed = [":utils"],
-    deps = ["@com_github_stretchr_testify//assert"],
+    deps = [
+        "//internal/telemetry",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
 )

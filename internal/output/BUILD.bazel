@@ -12,6 +12,7 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/config",
+        "//internal/utils",
         "//pkg/pmail",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",
