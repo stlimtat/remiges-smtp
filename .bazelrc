@@ -1,0 +1,7 @@
+build --color=yes
+build --noremote_accept_cached
+coverage --combined_report=lcov
+run --color=yes
+test --color=yes
+test --cache_test_results=no
+test --test_env=HOME=$HOME
