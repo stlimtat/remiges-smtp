@@ -14,7 +14,7 @@ func ValidateIO(
 	ctx context.Context,
 	path string,
 	fileNotDir bool,
-) error {
+) (string, error) {
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("path", path).
@@ -23,14 +23,14 @@ func ValidateIO(
 
 	if path == "" {
 		logger.Error().Msg("path is required")
-		return fmt.Errorf("path is required")
+		return "", fmt.Errorf("path is required")
 	}
 
 	if strings.HasPrefix(path, "./") {
 		wd, err := getWorkingDirRelativeToSourceRoot(ctx)
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to get working directory")
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return "", fmt.Errorf("failed to get working directory: %w", err)
 		}
 		path = filepath.Join(wd, path[2:])
 	} else if strings.HasPrefix(path, "~/") {
@@ -40,25 +40,25 @@ func ValidateIO(
 		home, err := os.UserHomeDir()
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to get user home directory")
-			return fmt.Errorf("failed to get user home directory: %w", err)
+			return "", fmt.Errorf("failed to get user home directory: %w", err)
 		}
 		path = filepath.Join(home, path[2:])
 	}
 
-	filePath := filepath.Clean(path)
-	fileInfo, err := os.Stat(filePath)
+	result := filepath.Clean(path)
+	fileInfo, err := os.Stat(result)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to get file info")
-		return fmt.Errorf("failed to get file info: %w", err)
+		return "", fmt.Errorf("failed to get file info: %w", err)
 	}
 	if fileNotDir && fileInfo.IsDir() {
 		logger.Error().Msg("path is not a file")
-		return fmt.Errorf("path is not a file")
+		return "", fmt.Errorf("path is not a file")
 	} else if !fileNotDir && !fileInfo.IsDir() {
 		logger.Error().Msg("path is not a directory")
-		return fmt.Errorf("path is not a directory")
+		return "", fmt.Errorf("path is not a directory")
 	}
-	return nil
+	return result, nil
 }
 
 func getWorkingDirRelativeToSourceRoot(

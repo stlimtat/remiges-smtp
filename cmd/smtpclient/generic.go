@@ -84,7 +84,23 @@ func newGenericSvc( //nolint:funlen // this sets up a generic application contex
 	}
 	result.MyOutput = outputFactory
 
-	mailProcessorFactory, err := intmail.NewDefaultMailProcessorFactory(ctx, result.Cfg.MailProcessors)
+	// We need to init the crypto factory
+	// for generic, we are not needing to write to a file
+	// so we can just use a temp directory
+	tempDir, err := os.MkdirTemp("", "remiges-smtp")
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newGenericSvc.MkdirTemp")
+	}
+	result.CryptoFactory = &crypto.CryptoFactory{}
+	result.KeyWriter, err = crypto.NewKeyWriter(ctx, tempDir)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newGenericSvc.KeyWriter")
+	}
+	_, err = result.CryptoFactory.Init(ctx, result.KeyWriter)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newGenericSvc.CryptoFactory.Init")
+	}
+	mailProcessorFactory, err := intmail.NewDefaultMailProcessorFactory(ctx, result.Cfg.MailProcessors, result.CryptoFactory)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MailProcessorFactory")
 	}
@@ -121,22 +137,6 @@ func newGenericSvc( //nolint:funlen // this sets up a generic application contex
 		result.Cfg.ReadFileConfig.PollInterval,
 	)
 
-	// We need to init the crypto factory
-	// for generic, we are not needing to write to a file
-	// so we can just use a temp directory
-	tempDir, err := os.MkdirTemp("", "remiges-smtp")
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newGenericSvc.MkdirTemp")
-	}
-	result.CryptoFactory = &crypto.CryptoFactory{}
-	result.KeyWriter, err = crypto.NewKeyWriter(ctx, tempDir)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newGenericSvc.KeyWriter")
-	}
-	_, err = result.CryptoFactory.Init(ctx, result.KeyWriter)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("newGenericSvc.CryptoFactory.Init")
-	}
 	// This is a hack to inject the crypto factory into the dkim processor
 	for _, mailProcessor := range mailProcessorFactory.Processors {
 		if reflect.TypeOf(mailProcessor) == reflect.TypeOf(&intmail.DKIMProcessor{}) {

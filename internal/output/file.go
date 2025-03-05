@@ -27,6 +27,7 @@ func NewFileOutput(
 	cfg config.OutputConfig,
 ) (*FileOutput, error) {
 	logger := zerolog.Ctx(ctx).With().Interface("cfg", cfg).Logger()
+	var err error
 
 	result := &FileOutput{
 		Cfg: cfg,
@@ -40,7 +41,7 @@ func NewFileOutput(
 	}
 	result.Path = path.(string)
 
-	err := utils.ValidateIO(ctx, result.Path, false)
+	result.Path, err = utils.ValidateIO(ctx, result.Path, false)
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to validate path")
 		return nil, err

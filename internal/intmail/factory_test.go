@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/crypto"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,7 +69,10 @@ func TestDefaultMailProcessorFactory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, _ := telemetry.InitLogger(context.Background())
-			factory, err := NewDefaultMailProcessorFactory(ctx, tt.cfgs)
+
+			cryptoFactory := &crypto.CryptoFactory{}
+
+			factory, err := NewDefaultMailProcessorFactory(ctx, tt.cfgs, cryptoFactory)
 			require.NoError(t, err)
 
 			err = factory.Init(ctx, config.MailProcessorConfig{})

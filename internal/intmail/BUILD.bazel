@@ -17,6 +17,7 @@ go_library(
     deps = [
         "//internal/config",
         "//internal/crypto",
+        "//internal/utils",
         "//pkg/input",
         "//pkg/pmail",
         "@com_github_mitchellh_mapstructure//:mapstructure",
@@ -40,6 +41,7 @@ go_test(
     embed = [":intmail"],
     deps = [
         "//internal/config",
+        "//internal/crypto",
         "//internal/telemetry",
         "//pkg/input",
         "//pkg/pmail",

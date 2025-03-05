@@ -8,21 +8,25 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/crypto"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
 type DefaultMailProcessorFactory struct {
-	Cfgs       []config.MailProcessorConfig
-	Processors []IMailProcessor
-	Registry   map[string]reflect.Type
+	Cfgs          []config.MailProcessorConfig
+	CryptoFactory *crypto.CryptoFactory
+	Processors    []IMailProcessor
+	Registry      map[string]reflect.Type
 }
 
 func NewDefaultMailProcessorFactory(
 	_ context.Context,
 	cfgs []config.MailProcessorConfig,
+	cryptoFactory *crypto.CryptoFactory,
 ) (*DefaultMailProcessorFactory, error) {
 	result := &DefaultMailProcessorFactory{
-		Cfgs: cfgs,
+		Cfgs:          cfgs,
+		CryptoFactory: cryptoFactory,
 	}
 	result.Registry = make(map[string]reflect.Type)
 	result.Registry[BodyHeadersProcessorType] = reflect.TypeOf(BodyHeadersProcessor{})
@@ -81,6 +85,7 @@ func (f *DefaultMailProcessorFactory) NewMailProcessors(
 	for _, processorIdx := range processorIndices {
 		result = append(result, rawProcessors[processorIdx])
 	}
+	f.Processors = result
 
 	return result, nil
 }
@@ -109,6 +114,20 @@ func (f *DefaultMailProcessorFactory) NewMailProcessor(
 	if err != nil {
 		return nil, err
 	}
+
+	// Specific processor initialization for dkim
+	if cfg.Type == DKIMProcessorType {
+		dkimProcessor, ok := result.(*DKIMProcessor)
+		if !ok {
+			return nil, fmt.Errorf("processor is not a DKIMProcessor")
+		}
+		err = dkimProcessor.InitDKIMCrypto(ctx, f.CryptoFactory)
+		if err != nil {
+			return nil, err
+		}
+		result = dkimProcessor
+	}
+
 	return result, nil
 }
 

@@ -71,12 +71,13 @@ func TestValidateIO(t *testing.T) {
 				_, err = os.Create(path)
 				require.NoError(t, err)
 			}
-			err = ValidateIO(ctx, tt.path, tt.fileNotDir)
+			gotPath, err := ValidateIO(ctx, tt.path, tt.fileNotDir)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+			assert.Equal(t, path, gotPath)
 			if tt.createFile {
 				err = os.Remove(path)
 				require.NoError(t, err)

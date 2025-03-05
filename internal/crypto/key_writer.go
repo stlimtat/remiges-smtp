@@ -18,7 +18,8 @@ func NewKeyWriter(
 	ctx context.Context,
 	outPath string,
 ) (*KeyWriter, error) {
-	err := utils.ValidateIO(ctx, outPath, false)
+	var err error
+	outPath, err = utils.ValidateIO(ctx, outPath, false)
 	if err != nil {
 		return nil, err
 	}

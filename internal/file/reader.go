@@ -39,11 +39,12 @@ func NewDefaultFileReader(
 	}
 
 	// 1. check that directory exists
-	err = utils.ValidateIO(ctx, result.InPath, false)
+	inPath, err = utils.ValidateIO(ctx, result.InPath, false)
 	if err != nil {
 		logger.Error().Err(err).Msg("ValidateInPath")
 		return nil, err
 	}
+	result.InPath = inPath
 
 	return result, nil
 }
@@ -51,11 +52,10 @@ func NewDefaultFileReader(
 func (r *DefaultFileReader) ValidateFile(
 	ctx context.Context,
 	fileName string,
-) error {
+) (string, error) {
 	// 1. file path
 	filePath := filepath.Join(r.InPath, fileName)
-	err := utils.ValidateIO(ctx, filePath, true)
-	return err
+	return utils.ValidateIO(ctx, filePath, true)
 }
 
 func (r *DefaultFileReader) GetQfFileName(
@@ -63,10 +63,11 @@ func (r *DefaultFileReader) GetQfFileName(
 	dfFileName string,
 ) (string, error) {
 	logger := zerolog.Ctx(ctx)
+	var err error
 	result := ""
 	if strings.HasPrefix(dfFileName, "df") {
 		result = strings.Replace(dfFileName, "df", "qf", 1)
-		err := r.ValidateFile(ctx, result)
+		result, err = r.ValidateFile(ctx, result)
 		if err != nil {
 			logger.Error().Err(err).Msg("ValidateFile")
 			return result, err
@@ -79,10 +80,11 @@ func (r *DefaultFileReader) RefreshList(
 	ctx context.Context,
 ) ([]*FileInfo, error) {
 	logger := zerolog.Ctx(ctx)
+	var err error
 	// 0. Reset the current list of files
 	result := make([]*FileInfo, 0)
 	// 1. validate directory
-	err := utils.ValidateIO(ctx, r.InPath, false)
+	r.InPath, err = utils.ValidateIO(ctx, r.InPath, false)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +178,7 @@ func (r *DefaultFileReader) ReadNextFile(
 		return nil, fmt.Errorf("file is being processed")
 	}
 	// 3. validate the df file
-	err = utils.ValidateIO(ctx, dfFilePath, true)
+	dfFilePath, err = utils.ValidateIO(ctx, dfFilePath, true)
 	if err != nil {
 		logger.Error().Err(err).
 			Str("dfFilePath", dfFilePath).
@@ -184,7 +186,7 @@ func (r *DefaultFileReader) ReadNextFile(
 		return nil, err
 	}
 	// 4. validate the qf file
-	err = utils.ValidateIO(ctx, qfFilePath, true)
+	qfFilePath, err = utils.ValidateIO(ctx, qfFilePath, true)
 	if err != nil {
 		logger.Error().Err(err).
 			Str("qfFilePath", qfFilePath).

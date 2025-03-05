@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/crypto"
+	"github.com/stlimtat/remiges-smtp/internal/utils"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
@@ -60,12 +61,18 @@ func (p *DKIMProcessor) InitDKIMCrypto(
 	selectors := p.DomainCfg.DKIM.DKIM.Selectors
 
 	for selectorName, selector := range selectors { //nolint:gocritic // This was inherited from mox
-		signer, err := loader.LoadPrivateKey(ctx, selector.Algorithm, selector.PrivateKeyFile)
+		privateKeyPath, err := utils.ValidateIO(ctx, selector.PrivateKeyFile, true)
+		if err != nil {
+			logger.Error().Err(err).Msg("DKIMProcessor: InitDKIMCrypto: ValidateIO")
+			return err
+		}
+		signer, err := loader.LoadPrivateKey(ctx, selector.Algorithm, privateKeyPath)
 		if err != nil {
 			logger.Error().Err(err).Msg("DKIMProcessor: InitDKIMCrypto: LoadPrivateKey")
 			return err
 		}
 		selector.Key = signer
+		selector.PrivateKeyFile = privateKeyPath
 		p.DomainCfg.DKIM.DKIM.Selectors[selectorName] = selector
 	}
 
