@@ -14,6 +14,10 @@ import (
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
+const (
+	DKIMProcessorType = "dkim"
+)
+
 type DKIMProcessor struct {
 	Cfg       config.MailProcessorConfig
 	DomainCfg *config.DomainConfig

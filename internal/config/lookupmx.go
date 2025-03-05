@@ -8,7 +8,7 @@ import (
 )
 
 type LookupMXConfig struct {
-	Domain string
+	Domain string `mapstructure:"domain"`
 }
 
 func NewLookupMXConfig(ctx context.Context) LookupMXConfig {

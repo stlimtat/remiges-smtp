@@ -28,5 +28,24 @@ func DefaultMailProcessorConfigs() []MailProcessorConfig {
 			Index: 99,
 			Type:  "mergeBody",
 		},
+		{
+			Args: map[string]any{
+				"domain-str": "stlim.net",
+				"dkim": map[string]any{
+					"selectors": map[string]any{
+						"key001": map[string]any{
+							"domain":           "key001",
+							"algorithm":        "rsa",
+							"hash":             "sha256",
+							"headers":          []string{"from", "to", "subject"},
+							"private-key-file": "./config/key001.pem",
+						},
+					},
+					"sign": []string{"key001"},
+				},
+			},
+			Index: 100,
+			Type:  "dkim",
+		},
 	}
 }
