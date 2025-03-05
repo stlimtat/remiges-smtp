@@ -19,7 +19,11 @@ mail-processors:
       dkim:
         selectors:
           key001:
+            canonicalization:
+              header-relaxed: true
+              body-relaxed: true
             domain: key001
+            expiration: 72h
             hash: sha256
             private-key-file: ./config/key001.pem
         sign:

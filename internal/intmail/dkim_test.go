@@ -98,6 +98,7 @@ func TestDKIMProcessorProcess(t *testing.T) {
 		keyName         string
 		mail            *pmail.Mail
 		wantDKIMHeaders map[string][]byte
+		excludeDKIMKeys []string
 		wantErr         bool
 	}{
 		{
@@ -129,13 +130,14 @@ args:
 					"test body\r\n\r\n"),
 			},
 			wantDKIMHeaders: map[string][]byte{
-				"d": []byte("example.com"),
-				"s": []byte("key001"),
-				"i": []byte("sender@example.com"),
 				"a": []byte("rsa-sha256"),
+				"d": []byte("example.com"),
+				"i": []byte("sender@example.com"),
+				"s": []byte("key001"),
 				"v": []byte("1"),
 			},
-			wantErr: false,
+			excludeDKIMKeys: []string{},
+			wantErr:         false,
 		},
 		{
 			name:       "happy - ed25519",
@@ -163,13 +165,14 @@ args:
 					"test body\r\n\r\n"),
 			},
 			wantDKIMHeaders: map[string][]byte{
-				"d": []byte("example.com"),
-				"s": []byte("key001"),
-				"i": []byte("sender@example.com"),
 				"a": []byte("ed25519-sha1"),
+				"d": []byte("example.com"),
+				"i": []byte("sender@example.com"),
+				"s": []byte("key001"),
 				"v": []byte("1"),
 			},
-			wantErr: false,
+			excludeDKIMKeys: []string{},
+			wantErr:         false,
 		},
 	}
 
@@ -217,6 +220,9 @@ args:
 			for key, value := range tt.wantDKIMHeaders {
 				val := fmt.Sprintf("%s=%s;", key, value)
 				assert.Contains(t, string(gotMail.DKIMHeaders), val)
+			}
+			for _, key := range tt.excludeDKIMKeys {
+				assert.NotContains(t, string(gotMail.DKIMHeaders), fmt.Sprintf("%s=", key))
 			}
 		})
 	}

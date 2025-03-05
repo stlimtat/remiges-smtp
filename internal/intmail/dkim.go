@@ -109,6 +109,9 @@ func (p *DKIMProcessor) Process(
 		logger.Error().Err(err).Msg("DKIMProcessor: sign")
 		return inMail, err
 	}
+	// m1 := regexp.MustCompile(`i=([^;]+);`)
+	// result := m1.ReplaceAllString(dkimHeaders, "")
+
 	// add dkim headers to the mail
 	inMail.DKIMHeaders = []byte(dkimHeaders)
 	inMail.Body = append(inMail.DKIMHeaders, inMail.Body...)

@@ -175,6 +175,7 @@ mail_processors:
           %s:
             domain: %s
             algorithm: %s
+			expiration: 72h
             hash: %s
             private-key-file: %s
         sign:

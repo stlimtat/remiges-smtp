@@ -67,7 +67,8 @@ func (r *DefaultFileReader) GetQfFileName(
 	result := ""
 	if strings.HasPrefix(dfFileName, "df") {
 		result = strings.Replace(dfFileName, "df", "qf", 1)
-		result, err = r.ValidateFile(ctx, result)
+		// At this point, we just want the base filename
+		_, err = r.ValidateFile(ctx, result)
 		if err != nil {
 			logger.Error().Err(err).Msg("ValidateFile")
 			return result, err
