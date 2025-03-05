@@ -133,7 +133,7 @@ World
 			}
 			require.NoError(t, err)
 			require.Equal(t, tt.wantBody, got.Body)
-			require.Equal(t, tt.wantMetadata, got.BodyHeaders)
+			require.Equal(t, tt.wantMetadata, got.HeadersMap)
 		})
 	}
 }

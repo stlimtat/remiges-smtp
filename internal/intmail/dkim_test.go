@@ -123,11 +123,11 @@ args:
 					Localpart: "sender",
 					Domain:    dns.Domain{ASCII: "example.com"},
 				},
-				Body: []byte("From: sender@example.com\r\n" +
+				Headers: []byte("From: sender@example.com\r\n" +
 					"To: recipient@example.com\r\n" +
 					"Subject: test subject\r\n" +
-					"Content-Type: text/plain\r\n\r\n" +
-					"test body\r\n\r\n"),
+					"Content-Type: text/plain\r\n\r\n"),
+				Body: []byte("test body\r\n\r\n"),
 			},
 			wantDKIMHeaders: map[string][]byte{
 				"a": []byte("rsa-sha256"),
@@ -158,11 +158,11 @@ args:
 `),
 			mail: &pmail.Mail{
 				From: smtp.Address{Localpart: "sender", Domain: dns.Domain{ASCII: "example.com"}},
-				Body: []byte("From: sender@example.com\r\n" +
+				Headers: []byte("From: sender@example.com\r\n" +
 					"To: recipient@example.com\r\n" +
 					"Subject: test subject\r\n" +
-					"Content-Type: text/plain\r\n\r\n" +
-					"test body\r\n\r\n"),
+					"Content-Type: text/plain\r\n\r\n"),
+				Body: []byte("test body\r\n\r\n"),
 			},
 			wantDKIMHeaders: map[string][]byte{
 				"a": []byte("ed25519-sha1"),
@@ -215,14 +215,18 @@ args:
 				return
 			}
 			require.NoError(t, err)
-			assert.NotNil(t, gotMail.DKIMHeaders)
-			logger.Info().Bytes("dkimHeaders", gotMail.DKIMHeaders).Msg("dkimHeaders")
+
+			assert.Contains(t, gotMail.HeadersMap, "DKIM-Signature")
+			gotGeneratedDkimHeaders := gotMail.HeadersMap["DKIM-Signature"]
+			assert.NotNil(t, gotGeneratedDkimHeaders)
+			logger.Info().Bytes("gotGeneratedDkimHeaders", gotGeneratedDkimHeaders).Msg("TestDKIMProcessorProcess: gotGeneratedDkimHeaders")
 			for key, value := range tt.wantDKIMHeaders {
 				val := fmt.Sprintf("%s=%s;", key, value)
-				assert.Contains(t, string(gotMail.DKIMHeaders), val)
+				assert.Contains(t, string(gotGeneratedDkimHeaders), val)
 			}
+			assert.NotContains(t, string(gotGeneratedDkimHeaders), "\r\n")
 			for _, key := range tt.excludeDKIMKeys {
-				assert.NotContains(t, string(gotMail.DKIMHeaders), fmt.Sprintf("%s=", key))
+				assert.NotContains(t, string(gotGeneratedDkimHeaders), fmt.Sprintf("%s=", key))
 			}
 		})
 	}

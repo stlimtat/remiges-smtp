@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	moxDkim "github.com/mjl-/mox/dkim"
@@ -96,6 +97,10 @@ func (p *DKIMProcessor) Process(
 
 	canonical := mox.CanonicalLocalpart(inMail.From.Localpart, p.DomainCfg.Domain)
 
+	mailMsg := inMail.Headers
+	mailMsg = append(mailMsg, inMail.Body...)
+	mailMsg = append(mailMsg, []byte("\r\n\r\n")...)
+
 	dkimHeaders, err := moxDkim.Sign(
 		ctx,
 		p.SLogger,
@@ -103,18 +108,28 @@ func (p *DKIMProcessor) Process(
 		inMail.From.Domain,
 		selectors,
 		true,
-		bytes.NewReader(inMail.Body),
+		bytes.NewReader(mailMsg),
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("DKIMProcessor: sign")
 		return inMail, err
 	}
-	// m1 := regexp.MustCompile(`i=([^;]+);`)
-	// result := m1.ReplaceAllString(dkimHeaders, "")
-
 	// add dkim headers to the mail
-	inMail.DKIMHeaders = []byte(dkimHeaders)
-	inMail.Body = append(inMail.DKIMHeaders, inMail.Body...)
+	dkimHeaderParts := strings.Split(dkimHeaders, ":")
+	dkimHeaderKey := dkimHeaderParts[0]
+	dkimHeaderValue := strings.Join(dkimHeaderParts[1:], "")
+	dkimHeaderValue = strings.ReplaceAll(dkimHeaderValue, ";\r\n\t", "; ")
+	dkimHeaderValue = strings.ReplaceAll(dkimHeaderValue, "\r\n\t", "")
+	dkimHeaderValue = strings.TrimSpace(dkimHeaderValue)
+	if inMail.HeadersMap == nil {
+		inMail.HeadersMap = make(map[string][]byte)
+	}
+	inMail.HeadersMap[dkimHeaderKey] = []byte(dkimHeaderValue)
+
+	logger.Info().
+		Str("dkim_header_key", dkimHeaderKey).
+		Str("dkim_header_value", dkimHeaderValue).
+		Msg("DKIMProcessor: Process.Done")
 
 	return inMail, nil
 }

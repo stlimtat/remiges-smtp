@@ -7,9 +7,10 @@ import (
 
 type Mail struct {
 	Body        []byte
-	BodyHeaders map[string][]byte
+	Headers     []byte
+	HeadersMap  map[string][]byte
 	ContentType []byte
-	DKIMHeaders []byte
+	FinalBody   []byte
 	From        smtp.Address
 	Metadata    map[string][]byte
 	MsgID       []byte

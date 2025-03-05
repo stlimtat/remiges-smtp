@@ -25,8 +25,8 @@ func DefaultMailProcessorConfigs() []MailProcessorConfig {
 		},
 		{
 			Args:  map[string]any{},
-			Index: 99,
-			Type:  "mergeBody",
+			Index: 11,
+			Type:  "mergeHeaders",
 		},
 		{
 			Args: map[string]any{
@@ -37,15 +37,24 @@ func DefaultMailProcessorConfigs() []MailProcessorConfig {
 							"domain":           "key001",
 							"algorithm":        "rsa",
 							"hash":             "sha256",
-							"headers":          []string{"from", "to", "subject"},
 							"private-key-file": "./config/key001.pem",
 						},
 					},
 					"sign": []string{"key001"},
 				},
 			},
-			Index: 100,
+			Index: 12,
 			Type:  "dkim",
+		},
+		{
+			Args:  map[string]any{},
+			Index: 13,
+			Type:  "mergeHeaders",
+		},
+		{
+			Args:  map[string]any{},
+			Index: 99,
+			Type:  "mergeBody",
 		},
 	}
 }

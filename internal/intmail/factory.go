@@ -33,6 +33,7 @@ func NewDefaultMailProcessorFactory(
 	result.Registry[BodyProcessorType] = reflect.TypeOf(BodyProcessor{})
 	result.Registry[DKIMProcessorType] = reflect.TypeOf(DKIMProcessor{})
 	result.Registry[MergeBodyProcessorType] = reflect.TypeOf(MergeBodyProcessor{})
+	result.Registry[MergeHeadersProcessorType] = reflect.TypeOf(MergeHeadersProcessor{})
 	result.Registry[UnixDosProcessorType] = reflect.TypeOf(UnixDosProcessor{})
 	return result, nil
 }

@@ -7,10 +7,10 @@ mail-processors:
     index: 2
   - type: bodyHeaders
     index: 3
-  - type: mergeBody
-    index: 99
+  - type: mergeHeaders
+    index: 11
   - type: dkim
-    index: 100
+    index: 12
     args:
       domain-str: stlim.net
       localpart-case-sensitive: true
@@ -28,6 +28,10 @@ mail-processors:
             private-key-file: ./config/key001.pem
         sign:
           - key001
+  - type: mergeHeaders
+    index: 13
+  - type: mergeBody
+    index: 99
 read-file:
   concurrency: 1
   file-mails:

@@ -156,8 +156,8 @@ func (m *MailSender) Deliver(
 		ctx,
 		myMail.From.String(),
 		[]string{toStr},
-		int64(len(myMail.Body)),
-		bytes.NewReader(myMail.Body),
+		int64(len(myMail.FinalBody)),
+		bytes.NewReader(myMail.FinalBody),
 		true, false, false,
 	)
 	if err != nil {

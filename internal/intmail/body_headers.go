@@ -48,22 +48,22 @@ func (_ *BodyHeadersProcessor) Process(
 		Interface("to", inMail.To).
 		Msg("BodyHeadersProcessor")
 
-	if inMail.BodyHeaders == nil {
-		inMail.BodyHeaders = make(map[string][]byte)
+	if inMail.HeadersMap == nil {
+		inMail.HeadersMap = make(map[string][]byte)
 	}
-	inMail.BodyHeaders[input.HeaderContentTypeKey] = inMail.ContentType
+	inMail.HeadersMap[input.HeaderContentTypeKey] = inMail.ContentType
 	now := time.Now().Format(time.RFC1123Z)
-	inMail.BodyHeaders[input.HeaderDateKey] = []byte(now)
-	inMail.BodyHeaders[input.HeaderFromKey] = []byte(inMail.From.String())
-	inMail.BodyHeaders[input.HeaderMsgIDKey] = inMail.MsgID
-	inMail.BodyHeaders[input.HeaderSubjectKey] = inMail.Subject
+	inMail.HeadersMap[input.HeaderDateKey] = []byte(now)
+	inMail.HeadersMap[input.HeaderFromKey] = []byte(inMail.From.String())
+	inMail.HeadersMap[input.HeaderMsgIDKey] = inMail.MsgID
+	inMail.HeadersMap[input.HeaderSubjectKey] = inMail.Subject
 
 	toBytes := []byte{}
 	for _, to := range inMail.To {
 		toBytes = append(toBytes, to.String()...)
 		toBytes = append(toBytes, ',')
 	}
-	inMail.BodyHeaders[input.HeaderToKey] = toBytes[:len(toBytes)-1]
+	inMail.HeadersMap[input.HeaderToKey] = toBytes[:len(toBytes)-1]
 
 	return inMail, nil
 }

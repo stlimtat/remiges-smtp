@@ -1,6 +1,7 @@
 package intmail
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/rs/zerolog"
@@ -41,18 +42,12 @@ func (_ *MergeBodyProcessor) Process(
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("MergeBodyProcessor")
 
-	mailBodyHeaders := make([]byte, 0)
-	for key, value := range inMail.BodyHeaders {
-		mailBodyHeaders = append(
-			mailBodyHeaders,
-			[]byte(key+": "+string(value)+"\r\n")...,
-		)
-	}
+	body := bytes.TrimSpace(inMail.Body)
+	finalBody := inMail.Headers
+	finalBody = append(finalBody, body...)
+	finalBody = append(finalBody, []byte("\r\n\r\n")...)
+	inMail.FinalBody = finalBody
 
-	mailBodyHeaders = append(mailBodyHeaders, []byte("\r\n")...)
-	inMail.Body = append(mailBodyHeaders, inMail.Body...)
-	inMail.Body = append(inMail.Body, []byte("\r\n\r\n")...)
-
-	logger.Info().Bytes("body", inMail.Body).Msg("MergeBodyProcessor")
+	logger.Info().Bytes("final_body", inMail.FinalBody).Msg("MergeBodyProcessor")
 	return inMail, nil
 }

@@ -44,8 +44,8 @@ func (_ *BodyProcessor) Process(
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("BodyProcessor")
 
-	if inMail.BodyHeaders == nil {
-		inMail.BodyHeaders = make(map[string][]byte)
+	if inMail.HeadersMap == nil {
+		inMail.HeadersMap = make(map[string][]byte)
 	}
 
 	// Forced operation to replace all \n with \r\n
@@ -74,7 +74,7 @@ func (_ *BodyProcessor) Process(
 			if len(headerParts) != 2 {
 				return nil, fmt.Errorf("invalid header: %s", header)
 			}
-			inMail.BodyHeaders[string(headerParts[0])] = headerParts[1]
+			inMail.HeadersMap[string(headerParts[0])] = headerParts[1]
 		}
 		// Add the headers to the mail
 		result = mailSections[1]
