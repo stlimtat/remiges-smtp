@@ -115,11 +115,9 @@ func (p *DKIMProcessor) Process(
 		return inMail, err
 	}
 	// add dkim headers to the mail
-	dkimHeaderParts := strings.Split(dkimHeaders, ":")
+	dkimHeaderParts := strings.SplitN(dkimHeaders, ":", 2)
 	dkimHeaderKey := dkimHeaderParts[0]
 	dkimHeaderValue := strings.Join(dkimHeaderParts[1:], "")
-	dkimHeaderValue = strings.ReplaceAll(dkimHeaderValue, ";\r\n\t", "; ")
-	dkimHeaderValue = strings.ReplaceAll(dkimHeaderValue, "\r\n\t", "")
 	dkimHeaderValue = strings.TrimSpace(dkimHeaderValue)
 	if inMail.HeadersMap == nil {
 		inMail.HeadersMap = make(map[string][]byte)

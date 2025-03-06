@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"os"
@@ -93,6 +94,13 @@ func (_ *RsaKeyGenerator) LoadPrivateKey(
 		logger.Error().Err(err).Msg("failed to parse private key")
 		return nil, err
 	}
+
+	pubKey := result.Public()
+	pubKeyDER := x509.MarshalPKCS1PublicKey(pubKey.(*rsa.PublicKey))
+	pubKeyDERB64 := base64.StdEncoding.EncodeToString(pubKeyDER)
+	logger.Info().
+		Str("public_key", pubKeyDERB64).
+		Msg("loaded public key")
 
 	return result, nil
 }

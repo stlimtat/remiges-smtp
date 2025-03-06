@@ -1,9 +1,9 @@
 package dkim
 
 import (
-	"bytes"
 	"context"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"strings"
@@ -51,24 +51,9 @@ func (_ *TxtGen) Generate(
 		}
 	}
 
-	if !bytes.HasPrefix(pubKeyPEM, []byte("-----BEGIN ")) {
-		logger.Error().Msg("pubKeyPEM is not PEM formatted")
-		return nil, fmt.Errorf("pubKeyPEM is not PEM formatted")
-	}
-
-	resultKey := []byte{}
-	lines := bytes.Split(pubKeyPEM, []byte("\n"))
-	for _, line := range lines {
-		if bytes.HasPrefix(line, []byte("----")) {
-			continue
-		}
-		resultKey = append(resultKey, line...)
-	}
+	resultKey := base64.StdEncoding.EncodeToString(block.Bytes)
 
 	result := fmt.Sprintf("\"v=DKIM1; k=%s; p=%s\"", keyType, resultKey)
-	// if len(result) > 256 {
-	// 	result = result[:256] + "\" \"" + result[256:]
-	// }
 	result = fmt.Sprintf("%s._domainkey.%s IN TXT %s", selector, domain, result)
 
 	return []byte(result), nil

@@ -50,7 +50,7 @@ func DefaultDKIMConfig(
 				DontSealHeaders: true,
 				Expiration:      "24h",
 				Hash:            "sha256",
-				Headers:         nil,
+				Headers:         []string{"from", "to", "subject", "date", "message-id", "content-type"},
 				PrivateKeyFile:  "~/go/src/github.com/stlimtat/remiges-smtp/config/key001.key",
 			},
 		},
@@ -122,6 +122,7 @@ func (c *DKIMConfig) TransformSelector(
 	// This is used in mox/dkimsign.go:L23 - DKIMSelectors
 	result.HashEffective = moxSelector.Hash
 	result.Headers = moxSelector.Headers
+	result.HeadersEffective = moxSelector.Headers
 	// Used to load the private key
 	result.PrivateKeyFile = moxSelector.PrivateKeyFile
 

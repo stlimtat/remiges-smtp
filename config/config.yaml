@@ -23,6 +23,7 @@ mail-processors:
               header-relaxed: true
               body-relaxed: true
             domain: key001
+            dont-seal-headers: true
             expiration: 72h
             hash: sha256
             private-key-file: ./config/key001.pem
