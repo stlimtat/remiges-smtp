@@ -8,21 +8,21 @@ import (
 )
 
 type GenDKIMConfig struct {
-	BitSize  int    `mapstructure:"bit-size,omitempty"`
-	Domain   string `mapstructure:"dkim-domain"`
-	Hash     string `mapstructure:"hash,omitempty"`
-	KeyType  string `mapstructure:"key-type,omitempty"`
-	OutPath  string `mapstructure:"out-path"`
-	Selector string `mapstructure:"selector"`
+	Algorithm string `mapstructure:"algorithm,omitempty"`
+	BitSize   int    `mapstructure:"bit-size,omitempty"`
+	Domain    string `mapstructure:"dkim-domain"`
+	Hash      string `mapstructure:"hash,omitempty"`
+	OutPath   string `mapstructure:"out-path"`
+	Selector  string `mapstructure:"selector"`
 }
 
 func NewGenDKIMConfig(ctx context.Context) GenDKIMConfig {
 	logger := zerolog.Ctx(ctx)
 	var err error
 	var result GenDKIMConfig
+	viper.SetDefault("algorithm", "rsa")
 	viper.SetDefault("bit-size", 2048)
 	viper.SetDefault("hash", "sha256")
-	viper.SetDefault("key-type", "rsa")
 	viper.SetDefault("out-path", "./config")
 	err = viper.Unmarshal(&result)
 	if err != nil {

@@ -21,8 +21,8 @@ func TestMergeBodyProcessor(t *testing.T) {
 		{
 			name: "happy",
 			inMail: &pmail.Mail{
-				HeadersMap: map[string][]byte{"From": []byte("test@example.com")},
-				Body:       []byte("Hello, world!"),
+				Headers: []byte("From: test@example.com\r\n\r\n"),
+				Body:    []byte("Hello, world!"),
 			},
 			wantBody: []byte("From: test@example.com\r\n\r\nHello, world!\r\n\r\n"),
 			wantErr:  false,
@@ -40,7 +40,7 @@ func TestMergeBodyProcessor(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tt.wantBody, gotMail.Body)
+			require.Equal(t, tt.wantBody, gotMail.FinalBody)
 		})
 	}
 }

@@ -13,19 +13,13 @@ const (
 )
 
 type DomainConfig struct {
-	moxConfig.Domain           `mapstructure:",omitempty"`
-	ClientSettingsDomain       string      `mapstructure:"client-settings-domain,omitempty"`
-	Description                string      `mapstructure:"description,omitempty"`
-	DomainStr                  string      `mapstructure:"domain-str,omitempty"`
-	DKIM                       *DKIMConfig `mapstructure:"dkim,omitempty"`
-	LocalpartCaseSensitive     bool        `mapstructure:"localpart-case-sensitive,omitempty"`
-	LocalpartCatchallSeparator string      `mapstructure:"localpart-catchall-separator,omitempty"`
-	ReportsOnly                bool        `mapstructure:"reports-only,omitempty"`
-	// Aliases                    map[string]Alias
-	// DMARC                      *DMARC
-	// MTASTS                     *MTASTS
-	// Routes                     []Route
-	// TLSRPT                     *TLSRPT
+	DKIM                       *DKIMConfig      `mapstructure:"dkim,omitempty"`
+	Domain                     moxDns.Domain    `mapstructure:",omitempty"`
+	DomainStr                  string           `mapstructure:"domain-str,omitempty"`
+	LocalpartCaseSensitive     bool             `mapstructure:"localpart-case-sensitive,omitempty"`
+	LocalpartCatchallSeparator string           `mapstructure:"localpart-catchall-separator,omitempty"`
+	MoxDomain                  moxConfig.Domain `mapstructure:",omitempty"`
+	ReportsOnly                bool             `mapstructure:"reports-only,omitempty"`
 }
 
 func DefaultDomainConfig(
@@ -34,9 +28,8 @@ func DefaultDomainConfig(
 	// yaml cannot have a map key with a dot, so we use a string key
 	result := map[string]*DomainConfig{
 		"stlimnet": {
-			ClientSettingsDomain:       "",
 			DKIM:                       DefaultDKIMConfig(ctx),
-			Domain:                     moxConfig.Domain{},
+			Domain:                     moxDns.Domain{ASCII: DomainStlimNet},
 			DomainStr:                  DomainStlimNet,
 			LocalpartCaseSensitive:     false,
 			LocalpartCatchallSeparator: "+",
@@ -56,25 +49,15 @@ func (c *DomainConfig) Transform(
 			logger.Error().Err(err).Msg("DomainConfig.Transform.DKIM")
 			return err
 		}
-		c.Domain.DKIM = c.DKIM.DKIM
-	}
-	if c.ClientSettingsDomain != "" {
-		c.Domain.ClientSettingsDomain = c.ClientSettingsDomain
-	}
-	if c.Description != "" {
-		c.Domain.Description = c.Description
 	}
 	if c.DomainStr != "" {
-		c.Domain.Domain = moxDns.Domain{ASCII: c.DomainStr}
+		c.Domain = moxDns.Domain{ASCII: c.DomainStr}
 	}
-	if c.LocalpartCaseSensitive {
-		c.Domain.LocalpartCaseSensitive = c.LocalpartCaseSensitive
-	}
-	if c.LocalpartCatchallSeparator != "" {
-		c.Domain.LocalpartCatchallSeparator = c.LocalpartCatchallSeparator
-	}
-	if c.ReportsOnly {
-		c.Domain.ReportsOnly = c.ReportsOnly
+	c.MoxDomain = moxConfig.Domain{
+		Domain:                     c.Domain,
+		LocalpartCaseSensitive:     c.LocalpartCaseSensitive,
+		LocalpartCatchallSeparator: c.LocalpartCatchallSeparator,
+		ReportsOnly:                c.ReportsOnly,
 	}
 	return nil
 }

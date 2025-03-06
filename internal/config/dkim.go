@@ -4,31 +4,25 @@ import (
 	"context"
 	"time"
 
-	moxConfig "github.com/mjl-/mox/config"
-	"github.com/mjl-/mox/dns"
+	moxDkim "github.com/mjl-/mox/dkim"
+	moxDns "github.com/mjl-/mox/dns"
 	"github.com/rs/zerolog"
 )
 
 type DKIMConfig struct {
-	moxConfig.DKIM `mapstructure:",omitempty"`
-	MoxSelectors   map[string]MoxSelector `mapstructure:"selectors,omitempty"`
-	MoxSign        []string               `mapstructure:"sign,omitempty"`
+	Selectors    map[string]moxDkim.Selector `mapstructure:",omitempty"`
+	MoxSelectors map[string]MoxSelector      `mapstructure:"selectors,omitempty"`
 }
-
 type MoxSelector struct {
-	Algorithm        string              `mapstructure:"algorithm"`
-	Canonicalization MoxCanonicalization `mapstructure:"canonicalization,omitempty"`
-	Domain           string              `mapstructure:"domain"`
-	DontSealHeaders  bool                `mapstructure:"dont-seal-headers,omitempty"`
-	Expiration       string              `mapstructure:"expiration,omitempty"`
-	Hash             string              `mapstructure:"hash"`
-	Headers          []string            `mapstructure:"headers,omitempty"`
-	PrivateKeyFile   string              `mapstructure:"private-key-file,omitempty"`
-}
-
-type MoxCanonicalization struct {
-	HeaderRelaxed bool `mapstructure:"header-relaxed"`
-	BodyRelaxed   bool `mapstructure:"body-relaxed"`
+	Algorithm      string        `mapstructure:"algorithm"`
+	BodyRelaxed    bool          `mapstructure:"body-relaxed"`
+	Expiration     time.Duration `mapstructure:"expiration,omitempty"`
+	Hash           string        `mapstructure:"hash"`
+	HeaderRelaxed  bool          `mapstructure:"header-relaxed"`
+	Headers        []string      `mapstructure:"headers,omitempty"`
+	PrivateKeyFile string        `mapstructure:"private-key-file,omitempty"`
+	SealHeaders    bool          `mapstructure:"seal-headers,omitempty"`
+	SelectorDomain string        `mapstructure:"selector-domain"`
 }
 
 func DefaultDKIMConfig(
@@ -36,25 +30,20 @@ func DefaultDKIMConfig(
 ) *DKIMConfig {
 	logger := zerolog.Ctx(ctx)
 	result := &DKIMConfig{
-		DKIM: moxConfig.DKIM{
-			Selectors: make(map[string]moxConfig.Selector),
-		},
+		Selectors: make(map[string]moxDkim.Selector),
 		MoxSelectors: map[string]MoxSelector{
 			"key001": {
-				Algorithm: "rsa",
-				Canonicalization: MoxCanonicalization{
-					HeaderRelaxed: true,
-					BodyRelaxed:   true,
-				},
-				Domain:          "key001",
-				DontSealHeaders: true,
-				Expiration:      "24h",
-				Hash:            "sha256",
-				Headers:         []string{"from", "to", "subject", "date", "message-id", "content-type"},
-				PrivateKeyFile:  "~/go/src/github.com/stlimtat/remiges-smtp/config/key001.key",
+				Algorithm:      "rsa",
+				BodyRelaxed:    true,
+				Hash:           "sha256",
+				HeaderRelaxed:  true,
+				Headers:        []string{"from", "to", "subject", "date", "message-id", "content-type"},
+				Expiration:     time.Hour * 24,
+				PrivateKeyFile: "~/go/src/github.com/stlimtat/remiges-smtp/config/key001.key",
+				SealHeaders:    true,
+				SelectorDomain: "key001",
 			},
 		},
-		MoxSign: make([]string, 0),
 	}
 	err := result.Transform(ctx)
 	if err != nil {
@@ -75,11 +64,6 @@ func (c *DKIMConfig) Transform(
 			return err
 		}
 	}
-	err := c.TransformSign(ctx)
-	if err != nil {
-		logger.Error().Err(err).Msg("DKIMConfig.TransformSign")
-		return err
-	}
 	return nil
 }
 
@@ -88,54 +72,32 @@ func (c *DKIMConfig) TransformSelector(
 	selectorName string,
 	moxSelector *MoxSelector,
 ) error {
-	logger := zerolog.Ctx(ctx).With().Str("selector", selectorName).Logger()
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("selector", selectorName).
+		Logger()
 	var err error
-	if c.DKIM.Selectors == nil {
-		c.DKIM.Selectors = make(map[string]moxConfig.Selector)
+	if c.Selectors == nil {
+		c.Selectors = make(map[string]moxDkim.Selector)
 	}
 
-	result, ok := c.DKIM.Selectors[selectorName]
+	result, ok := c.Selectors[selectorName]
 	if !ok {
-		result = moxConfig.Selector{}
+		result = moxDkim.Selector{}
 	}
-	result.Algorithm = moxSelector.Algorithm
-	result.Canonicalization = moxConfig.Canonicalization{
-		HeaderRelaxed: moxSelector.Canonicalization.HeaderRelaxed,
-		BodyRelaxed:   moxSelector.Canonicalization.BodyRelaxed,
-	}
-	result.Domain, err = dns.ParseDomain(moxSelector.Domain)
+	result.BodyRelaxed = moxSelector.BodyRelaxed
+	result.Domain, err = moxDns.ParseDomain(moxSelector.SelectorDomain)
 	if err != nil {
 		logger.Error().Err(err).Msg("TransformSelector.ParseDomain")
 		return err
 	}
-	result.DontSealHeaders = moxSelector.DontSealHeaders
 	result.Expiration = moxSelector.Expiration
-	if moxSelector.Expiration != "" {
-		expiration, err := time.ParseDuration(moxSelector.Expiration)
-		if err != nil {
-			logger.Error().Err(err).Msg("TransformSelector.ParseDuration")
-			return err
-		}
-		result.ExpirationSeconds = int(expiration.Seconds())
-	}
 	result.Hash = moxSelector.Hash
+	result.HeaderRelaxed = moxSelector.HeaderRelaxed
 	// This is used in mox/dkimsign.go:L23 - DKIMSelectors
-	result.HashEffective = moxSelector.Hash
 	result.Headers = moxSelector.Headers
-	result.HeadersEffective = moxSelector.Headers
-	// Used to load the private key
-	result.PrivateKeyFile = moxSelector.PrivateKeyFile
+	result.SealHeaders = moxSelector.SealHeaders
 
-	c.DKIM.Selectors[selectorName] = result
-	return nil
-}
-
-func (c *DKIMConfig) TransformSign(
-	_ context.Context,
-) error {
-	if c.DKIM.Sign == nil {
-		c.DKIM.Sign = make([]string, 0)
-	}
-	c.DKIM.Sign = append(c.DKIM.Sign, c.MoxSign...)
+	c.Selectors[selectorName] = result
 	return nil
 }

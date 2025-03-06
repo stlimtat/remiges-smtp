@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
+	"maps"
+	"path/filepath"
+	"slices"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	moxDkim "github.com/mjl-/mox/dkim"
 	"github.com/mjl-/mox/mox-"
 	"github.com/rs/zerolog"
@@ -35,14 +38,27 @@ func (p *DKIMProcessor) Init(
 	p.Cfg = cfg
 
 	p.DomainCfg = &config.DomainConfig{}
-	err := mapstructure.Decode(p.Cfg.Args, p.DomainCfg)
+	decoder, err := mapstructure.NewDecoder(
+		&mapstructure.DecoderConfig{
+			Metadata:   nil,
+			DecodeHook: mapstructure.StringToTimeDurationHookFunc(),
+			Result:     &p.DomainCfg,
+		},
+	)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("DKIMProcessor: decode")
+		logger.Error().Err(err).Msg("DKIMProcessor: NewDecoder")
+		return err
+	}
+	err = decoder.Decode(p.Cfg.Args)
+	if err != nil {
+		logger.Error().Err(err).Msg("DKIMProcessor: decode")
+		return err
 	}
 
 	err = p.DomainCfg.Transform(ctx)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("DKIMProcessor: transform")
+		logger.Error().Err(err).Msg("DKIMProcessor: transform")
+		return err
 	}
 
 	return nil
@@ -57,24 +73,32 @@ func (p *DKIMProcessor) InitDKIMCrypto(
 	loader crypto.IKeyLoader,
 ) error {
 	logger := zerolog.Ctx(ctx)
-	logger.Debug().Msg("DKIMProcessor: InitDKIMCrypto")
+	logger.Debug().Msg("InitDKIMCrypto")
 
-	selectors := p.DomainCfg.DKIM.DKIM.Selectors
+	moxSelectors := p.DomainCfg.DKIM.MoxSelectors
 
-	for selectorName, selector := range selectors { //nolint:gocritic // This was inherited from mox
-		privateKeyPath, err := utils.ValidateIO(ctx, selector.PrivateKeyFile, true)
+	for selectorName, moxSelector := range moxSelectors {
+		privateKeyPath, err := utils.ValidateIO(
+			ctx,
+			filepath.Clean(moxSelector.PrivateKeyFile),
+			true,
+		)
 		if err != nil {
-			logger.Error().Err(err).Msg("DKIMProcessor: InitDKIMCrypto: ValidateIO")
+			logger.Error().Err(err).Msg("InitDKIMCrypto: ValidateIO")
 			return err
 		}
-		signer, err := loader.LoadPrivateKey(ctx, selector.Algorithm, privateKeyPath)
+		signer, err := loader.LoadPrivateKey(
+			ctx,
+			moxSelector.Algorithm,
+			privateKeyPath,
+		)
 		if err != nil {
-			logger.Error().Err(err).Msg("DKIMProcessor: InitDKIMCrypto: LoadPrivateKey")
+			logger.Error().Err(err).Msg("InitDKIMCrypto: LoadPrivateKey")
 			return err
 		}
-		selector.Key = signer
-		selector.PrivateKeyFile = privateKeyPath
-		p.DomainCfg.DKIM.DKIM.Selectors[selectorName] = selector
+		moxDkimSelector := p.DomainCfg.DKIM.Selectors[selectorName]
+		moxDkimSelector.PrivateKey = signer
+		p.DomainCfg.DKIM.Selectors[selectorName] = moxDkimSelector
 	}
 
 	return nil
@@ -89,17 +113,17 @@ func (p *DKIMProcessor) Process(
 		Interface("from", inMail.From).
 		Msg("DKIMProcessor")
 
-	selectors := mox.DKIMSelectors(p.DomainCfg.DKIM.DKIM)
-	if len(selectors) == 0 {
-		logger.Debug().Msg("DKIMProcessor: no selectors")
-		return inMail, nil
-	}
-
-	canonical := mox.CanonicalLocalpart(inMail.From.Localpart, p.DomainCfg.Domain)
+	canonical := mox.CanonicalLocalpart(
+		inMail.From.Localpart,
+		p.DomainCfg.MoxDomain,
+	)
 
 	mailMsg := inMail.Headers
 	mailMsg = append(mailMsg, inMail.Body...)
 	mailMsg = append(mailMsg, []byte("\r\n\r\n")...)
+	selectors := slices.Collect(
+		maps.Values(p.DomainCfg.DKIM.Selectors),
+	)
 
 	dkimHeaders, err := moxDkim.Sign(
 		ctx,

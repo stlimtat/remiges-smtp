@@ -56,12 +56,16 @@ func newGenDKIMCmd(
 		},
 	}
 
+	result.cmd.Flags().String("algorithm", "rsa", "Key type to generate DKIM keys, dns record and config")
 	result.cmd.Flags().Int("bit-size", 2048, "Bit size of the DKIM keys")
 	result.cmd.Flags().String("dkim-domain", "", "Domain to generate DKIM keys, dns record and config")
 	result.cmd.Flags().String("hash", "sha256", "Hash algorithm to use for DKIM keys, dns record and config")
-	result.cmd.Flags().String("key-type", "rsa", "Key type to generate DKIM keys, dns record and config")
 	result.cmd.Flags().String("out-path", "./config", "Path to write DKIM keys, dns record and config")
 	result.cmd.Flags().String("selector", "key001", "Selector for DKIM keys")
+	err = viper.BindPFlag("algorithm", result.cmd.Flags().Lookup("algorithm"))
+	if err != nil {
+		logger.Fatal().Err(err).Msg("viper.BindPFlag - algorithm")
+	}
 	err = viper.BindPFlag("bit-size", result.cmd.Flags().Lookup("bit-size"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag - bit-size")
@@ -74,9 +78,9 @@ func newGenDKIMCmd(
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag - hash")
 	}
-	err = viper.BindPFlag("key-type", result.cmd.Flags().Lookup("key-type"))
+	err = viper.BindPFlag("algorithm", result.cmd.Flags().Lookup("algorithm"))
 	if err != nil {
-		logger.Fatal().Err(err).Msg("viper.BindPFlag - key-type")
+		logger.Fatal().Err(err).Msg("viper.BindPFlag - algorithm")
 	}
 	err = viper.BindPFlag("out-path", result.cmd.Flags().Lookup("out-path"))
 	if err != nil {
@@ -126,7 +130,7 @@ func (_ *GenDKIMSvc) Run(
 		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.Init")
 	}
 
-	publicKeyPEM, privateKeyPEM, err := factory.GenerateKey(ctx, cfg.BitSize, cfg.Domain, cfg.KeyType)
+	publicKeyPEM, privateKeyPEM, err := factory.GenerateKey(ctx, cfg.BitSize, cfg.Domain, cfg.Algorithm)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.GenerateKey")
 	}
@@ -136,7 +140,7 @@ func (_ *GenDKIMSvc) Run(
 		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.WriteKey")
 	}
 
-	txtEntry, err := txtGen.Generate(ctx, cfg.Domain, cfg.KeyType, cfg.Selector, publicKeyPEM)
+	txtEntry, err := txtGen.Generate(ctx, cfg.Domain, cfg.Algorithm, cfg.Selector, publicKeyPEM)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("dkim.TxtGen.Generate")
 	}
@@ -147,8 +151,7 @@ func (_ *GenDKIMSvc) Run(
 		txtEntry,
 		cfg.Domain,
 		cfg.Selector,
-		cfg.Selector,
-		cfg.KeyType,
+		cfg.Algorithm,
 		cfg.Hash,
 		privateKeyPath,
 		cfg.Selector,
@@ -173,13 +176,21 @@ mail_processors:
       dkim:
         selectors:
           %s:
-            domain: %s
             algorithm: %s
-			expiration: 72h
+            body-relaxed: true
+            expiration: 72h
             hash: %s
+            header-relaxed: true
+            headers:
+              - from
+              - to
+              - subject
+              - date
+              - message-id
+              - content-type
             private-key-file: %s
-        sign:
-          - %s
+            seal-headers: false
+            selector-domain: %s
 ` + "```" + `
 Then restart the smtpclient.
 `

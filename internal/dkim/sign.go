@@ -35,7 +35,7 @@ func (s *DKIMSigner) Sign(
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("DKIMSigner: Sign")
 
-	_ = mox.CanonicalLocalpart(msg.From.Localpart, s.DomainCfg.Domain)
+	_ = mox.CanonicalLocalpart(msg.From.Localpart, s.DomainCfg.MoxDomain)
 
 	return msg, nil
 }
