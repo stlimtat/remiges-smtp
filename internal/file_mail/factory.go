@@ -53,7 +53,7 @@ func (f *MailTransformerFactory) NewMailTransformers(
 	cfgs []config.FileMailConfig,
 ) ([]IMailTransformer, error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().
+	logger.Debug().
 		Interface("cfgs", cfgs).
 		Msg("MailTransformerFactory")
 

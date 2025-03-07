@@ -21,8 +21,11 @@ services:
     volumes:
       - ./config:/app/config
       - ./testdata:/app/data
+      - ./output:/app/output
 volumes:
   config:
     driver: local
   data:
+    driver: local
+  output:
     driver: local

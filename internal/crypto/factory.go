@@ -25,7 +25,7 @@ func (c *CryptoFactory) Init(
 		KeyTypeRSA:     &RsaKeyGenerator{},
 	}
 
-	logger.Info().Msg("new key generators created")
+	logger.Debug().Msg("CryptoFactory initialized")
 
 	return c.Generators, nil
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -14,12 +15,13 @@ import (
 )
 
 const (
-	DEFAULT_FILE_NAME string = "remiges-smtp-%s.csv"
+	DEFAULT_FILE_NAME string = "output-%s.csv"
 )
 
 type FileOutput struct {
-	Cfg  config.OutputConfig
-	Path string
+	Cfg          config.OutputConfig
+	FileNameType string
+	Path         string
 }
 
 func NewFileOutput(
@@ -47,7 +49,40 @@ func NewFileOutput(
 		return nil, err
 	}
 
+	fileNameType, ok := cfg.Args[config.ConfigArgFileNameType]
+	if !ok {
+		logger.Error().
+			Msg("FileNameType not found in config")
+		fileNameType = config.ConfigArgFileNameTypeDate
+	}
+	result.FileNameType = fileNameType.(string)
+
 	return result, nil
+}
+
+func (f *FileOutput) GetFileName(
+	_ context.Context,
+	myMail *pmail.Mail,
+) string {
+	var fileName string
+	now := time.Now()
+	switch f.FileNameType {
+	case config.ConfigArgFileNameTypeMailID:
+		fileName = fmt.Sprintf(DEFAULT_FILE_NAME, myMail.MsgID)
+	case config.ConfigArgFileNameTypeHour:
+		hour := now.Format("2006-01-02-15")
+		fileName = fmt.Sprintf(DEFAULT_FILE_NAME, hour)
+	case config.ConfigArgFileNameTypeQuarterHour:
+		hour := now.Format("2006-01-02-15")
+		minute := now.Minute()
+		quarter := minute / 15
+		hour = fmt.Sprintf("%s-%d", hour, quarter)
+		fileName = fmt.Sprintf(DEFAULT_FILE_NAME, hour)
+	default:
+		date := time.Now().Format("2006-01-02")
+		fileName = fmt.Sprintf(DEFAULT_FILE_NAME, date)
+	}
+	return filepath.Join(f.Path, fileName)
 }
 
 func (f *FileOutput) Write(
@@ -55,14 +90,15 @@ func (f *FileOutput) Write(
 	myMail *pmail.Mail,
 	resp []pmail.Response,
 ) error {
-	filePath := filepath.Join(f.Path, fmt.Sprintf(DEFAULT_FILE_NAME, myMail.MsgID))
+	fileName := f.GetFileName(ctx, myMail)
 	logger := zerolog.Ctx(ctx).
 		With().
-		Str("file", filePath).
+		Str("file", fileName).
 		Bytes("mail", myMail.MsgID).
 		Logger()
+	logger.Debug().Msg("FileOutput: Write")
 
-	file, err := os.Create(filePath)
+	file, err := os.Create(fileName)
 	if err != nil {
 		logger.Error().
 			Err(err).
@@ -72,13 +108,13 @@ func (f *FileOutput) Write(
 	defer func() {
 		err = file.Close()
 		if err != nil {
-			logger.Error().
-				Err(err).
-				Msg("Failed to close file")
+			logger.Error().Err(err).Msg("Failed to close file")
 		}
 	}()
 
 	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
 	err = writer.Write([]string{"msg_id", "status", "error"})
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to write header")
@@ -95,11 +131,12 @@ func (f *FileOutput) Write(
 			return err
 		}
 	}
-	writer.Flush()
+
 	err = writer.Error()
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to flush writer")
 		return err
 	}
+	logger.Info().Msg("FileOutput: Write success")
 	return nil
 }

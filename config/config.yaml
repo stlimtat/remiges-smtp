@@ -1,4 +1,4 @@
-debug: true
+debug: false
 from: spteo@stlim.net
 mail-processors:
   - type: unixdos
@@ -19,16 +19,21 @@ mail-processors:
       dkim:
         selectors:
           key001:
-            canonicalization:
-              header-relaxed: true
-              body-relaxed: true
-            domain: key001
-            dont-seal-headers: true
+            algorithm: rsa
+            body-relaxed: true
             expiration: 72h
             hash: sha256
-            private-key-file: ./config/key001.pem
-        sign:
-          - key001
+            header-relaxed: true
+            headers:
+              - from
+              - to
+              - subject
+              - date
+              - message-id
+              - content-type
+            private-key-file: /app/config/key001.pem
+            seal-headers: true
+            selector-domain: key001
   - type: mergeHeaders
     index: 13
   - type: mergeBody
@@ -59,9 +64,15 @@ read-file:
     - type: body
       index: 7
   from: spteo@stlim.net
-  in-path: /Users/st_lim/go/src/github.com/stlimtat/remiges-smtp/testdata
+  in-path: /app/data
   poll-interval: 60s
   redis-addr: redis:6379
+outputs:
+  - type: file
+    index: 1
+    args:
+      path: /app/output
+      file_name_type: date
 to: st_lim+remiges-smtp@stlim.net
 urls:
   urls:

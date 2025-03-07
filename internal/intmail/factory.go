@@ -57,7 +57,7 @@ func (f *DefaultMailProcessorFactory) NewMailProcessors(
 	cfgs []config.MailProcessorConfig,
 ) ([]IMailProcessor, error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Info().
+	logger.Debug().
 		Interface("cfgs", cfgs).
 		Msg("DefaultMailProcessorFactory")
 

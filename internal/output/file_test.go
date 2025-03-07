@@ -3,7 +3,6 @@ package output
 import (
 	"context"
 	"encoding/csv"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,6 +17,9 @@ import (
 )
 
 func TestFileOutput_Write(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "remiges-smtp-output-file-test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
 	tests := []struct {
 		name         string
 		cfg          config.OutputConfig
@@ -25,13 +27,86 @@ func TestFileOutput_Write(t *testing.T) {
 		wantWriteErr bool
 	}{
 		{
-			name: "happy",
+			name: "happy - date",
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath: "/tmp",
+					config.ConfigArgPath:         tempDir,
+					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeDate,
 				},
 			},
+			wantInitErr:  false,
+			wantWriteErr: false,
+		},
+		{
+			name: "happy - mail_id",
+			cfg: config.OutputConfig{
+				Type: config.ConfigOutputTypeFile,
+				Args: map[string]any{
+					config.ConfigArgPath:         tempDir,
+					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeMailID,
+				},
+			},
+			wantInitErr:  false,
+			wantWriteErr: false,
+		},
+		{
+			name: "happy - hour",
+			cfg: config.OutputConfig{
+				Type: config.ConfigOutputTypeFile,
+				Args: map[string]any{
+					config.ConfigArgPath:         tempDir,
+					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeHour,
+				},
+			},
+			wantInitErr:  false,
+			wantWriteErr: false,
+		},
+		{
+			name: "happy - quarter_hour",
+			cfg: config.OutputConfig{
+				Type: config.ConfigOutputTypeFile,
+				Args: map[string]any{
+					config.ConfigArgPath:         tempDir,
+					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeQuarterHour,
+				},
+			},
+			wantInitErr:  false,
+			wantWriteErr: false,
+		},
+		{
+			name: "happy - date by default",
+			cfg: config.OutputConfig{
+				Type: config.ConfigOutputTypeFile,
+				Args: map[string]any{
+					config.ConfigArgPath: tempDir,
+				},
+			},
+			wantInitErr:  false,
+			wantWriteErr: false,
+		},
+		{
+			name: "error - invalid path",
+			cfg: config.OutputConfig{
+				Type: config.ConfigOutputTypeFile,
+				Args: map[string]any{
+					config.ConfigArgPath: filepath.Join(tempDir, "invalid"),
+				},
+			},
+			wantInitErr:  true,
+			wantWriteErr: false,
+		},
+		{
+			name: "happy - invalid file name type",
+			cfg: config.OutputConfig{
+				Type: config.ConfigOutputTypeFile,
+				Args: map[string]any{
+					config.ConfigArgPath:         tempDir,
+					config.ConfigArgFileNameType: "invalid",
+				},
+			},
+			wantInitErr:  false,
+			wantWriteErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -45,12 +120,14 @@ func TestFileOutput_Write(t *testing.T) {
 			require.NoError(t, err)
 
 			msgID := uuid.New().String()
+			mail := &pmail.Mail{
+				MsgID: []byte(msgID),
+			}
 
+			filePath := fo.GetFileName(ctx, mail)
 			err = fo.Write(
 				ctx,
-				&pmail.Mail{
-					MsgID: []byte(msgID),
-				},
+				mail,
 				[]pmail.Response{
 					{
 						Response: smtpclient.Response{
@@ -66,7 +143,6 @@ func TestFileOutput_Write(t *testing.T) {
 			}
 			require.NoError(t, err)
 			// check that the file was created
-			filePath := filepath.Join(tt.cfg.Args[config.ConfigArgPath].(string), fmt.Sprintf(DEFAULT_FILE_NAME, msgID))
 			_, err = os.Stat(filePath)
 			require.NoError(t, err)
 			// check that the file contains the correct data
