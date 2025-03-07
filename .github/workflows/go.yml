@@ -13,9 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: bazelbuild/setup-bazelisk@v3
-      with:
-        version: 7.4.0
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
@@ -27,18 +24,6 @@ jobs:
         mkdir -p ./artifacts
         go test -cover -coverprofile ./artifacts/cover.out -v ./...
         go tool cover -html ./artifacts/cover.out -o ./artifacts/cover.html
-    - name: Mount Bazel cache
-      uses: actions/cache@v4
-      with:
-        key: bazel
-        path: ~/.cache/bazel
-    - name: Bazel Build
-      run: |
-        bazel build //...
-        bazel build //cmd/smtpserver/...
-    - name: Bazel Test
-      run: |
-        bazel test //...
     - name: Archive code coverage results
       uses: actions/upload-artifact@v4
       with:
