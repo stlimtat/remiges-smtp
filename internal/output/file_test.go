@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
@@ -127,6 +128,7 @@ func TestFileOutput_Write(t *testing.T) {
 			filePath := fo.GetFileName(ctx, mail)
 			err = fo.Write(
 				ctx,
+				&file.FileInfo{ID: msgID},
 				mail,
 				[]pmail.Response{
 					{
@@ -146,9 +148,9 @@ func TestFileOutput_Write(t *testing.T) {
 			_, err = os.Stat(filePath)
 			require.NoError(t, err)
 			// check that the file contains the correct data
-			file, err := os.Open(filePath)
+			generatedFile, err := os.Open(filePath)
 			require.NoError(t, err)
-			csvReader := csv.NewReader(file)
+			csvReader := csv.NewReader(generatedFile)
 			content, err := csvReader.ReadAll()
 			require.NoError(t, err)
 			assert.Equal(t, []string{"msg_id", "status", "error"}, content[0])

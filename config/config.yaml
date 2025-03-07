@@ -72,7 +72,8 @@ outputs:
     index: 1
     args:
       path: /app/output
-      file_name_type: date
+  - type: file_tracker
+    index: 2
 to: st_lim+remiges-smtp@stlim.net
 urls:
   urls:

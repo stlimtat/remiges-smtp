@@ -42,9 +42,9 @@ func (m *MockIKeyGenerator) EXPECT() *MockIKeyGeneratorMockRecorder {
 }
 
 // GenerateKey mocks base method.
-func (m *MockIKeyGenerator) GenerateKey(ctx context.Context, bitSize int, id string) ([]byte, []byte, error) {
+func (m *MockIKeyGenerator) GenerateKey(ctx context.Context, bitSize int, id, keyType string) ([]byte, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateKey", ctx, bitSize, id)
+	ret := m.ctrl.Call(m, "GenerateKey", ctx, bitSize, id, keyType)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].([]byte)
 	ret2, _ := ret[2].(error)
@@ -52,9 +52,9 @@ func (m *MockIKeyGenerator) GenerateKey(ctx context.Context, bitSize int, id str
 }
 
 // GenerateKey indicates an expected call of GenerateKey.
-func (mr *MockIKeyGeneratorMockRecorder) GenerateKey(ctx, bitSize, id any) *gomock.Call {
+func (mr *MockIKeyGeneratorMockRecorder) GenerateKey(ctx, bitSize, id, keyType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateKey", reflect.TypeOf((*MockIKeyGenerator)(nil).GenerateKey), ctx, bitSize, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateKey", reflect.TypeOf((*MockIKeyGenerator)(nil).GenerateKey), ctx, bitSize, id, keyType)
 }
 
 // MockIKeyLoader is a mock of IKeyLoader interface.
@@ -82,18 +82,18 @@ func (m *MockIKeyLoader) EXPECT() *MockIKeyLoaderMockRecorder {
 }
 
 // LoadPrivateKey mocks base method.
-func (m *MockIKeyLoader) LoadPrivateKey(ctx context.Context, privateKeyPath string) (crypto.Signer, error) {
+func (m *MockIKeyLoader) LoadPrivateKey(ctx context.Context, keyType, privateKeyPath string) (crypto.Signer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadPrivateKey", ctx, privateKeyPath)
+	ret := m.ctrl.Call(m, "LoadPrivateKey", ctx, keyType, privateKeyPath)
 	ret0, _ := ret[0].(crypto.Signer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // LoadPrivateKey indicates an expected call of LoadPrivateKey.
-func (mr *MockIKeyLoaderMockRecorder) LoadPrivateKey(ctx, privateKeyPath any) *gomock.Call {
+func (mr *MockIKeyLoaderMockRecorder) LoadPrivateKey(ctx, keyType, privateKeyPath any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadPrivateKey", reflect.TypeOf((*MockIKeyLoader)(nil).LoadPrivateKey), ctx, privateKeyPath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadPrivateKey", reflect.TypeOf((*MockIKeyLoader)(nil).LoadPrivateKey), ctx, keyType, privateKeyPath)
 }
 
 // MockIKeyWriter is a mock of IKeyWriter interface.

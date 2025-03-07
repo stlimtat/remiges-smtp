@@ -2,6 +2,8 @@ package file
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -30,6 +32,9 @@ func (f *FileReadTracker) FileRead(
 		Msg("FileRead")
 	getResult := f.redisClient.Get(ctx, "read_tracker_"+id)
 	if getResult.Err() != nil {
+		if errors.Is(getResult.Err(), redis.Nil) {
+			return input.FILE_STATUS_NOT_FOUND, nil
+		}
 		return input.FILE_STATUS_ERROR, getResult.Err()
 	}
 	getResultInt, err := strconv.ParseInt(getResult.Val(), 10, 8)
@@ -49,6 +54,16 @@ func (f *FileReadTracker) UpsertFile(
 		Str("id", id).
 		Int("status", int(status)).
 		Msg("UpsertFile")
+
+	gotStatus, err := f.FileRead(ctx, id)
+	if err != nil {
+		logger.Error().Err(err).Msg("UpsertFile: FileRead")
+		return err
+	}
+	if gotStatus == status {
+		logger.Debug().Msg("UpsertFile: key already exists")
+		return fmt.Errorf("key already exists")
+	}
 	setResult := f.redisClient.Set(
 		ctx,
 		"read_tracker_"+id,
@@ -56,7 +71,7 @@ func (f *FileReadTracker) UpsertFile(
 		6*time.Hour,
 	)
 	if setResult.Err() != nil {
-		logger.Error().Err(setResult.Err()).Msg("UpsertFile")
+		logger.Error().Err(setResult.Err()).Msg("UpsertFile: setResult")
 		return setResult.Err()
 	}
 	return nil

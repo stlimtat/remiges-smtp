@@ -114,10 +114,6 @@ func (r *DefaultFileReader) RefreshList(
 			logger.Error().Err(err).Msg("GetQfFileName")
 			continue
 		}
-		logger.Info().
-			Str("dfFileName", dfFileName).
-			Str("qfFileName", qfFileName).
-			Msg("RefreshList")
 		id := dfFileName[2:]
 		fileInfo := &FileInfo{
 			DfFilePath: filepath.Join(r.InPath, dfFileName),
@@ -125,12 +121,16 @@ func (r *DefaultFileReader) RefreshList(
 			QfFilePath: filepath.Join(r.InPath, qfFileName),
 			Status:     input.FILE_STATUS_INIT,
 		}
-		result = append(result, fileInfo)
 		err = r.FileReadTracker.UpsertFile(ctx, id, input.FILE_STATUS_INIT)
 		if err != nil {
 			logger.Error().Err(err).Msg("UpsertFile")
 			continue
 		}
+		result = append(result, fileInfo)
+		logger.Info().
+			Str("dfFileName", dfFileName).
+			Str("qfFileName", qfFileName).
+			Msg("RefreshList")
 	}
 	// 5. update the list of files - note this needs
 	// to be thread safe
@@ -173,6 +173,8 @@ func (r *DefaultFileReader) ReadNextFile(
 		input.FILE_STATUS_PROCESSING,
 		input.FILE_STATUS_HEADERS_READ,
 		input.FILE_STATUS_HEADERS_PARSE,
+		input.FILE_STATUS_MAIL_PROCESS,
+		input.FILE_STATUS_DELIVERED,
 		input.FILE_STATUS_DONE,
 	}, status) {
 		logger.Error().Msg("file is being processed")

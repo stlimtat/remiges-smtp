@@ -104,9 +104,9 @@ func TestReadNextMail(t *testing.T) {
 				).AnyTimes()
 			myOutput := output.NewMockIOutput(ctrl)
 			myOutput.EXPECT().
-				Write(ctx, gomock.Any(), gomock.Any()).
+				Write(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				DoAndReturn(
-					func(_ context.Context, _ *pmail.Mail, _ []pmail.Response) error {
+					func(_ context.Context, _ *file.FileInfo, _ *pmail.Mail, _ []pmail.Response) error {
 						return nil
 					},
 				).AnyTimes()

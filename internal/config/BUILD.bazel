@@ -35,6 +35,7 @@ go_test(
     embed = [":config"],
     deps = [
         "//internal/telemetry",
+        "@com_github_go_viper_mapstructure_v2//:mapstructure",
         "@com_github_mjl_mox//dkim",
         "@com_github_mjl_mox//dns",
         "@com_github_spf13_viper//:viper",

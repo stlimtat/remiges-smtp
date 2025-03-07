@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/utils"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
@@ -87,18 +88,20 @@ func (f *FileOutput) GetFileName(
 
 func (f *FileOutput) Write(
 	ctx context.Context,
+	fileInfo *file.FileInfo,
 	myMail *pmail.Mail,
 	resp []pmail.Response,
 ) error {
 	fileName := f.GetFileName(ctx, myMail)
 	logger := zerolog.Ctx(ctx).
 		With().
-		Str("file", fileName).
+		Str("output.file", fileName).
+		Str("fileInfo.id", fileInfo.ID).
 		Bytes("mail", myMail.MsgID).
 		Logger()
 	logger.Debug().Msg("FileOutput: Write")
 
-	file, err := os.Create(fileName)
+	outputFile, err := os.Create(fileName)
 	if err != nil {
 		logger.Error().
 			Err(err).
@@ -106,13 +109,13 @@ func (f *FileOutput) Write(
 		return err
 	}
 	defer func() {
-		err = file.Close()
+		err = outputFile.Close()
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to close file")
 		}
 	}()
 
-	writer := csv.NewWriter(file)
+	writer := csv.NewWriter(outputFile)
 	defer writer.Flush()
 
 	err = writer.Write([]string{"msg_id", "status", "error"})

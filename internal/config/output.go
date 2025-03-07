@@ -4,6 +4,7 @@ import "context"
 
 const (
 	ConfigOutputTypeFile             string = "file"
+	ConfigOutputTypeFileTracker      string = "file_tracker"
 	ConfigArgPath                    string = "path"
 	ConfigArgFileNameType            string = "file_name_type"
 	ConfigArgFileNameTypeDate        string = "date"

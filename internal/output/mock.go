@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	config "github.com/stlimtat/remiges-smtp/internal/config"
+	file "github.com/stlimtat/remiges-smtp/internal/file"
 	pmail "github.com/stlimtat/remiges-smtp/pkg/pmail"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -43,17 +44,17 @@ func (m *MockIOutput) EXPECT() *MockIOutputMockRecorder {
 }
 
 // Write mocks base method.
-func (m *MockIOutput) Write(ctx context.Context, myMail *pmail.Mail, responses []pmail.Response) error {
+func (m *MockIOutput) Write(ctx context.Context, fileInfo *file.FileInfo, myMail *pmail.Mail, responses []pmail.Response) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Write", ctx, myMail, responses)
+	ret := m.ctrl.Call(m, "Write", ctx, fileInfo, myMail, responses)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Write indicates an expected call of Write.
-func (mr *MockIOutputMockRecorder) Write(ctx, myMail, responses any) *gomock.Call {
+func (mr *MockIOutputMockRecorder) Write(ctx, fileInfo, myMail, responses any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockIOutput)(nil).Write), ctx, myMail, responses)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockIOutput)(nil).Write), ctx, fileInfo, myMail, responses)
 }
 
 // MockIOutputFactory is a mock of IOutputFactory interface.

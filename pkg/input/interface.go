@@ -12,6 +12,7 @@ const (
 	FILE_STATUS_DELIVERED     FileStatus = 7
 	FILE_STATUS_DONE          FileStatus = 99
 	FILE_STATUS_ERROR         FileStatus = 0
+	FILE_STATUS_NOT_FOUND     FileStatus = -1
 
 	HeaderContentTypeKey = "Content-Type"
 	HeaderDateKey        = "Date"

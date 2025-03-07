@@ -77,7 +77,10 @@ func newGenericSvc( //nolint:funlen // this sets up a generic application contex
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MailTransformerFactory.Init")
 	}
-	outputFactory := &output.OutputFactory{}
+	outputFactory := output.NewOutputFactory(
+		ctx,
+		result.FileReadTracker,
+	)
 	_, err = outputFactory.NewOutputs(ctx, result.Cfg.Outputs)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newSendMailSvc.MyOutput")

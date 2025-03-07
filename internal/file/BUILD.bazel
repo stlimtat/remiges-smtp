@@ -30,6 +30,7 @@ go_test(
         "//internal/telemetry",
         "//pkg/input",
         "@com_github_go_redis_redismock_v9//:redismock",
+        "@com_github_redis_go_redis_v9//:go-redis",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
         "@org_uber_go_mock//gomock",

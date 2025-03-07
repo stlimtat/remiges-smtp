@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mjl-/mox/smtpclient"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/file"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 	"github.com/stretchr/testify/assert"
@@ -91,8 +92,8 @@ func TestNewOutputs(t *testing.T) {
 			// Replacing the outputs with our mock
 			myOutput := NewMockIOutput(ctrl)
 			myOutput.EXPECT().
-				Write(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ *pmail.Mail, _ []pmail.Response) error {
+				Write(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ *file.FileInfo, _ *pmail.Mail, _ []pmail.Response) error {
 					if tt.wantWriteErr {
 						err = errors.New("test error")
 					}
@@ -102,6 +103,7 @@ func TestNewOutputs(t *testing.T) {
 
 			err = factory.Write(
 				ctx,
+				&file.FileInfo{ID: msgID},
 				&pmail.Mail{
 					MsgID: []byte(msgID),
 				},
