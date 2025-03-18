@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "intmail",
@@ -22,8 +22,8 @@ go_library(
         "//pkg/input",
         "//pkg/pmail",
         "@com_github_go_viper_mapstructure_v2//:mapstructure",
-        "@com_github_mjl_mox//dkim",
-        "@com_github_mjl_mox//mox-",
+        "@com_github_mjl__mox//dkim",
+        "@com_github_mjl__mox//mox-",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",
     ],
@@ -47,9 +47,9 @@ go_test(
         "//internal/telemetry",
         "//pkg/input",
         "//pkg/pmail",
-        "@com_github_mjl_mox//dkim",
-        "@com_github_mjl_mox//dns",
-        "@com_github_mjl_mox//smtp",
+        "@com_github_mjl__mox//dkim",
+        "@com_github_mjl__mox//dns",
+        "@com_github_mjl__mox//smtp",
         "@com_github_spf13_viper//:viper",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

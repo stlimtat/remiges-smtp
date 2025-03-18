@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "dns",
@@ -12,9 +12,9 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//pkg/dn",
-        "@com_github_mjl_adns//:adns",
-        "@com_github_mjl_mox//dns",
-        "@com_github_mjl_mox//smtpclient",
+        "@com_github_mjl__adns//:adns",
+        "@com_github_mjl__mox//dns",
+        "@com_github_mjl__mox//smtpclient",
         "@com_github_rs_zerolog//:zerolog",
         "@org_uber_go_mock//gomock",
     ],
@@ -26,8 +26,8 @@ go_test(
     embed = [":dns"],
     deps = [
         "//internal/telemetry",
-        "@com_github_mjl_adns//:adns",
-        "@com_github_mjl_mox//dns",
+        "@com_github_mjl__adns//:adns",
+        "@com_github_mjl__mox//dns",
         "@com_github_stretchr_testify//assert",
         "@org_uber_go_mock//gomock",
     ],
