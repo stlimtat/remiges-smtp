@@ -1,7 +1,7 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 Swee Tat Lim <st_lim@stlim.net>
 */
-package main
+package cli
 
 import (
 	"context"

@@ -6,7 +6,14 @@ go_library(
     importpath = "github.com/stlimtat/remiges-smtp/pkg/pmail",
     visibility = ["//visibility:public"],
     deps = [
+        "//internal/errors",
         "@com_github_mjl__mox//smtp",
         "@com_github_mjl__mox//smtpclient",
     ],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":pmail",
+    visibility = ["//visibility:public"],
 )

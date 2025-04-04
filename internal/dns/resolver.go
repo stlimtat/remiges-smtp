@@ -1,8 +1,10 @@
+// Package dns provides DNS resolution functionality for SMTP operations.
 package dns
 
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/mjl-/mox/dns"
 	"github.com/mjl-/mox/smtpclient"
@@ -10,9 +12,16 @@ import (
 	"github.com/stlimtat/remiges-smtp/pkg/dn"
 )
 
+// Resolver provides DNS resolution capabilities
 type Resolver struct {
 	dns.Resolver
 	Slogger *slog.Logger
+
+	// Cache duration for DNS records
+	cacheDuration time.Duration
+
+	// Maximum number of retries for DNS lookups
+	maxRetries int
 }
 
 func NewResolver(

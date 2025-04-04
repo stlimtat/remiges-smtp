@@ -1,4 +1,14 @@
 load("@gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/stlimtat/remiges-smtp
+# gazelle:exclude vendor
+# gazelle:exclude third_party
+# gazelle:exclude .bazelci
+# gazelle:exclude .bcr
+# gazelle:exclude .idea
+# gazelle:exclude .ijwb
+# gazelle:exclude .github
+# gazelle:exclude .vscode
+# gazelle:exclude testdata
+# gazelle:go_naming_convention import_alias
 gazelle(name = "gazelle")

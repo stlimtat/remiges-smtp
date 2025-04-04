@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/crypto"
+	"github.com/stlimtat/remiges-smtp/internal/errors"
 	"github.com/stlimtat/remiges-smtp/internal/utils"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
@@ -23,6 +24,7 @@ const (
 	DKIMProcessorType = "dkim"
 )
 
+// DKIMProcessor handles DKIM signing of emails
 type DKIMProcessor struct {
 	Cfg       config.MailProcessorConfig
 	DomainCfg *config.DomainConfig
@@ -104,22 +106,51 @@ func (p *DKIMProcessor) InitDKIMCrypto(
 	return nil
 }
 
-func (p *DKIMProcessor) Process(
-	ctx context.Context,
-	inMail *pmail.Mail,
-) (*pmail.Mail, error) {
+// Process handles DKIM signing of an email
+func (p *DKIMProcessor) Process(ctx context.Context, mail *pmail.Mail) (*pmail.Mail, error) {
+	logger := zerolog.Ctx(ctx)
+
+	// Validate input
+	if mail == nil {
+		return nil, errors.NewError(errors.ErrMailProcessing, "mail cannot be nil", nil)
+	}
+
+	if p.DomainCfg == nil || p.DomainCfg.DKIM == nil {
+		return nil, errors.NewError(errors.ErrDKIMConfig, "DKIM configuration not initialized", nil)
+	}
+
+	// Validate From address
+	if mail.From.String() == "" {
+		return nil, errors.NewError(errors.ErrMailProcessing, "from address required for DKIM signing", nil)
+	}
+
+	logger.Debug().
+		Str("from", mail.From.String()).
+		Msg("Starting DKIM signing process")
+
+	// Process DKIM signing
+	signedMail, err := p.signMail(ctx, mail)
+	if err != nil {
+		return nil, errors.NewError(errors.ErrMailProcessing, "failed to sign mail", err)
+	}
+
+	return signedMail, nil
+}
+
+// signMail performs the actual DKIM signing
+func (p *DKIMProcessor) signMail(ctx context.Context, mail *pmail.Mail) (*pmail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().
-		Interface("from", inMail.From).
+		Interface("from", mail.From).
 		Msg("DKIMProcessor")
 
 	canonical := mox.CanonicalLocalpart(
-		inMail.From.Localpart,
+		mail.From.Localpart,
 		p.DomainCfg.MoxDomain,
 	)
 
-	mailMsg := inMail.Headers
-	mailMsg = append(mailMsg, inMail.Body...)
+	mailMsg := mail.Headers
+	mailMsg = append(mailMsg, mail.Body...)
 	mailMsg = append(mailMsg, []byte("\r\n\r\n")...)
 	selectors := slices.Collect(
 		maps.Values(p.DomainCfg.DKIM.Selectors),
@@ -129,29 +160,29 @@ func (p *DKIMProcessor) Process(
 		ctx,
 		p.SLogger,
 		canonical,
-		inMail.From.Domain,
+		mail.From.Domain,
 		selectors,
 		true,
 		bytes.NewReader(mailMsg),
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("DKIMProcessor: sign")
-		return inMail, err
+		return mail, err
 	}
 	// add dkim headers to the mail
 	dkimHeaderParts := strings.SplitN(dkimHeaders, ":", 2)
 	dkimHeaderKey := dkimHeaderParts[0]
 	dkimHeaderValue := strings.Join(dkimHeaderParts[1:], "")
 	dkimHeaderValue = strings.TrimSpace(dkimHeaderValue)
-	if inMail.HeadersMap == nil {
-		inMail.HeadersMap = make(map[string][]byte)
+	if mail.HeadersMap == nil {
+		mail.HeadersMap = make(map[string][]byte)
 	}
-	inMail.HeadersMap[dkimHeaderKey] = []byte(dkimHeaderValue)
+	mail.HeadersMap[dkimHeaderKey] = []byte(dkimHeaderValue)
 
 	logger.Info().
 		Str("dkim_header_key", dkimHeaderKey).
 		Str("dkim_header_value", dkimHeaderValue).
 		Msg("DKIMProcessor: Process.Done")
 
-	return inMail, nil
+	return mail, nil
 }

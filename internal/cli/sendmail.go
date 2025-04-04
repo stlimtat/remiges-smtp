@@ -1,7 +1,7 @@
 /*
 Copyright © 2024 Lim Swee Tat <st_lim@stlim.net>
 */
-package main
+package cli
 
 import (
 	"context"

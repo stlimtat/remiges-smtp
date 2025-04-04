@@ -12,3 +12,9 @@ go_library(
         "@com_github_samber_slog_zerolog_v2//:slog-zerolog",
     ],
 )
+
+alias(
+    name = "go_default_library",
+    actual = ":telemetry",
+    visibility = ["//:__subpackages__"],
+)

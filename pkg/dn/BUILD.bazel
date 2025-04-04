@@ -10,3 +10,9 @@ go_library(
         "@com_github_mjl__mox//dns",
     ],
 )
+
+alias(
+    name = "go_default_library",
+    actual = ":dn",
+    visibility = ["//visibility:public"],
+)

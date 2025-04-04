@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/stlimtat/remiges-smtp/internal/cli"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
 
@@ -16,7 +17,7 @@ func main() {
 	defer cancel()
 
 	ctx, logger := telemetry.InitLogger(ctx)
-	rootCmd := newRootCmd(ctx)
+	rootCmd := cli.NewRootCmd(ctx)
 	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("ExecuteContext")

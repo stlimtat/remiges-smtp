@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/mjl-/mox/smtp"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -87,4 +88,20 @@ func NewSendMailConfig(ctx context.Context) SendMailConfig {
 		Msg("SendMailConfig init")
 
 	return result
+}
+
+// Add configuration validation
+func ValidateConfig(cfg *SendMailConfig) error {
+	validate := validator.New()
+
+	if err := validate.Struct(cfg); err != nil {
+		return fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	// Add custom validation logic
+	// if err := validateMailProcessors(cfg.MailProcessors); err != nil {
+	// 	return fmt.Errorf("invalid mail processors: %w", err)
+	// }
+
+	return nil
 }

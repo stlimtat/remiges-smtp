@@ -18,6 +18,7 @@ go_library(
     deps = [
         "//internal/config",
         "//internal/crypto",
+        "//internal/errors",
         "//internal/utils",
         "//pkg/input",
         "//pkg/pmail",
@@ -54,4 +55,10 @@ go_test(
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":intmail",
+    visibility = ["//:__subpackages__"],
 )

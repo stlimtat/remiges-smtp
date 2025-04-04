@@ -18,7 +18,9 @@ go_library(
     importpath = "github.com/stlimtat/remiges-smtp/internal/config",
     visibility = ["//:__subpackages__"],
     deps = [
+        "//internal/errors",
         "//internal/telemetry",
+        "@com_github_go_playground_validator_v10//:validator",
         "@com_github_mjl__mox//config",
         "@com_github_mjl__mox//dkim",
         "@com_github_mjl__mox//dns",
@@ -42,4 +44,10 @@ go_test(
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":config",
+    visibility = ["//:__subpackages__"],
 )

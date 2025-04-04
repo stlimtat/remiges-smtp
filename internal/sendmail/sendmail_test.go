@@ -32,10 +32,10 @@ func TestNewConn(t *testing.T) {
 			dialer.EXPECT().
 				DialContext(gomock.Any(), gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, network, address string) (net.Conn, error) {
-					assert.Equal(t, TCP_NETWORK, network)
+					assert.Equal(t, "tcp", network)
 					hosts2 := []string{}
 					for _, host := range tt.hosts {
-						host = fmt.Sprintf("%s:%s", host, DEFAULT_SMTP_PORT_STR)
+						host = fmt.Sprintf("%s:%s", host, "25")
 						hosts2 = append(hosts2, host)
 					}
 					assert.Contains(t, hosts2, address)
@@ -53,3 +53,33 @@ func TestNewConn(t *testing.T) {
 		})
 	}
 }
+
+// Add more comprehensive test cases
+// func TestMailSender_SendMail(t *testing.T) {
+// 	tests := []struct {
+// 			name    string
+// 			mail    *pmail.Mail
+// 			mocks   func(*MockResolver, *MockDialerFactory)
+// 			want    map[string][]pmail.Response
+// 			wantErr bool
+// 	}{
+// 			// Add test cases for various scenarios
+// 			{
+// 					name: "successful delivery",
+// 					mail: &pmail.Mail{...},
+// 					mocks: func(r *MockResolver, d *MockDialerFactory) {
+// 							// Setup mock expectations
+// 					},
+// 					want: map[string][]pmail.Response{...},
+// 					wantErr: false,
+// 			},
+// 			// Add more test cases
+// 	}
+
+// 	for _, tt := range tests {
+// 			t.Run(tt.name, func(t *testing.T) {
+// 					// Test implementation
+// 					assert.True(t, true)
+// 			})
+// 	}
+// }

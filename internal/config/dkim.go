@@ -2,11 +2,26 @@ package config
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"time"
 
 	moxDkim "github.com/mjl-/mox/dkim"
 	moxDns "github.com/mjl-/mox/dns"
 	"github.com/rs/zerolog"
+	"github.com/stlimtat/remiges-smtp/internal/errors"
+)
+
+const (
+	AlgorithmRSA     = "rsa"
+	AlgorithmED25519 = "ed25519"
+	HashSHA1         = "sha1"
+	HashSHA256       = "sha256"
+)
+
+var (
+	SupportedAlgorithms = []string{AlgorithmRSA, AlgorithmED25519}
+	SupportedHashes     = []string{HashSHA1, HashSHA256}
 )
 
 type DKIMConfig struct {
@@ -52,18 +67,44 @@ func DefaultDKIMConfig(
 	return result
 }
 
-func (c *DKIMConfig) Transform(
-	ctx context.Context,
-) error {
-	logger := zerolog.Ctx(ctx)
-	for selectorName, moxSelector := range c.MoxSelectors {
-		sublogger := logger.With().Str("selector", selectorName).Logger()
-		err := c.TransformSelector(ctx, selectorName, &moxSelector)
-		if err != nil {
-			sublogger.Error().Err(err).Msg("DKIMConfig.TransformSelector")
-			return err
+func (c *DKIMConfig) Transform(ctx context.Context) error {
+	// Validate configuration
+	if len(c.MoxSelectors) == 0 {
+		return &errors.ConfigError{
+			Field:   "MoxSelectors",
+			Message: "at least one selector must be configured",
 		}
 	}
+
+	for selectorName, moxSelector := range c.MoxSelectors {
+		// Validate algorithm
+		if !slices.Contains(SupportedAlgorithms, moxSelector.Algorithm) {
+			return &errors.ConfigError{
+				Field: fmt.Sprintf("Selectors[%s].Algorithm", selectorName),
+				Message: fmt.Sprintf("unsupported algorithm %s, supported: %v",
+					moxSelector.Algorithm, SupportedAlgorithms),
+			}
+		}
+
+		// Validate hash
+		if !slices.Contains(SupportedHashes, moxSelector.Hash) {
+			return &errors.ConfigError{
+				Field: fmt.Sprintf("Selectors[%s].Hash", selectorName),
+				Message: fmt.Sprintf("unsupported hash %s, supported: %v",
+					moxSelector.Hash, SupportedHashes),
+			}
+		}
+
+		// Transform selector with detailed error handling
+		if err := c.TransformSelector(ctx, selectorName, &moxSelector); err != nil {
+			return &errors.ConfigError{
+				Field:   fmt.Sprintf("Selectors[%s]", selectorName),
+				Message: "failed to transform selector",
+				Err:     err,
+			}
+		}
+	}
+
 	return nil
 }
 

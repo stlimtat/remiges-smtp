@@ -1,7 +1,7 @@
 /*
 Copyright © 2024 Swee Tat Lim <st_lim@stlim.net>
 */
-package main
+package cli
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type rootCmd struct {
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func newRootCmd(ctx context.Context) *rootCmd {
+func NewRootCmd(ctx context.Context) *rootCmd {
 	logger := zerolog.Ctx(ctx)
 	var err error
 
@@ -44,18 +44,9 @@ func newRootCmd(ctx context.Context) *rootCmd {
 		false,
 		"Run the application in debug mode",
 	)
-	result.cmd.PersistentFlags().StringP(
-		"config", "c",
-		"",
-		"config file (default is $HOME/config.yaml)",
-	)
 	err = viper.BindPFlag("debug", result.cmd.PersistentFlags().Lookup("debug"))
 	if err != nil {
 		logger.Fatal().Err(err).Msg("viper.BindPFlag.debug")
-	}
-	err = viper.BindPFlag("config", result.cmd.PersistentFlags().Lookup("config"))
-	if err != nil {
-		logger.Fatal().Err(err).Msg("viper.BindPFlag.config")
 	}
 	_, genDKIMCmd := newGenDKIMCmd(ctx)
 	_, lookupMXCmd := newLookupMXCmd(ctx)

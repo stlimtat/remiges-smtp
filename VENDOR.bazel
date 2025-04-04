@@ -1,0 +1,7 @@
+ignore(
+  "@@rules_cc+",
+  "@@rules_java",
+  "@@rules_jvm",
+  "@@rules_jvm_external",
+  "@@rules_python",
+  )

@@ -13,7 +13,7 @@ go_sdk.download(version = "1.24.1")
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.config(
     go_env = {
-        "GOPRIVATE": "github.com/syber-ai-corp/*",
+        "GOPRIVATE": "github.com/stlimtat/remiges-smtp/*",
     },
 )
 go_deps.from_file(go_mod = "//:go.mod")
@@ -24,12 +24,14 @@ use_repo(
     "com_github_gin_contrib_pprof",
     "com_github_gin_gonic_gin",
     "com_github_go_mods_zerolog_gin",
+    "com_github_go_playground_validator_v10",
     "com_github_go_redis_redismock_v9",
     "com_github_go_viper_mapstructure_v2",
     "com_github_google_uuid",
     "com_github_mcnijman_go_emailaddress",
     "com_github_mjl__adns",
     "com_github_mjl__mox",
+    "com_github_prometheus_client_golang",
     "com_github_redis_go_redis_v9",
     "com_github_rs_zerolog",
     "com_github_samber_slog_zerolog_v2",

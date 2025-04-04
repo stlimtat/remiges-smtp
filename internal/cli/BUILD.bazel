@@ -2,11 +2,43 @@ load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "cli",
-    srcs = ["options.go"],
+    srcs = [
+        "gen_dkim.go",
+        "generic.go",
+        "lookupmx.go",
+        "options.go",
+        "read_file.go",
+        "root.go",
+        "sendmail.go",
+        "server.go",
+    ],
     importpath = "github.com/stlimtat/remiges-smtp/internal/cli",
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/config",
+        "//internal/crypto",
+        "//internal/dkim",
+        "//internal/dns",
+        "//internal/file",
+        "//internal/file_mail",
+        "//internal/http",
+        "//internal/intmail",
+        "//internal/output",
+        "//internal/sendmail",
+        "//internal/telemetry",
+        "@com_github_gin_gonic_gin//:gin",
+        "@com_github_go_mods_zerolog_gin//:zerolog-gin",
+        "@com_github_mjl__mox//dns",
+        "@com_github_redis_go_redis_v9//:go-redis",
+        "@com_github_rs_zerolog//:zerolog",
         "@com_github_spf13_cobra//:cobra",
+        "@com_github_spf13_viper//:viper",
+        "@org_golang_x_sync//errgroup",
     ],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":cli",
+    visibility = ["//:__subpackages__"],
 )
