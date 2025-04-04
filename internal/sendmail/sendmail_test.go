@@ -32,10 +32,10 @@ func TestNewConn(t *testing.T) {
 			dialer.EXPECT().
 				DialContext(gomock.Any(), gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, network, address string) (net.Conn, error) {
-					assert.Equal(t, "tcp", network)
+					assert.Equal(t, TCPNetwork, network)
 					hosts2 := []string{}
 					for _, host := range tt.hosts {
-						host = fmt.Sprintf("%s:%s", host, "25")
+						host = fmt.Sprintf("%s:%s", host, DefaultSMTPPort)
 						hosts2 = append(hosts2, host)
 					}
 					assert.Contains(t, hosts2, address)
