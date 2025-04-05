@@ -45,9 +45,9 @@ func newReadFileCmd(ctx context.Context) (*readFileCmd, *cobra.Command) {
 		"path", "p",
 		"", "Path to the directory containing the df and qf files",
 	)
-	err = viper.BindPFlag("in_path", result.cmd.Flags().Lookup("path"))
+	err = viper.BindPFlag("in-path", result.cmd.Flags().Lookup("path"))
 	if err != nil {
-		logger.Fatal().Err(err).Msg("viper.BindPFlag.inpath")
+		logger.Fatal().Err(err).Msg("viper.BindPFlag.in-path")
 	}
 
 	return result, result.cmd
