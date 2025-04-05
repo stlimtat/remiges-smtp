@@ -72,6 +72,10 @@ func newReadFileSvc(
 	result.RedisClient = redis.NewClient(&redis.Options{
 		Addr: result.Cfg.RedisAddr,
 	})
+	_, err = result.RedisClient.Ping(ctx).Result()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("newReadFileSvc.RedisClient.Ping")
+	}
 	result.FileReadTracker = file.NewFileReadTracker(ctx, result.RedisClient)
 	result.FileReader, err = file.NewDefaultFileReader(ctx, result.Cfg.InPath, result.FileReadTracker)
 	if err != nil {
