@@ -48,7 +48,7 @@ func newGenericSvc( //nolint:funlen // this sets up a generic application contex
 	logger := zerolog.Ctx(ctx)
 	result.Cfg = config.GetContextConfig(ctx).(config.SendMailConfig)
 	result.Slogger = telemetry.GetSLogger(ctx)
-	result.DialerFactory = sendmail.NewDefaultDialerFactory()
+	result.DialerFactory = sendmail.NewDefaultDialerFactory(ctx, result.Cfg.Dialer)
 	result.RedisClient = redis.NewClient(&redis.Options{
 		Addr: result.Cfg.ReadFileConfig.RedisAddr,
 	})

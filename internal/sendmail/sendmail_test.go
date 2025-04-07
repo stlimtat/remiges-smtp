@@ -6,6 +6,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/mjl-/mox/smtpclient"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -43,7 +44,10 @@ func TestNewConn(t *testing.T) {
 				})
 			dialerFactory := NewMockINetDialerFactory(ctrl)
 			dialerFactory.EXPECT().
-				NewDialer().Return(dialer)
+				NewDialer(gomock.Any()).
+				DoAndReturn(func(_ context.Context) (smtpclient.Dialer, error) {
+					return dialer, nil
+				})
 
 			m := NewMailSender(ctx, false, dialerFactory, nil, slogger)
 			_, err := m.NewConn(ctx, tt.hosts)

@@ -45,17 +45,18 @@ func (m *MockINetDialerFactory) EXPECT() *MockINetDialerFactoryMockRecorder {
 }
 
 // NewDialer mocks base method.
-func (m *MockINetDialerFactory) NewDialer() smtpclient.Dialer {
+func (m *MockINetDialerFactory) NewDialer(ctx context.Context) (smtpclient.Dialer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewDialer")
+	ret := m.ctrl.Call(m, "NewDialer", ctx)
 	ret0, _ := ret[0].(smtpclient.Dialer)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // NewDialer indicates an expected call of NewDialer.
-func (mr *MockINetDialerFactoryMockRecorder) NewDialer() *gomock.Call {
+func (mr *MockINetDialerFactoryMockRecorder) NewDialer(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewDialer", reflect.TypeOf((*MockINetDialerFactory)(nil).NewDialer))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewDialer", reflect.TypeOf((*MockINetDialerFactory)(nil).NewDialer), ctx)
 }
 
 // MockIMailSender is a mock of IMailSender interface.

@@ -11,10 +11,12 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/net/proxy"
 )
 
 type SendMailConfig struct {
 	Debug          bool                  `mapstructure:"debug"`
+	Dialer         DialerConfig          `mapstructure:"dialer"`
 	From           string                `mapstructure:"from"`
 	FromAddr       smtp.Address          `mapstructure:",omitempty"`
 	To             string                `mapstructure:"to"`
@@ -25,6 +27,12 @@ type SendMailConfig struct {
 	Outputs        []OutputConfig        `mapstructure:"outputs"`
 	PollInterval   time.Duration         `mapstructure:"poll-interval"`
 	ReadFileConfig ReadFileConfig        `mapstructure:"read-file"`
+}
+
+type DialerConfig struct {
+	Socks5  string        `mapstructure:"socks5"`
+	Auth    proxy.Auth    `mapstructure:"auth"`
+	Timeout time.Duration `mapstructure:"timeout"`
 }
 
 func CobraSendMailArgsFunc(cmd *cobra.Command, _ []string) error {

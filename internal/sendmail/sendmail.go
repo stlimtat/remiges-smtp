@@ -115,7 +115,10 @@ func (m *MailSender) NewConn(
 	}
 	host := hosts[randomInt]
 
-	dialer := m.DialerFactory.NewDialer()
+	dialer, err := m.DialerFactory.NewDialer(ctx)
+	if err != nil {
+		return nil, err
+	}
 	addr := net.JoinHostPort(host, DefaultSMTPPort)
 	result, err := dialer.DialContext(ctx, TCPNetwork, addr)
 	if err != nil {

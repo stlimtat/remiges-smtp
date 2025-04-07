@@ -13,7 +13,7 @@ import (
 //go:generate mockgen -destination=mock.go -package=sendmail . INetDialerFactory,IMailSender
 
 type INetDialerFactory interface {
-	NewDialer() smtpclient.Dialer
+	NewDialer(ctx context.Context) (smtpclient.Dialer, error)
 }
 
 type IMailSender interface {

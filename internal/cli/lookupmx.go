@@ -86,7 +86,6 @@ func newLookupMXSvc(
 		result.MoxResolver,
 		result.Slogger,
 	)
-	result.DialerFactory = sendmail.NewDefaultDialerFactory()
 	return result
 }
 

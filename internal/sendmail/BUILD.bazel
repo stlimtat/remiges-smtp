@@ -28,6 +28,7 @@ go_library(
         "@com_github_mjl__mox//smtpclient",
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_rs_zerolog//:zerolog",
+        "@org_golang_x_net//proxy",
         "@org_uber_go_mock//gomock",
     ],
 )
@@ -48,6 +49,7 @@ go_test(
         "//pkg/pmail",
         "@com_github_mjl__mox//dns",
         "@com_github_mjl__mox//smtp",
+        "@com_github_mjl__mox//smtpclient",
         "@com_github_stretchr_testify//assert",
         "@org_uber_go_mock//gomock",
     ],
