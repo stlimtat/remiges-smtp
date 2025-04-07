@@ -1,6 +1,10 @@
 /*
 Copyright © 2024 Swee Tat Lim <st_lim@stlim.net>
 */
+
+// Package cli provides the command-line interface for the remiges-smtp application.
+// It implements various subcommands for SMTP operations using the Cobra CLI framework.
+// The package handles command initialization, configuration, and execution flow.
 package cli
 
 import (
@@ -13,12 +17,20 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
 
+// rootCmd represents the root command structure for the CLI application.
+// It encapsulates the Cobra command and provides methods for command execution.
 type rootCmd struct {
 	cmd *cobra.Command
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// NewRootCmd initializes and returns a new root command for the CLI application.
+// It sets up the command structure, flags, and subcommands.
+//
+// Parameters:
+//   - ctx: Context for logging and cancellation
+//
+// Returns:
+//   - *rootCmd: The initialized root command structure
 func NewRootCmd(ctx context.Context) *rootCmd {
 	logger := zerolog.Ctx(ctx)
 	var err error
@@ -65,6 +77,14 @@ func NewRootCmd(ctx context.Context) *rootCmd {
 	return result
 }
 
+// ExecuteContext executes the root command with the provided context.
+// It handles the execution of all subcommands and propagates the context.
+//
+// Parameters:
+//   - ctx: Context for command execution
+//
+// Returns:
+//   - error: Non-nil if command execution fails
 func (r *rootCmd) ExecuteContext(ctx context.Context) error {
 	return r.cmd.ExecuteContext(ctx)
 }

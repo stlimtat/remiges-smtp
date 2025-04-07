@@ -12,10 +12,22 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/dkim"
 )
 
+// genDKIMCmd represents the command for generating DKIM keys and configuration.
+// It handles the generation of DKIM keys, DNS records, and configuration files
+// for email domain authentication.
 type genDKIMCmd struct {
 	cmd *cobra.Command
 }
 
+// newGenDKIMCmd creates and initializes a new DKIM generation command.
+// It sets up command flags, validation, and execution logic.
+//
+// Parameters:
+//   - ctx: Context for logging and cancellation
+//
+// Returns:
+//   - *genDKIMCmd: The initialized command structure
+//   - *cobra.Command: The Cobra command for CLI integration
 func newGenDKIMCmd(
 	ctx context.Context,
 ) (*genDKIMCmd, *cobra.Command) {
@@ -93,10 +105,21 @@ func newGenDKIMCmd(
 	return result, result.cmd
 }
 
+// GenDKIMSvc handles the service layer for DKIM key generation.
+// It manages the generation of keys, DNS records, and configuration files.
 type GenDKIMSvc struct {
 	Cfg config.GenDKIMConfig
 }
 
+// newGenDKIMSvc creates a new DKIM generation service instance.
+// It initializes the service with the provided configuration.
+//
+// Parameters:
+//   - cmd: The Cobra command instance
+//   - args: Command arguments
+//
+// Returns:
+//   - *GenDKIMSvc: The initialized service instance
 func newGenDKIMSvc(
 	cmd *cobra.Command,
 	_ []string,
@@ -107,6 +130,15 @@ func newGenDKIMSvc(
 	return result
 }
 
+// Run executes the DKIM key generation process.
+// It generates keys, creates DNS records, and writes configuration files.
+//
+// Parameters:
+//   - cmd: The Cobra command instance
+//   - args: Command arguments
+//
+// Returns:
+//   - error: Non-nil if the generation process fails
 func (_ *GenDKIMSvc) Run(
 	cmd *cobra.Command,
 	_ []string,
@@ -120,29 +152,34 @@ func (_ *GenDKIMSvc) Run(
 	factory := &crypto.CryptoFactory{}
 	keyWriter, err := crypto.NewKeyWriter(ctx, cfg.OutPath)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("crypto.NewKeyWriter")
+		logger.Error().Err(err).Msg("crypto.NewKeyWriter")
+		return err
 	}
 	txtGen := &dkim.TxtGen{}
 
 	// Perform the running
 	_, err = factory.Init(ctx, keyWriter)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.Init")
+		logger.Error().Err(err).Msg("crypto.CryptoFactory.Init")
+		return err
 	}
 
 	publicKeyPEM, privateKeyPEM, err := factory.GenerateKey(ctx, cfg.BitSize, cfg.Domain, cfg.Algorithm)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.GenerateKey")
+		logger.Error().Err(err).Msg("crypto.CryptoFactory.GenerateKey")
+		return err
 	}
 
 	_, privateKeyPath, err := factory.WriteKey(ctx, cfg.Domain, publicKeyPEM, privateKeyPEM)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("crypto.CryptoFactory.WriteKey")
+		logger.Error().Err(err).Msg("crypto.CryptoFactory.WriteKey")
+		return err
 	}
 
 	txtEntry, err := txtGen.Generate(ctx, cfg.Domain, cfg.Algorithm, cfg.Selector, publicKeyPEM)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("dkim.TxtGen.Generate")
+		logger.Error().Err(err).Msg("dkim.TxtGen.Generate")
+		return err
 	}
 
 	fmt.Printf(

@@ -103,5 +103,12 @@ func (s *SendMailSvc) Run(
 		Str("from", myMail.From.String()).
 		Msg("ReadNextMail")
 
+	// write output to file
+	err = s.MyOutput.Write(ctx, fileInfo, myMail, nil)
+	if err != nil {
+		logger.Error().Err(err).Msg("MyOutput.Write")
+		return err
+	}
+
 	return nil
 }

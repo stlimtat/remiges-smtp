@@ -20,6 +20,9 @@ import (
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 )
 
+// GenericSvc represents a generic service that provides common functionality
+// for various CLI commands. It encapsulates dependencies and services needed
+// for mail processing, sending, and file operations.
 type GenericSvc struct {
 	Cfg                    config.SendMailConfig
 	CryptoFactory          *crypto.CryptoFactory
@@ -38,6 +41,20 @@ type GenericSvc struct {
 	Slogger                *slog.Logger
 }
 
+// newGenericSvc initializes a new generic service with all required dependencies.
+// It sets up Redis connection, file readers, mail processors, and other services
+// needed for mail operations.
+//
+// Parameters:
+//   - cmd: The Cobra command instance
+//   - args: Command arguments
+//
+// Returns:
+//   - *GenericSvc: The initialized service instance
+//
+// Note: This function is marked as funlen due to the extensive setup required.
+// The setup includes Redis connection, file operations, mail processing,
+// and cryptographic operations initialization.
 func newGenericSvc( //nolint:funlen // this sets up a generic application context
 	cmd *cobra.Command,
 	_ []string,

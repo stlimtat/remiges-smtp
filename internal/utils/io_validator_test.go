@@ -21,6 +21,7 @@ func TestValidateIO(t *testing.T) {
 		path       string
 		fileNotDir bool
 		wantErr    bool
+		errMsg     string
 	}{
 		{
 			name:       "valid file",
@@ -50,6 +51,46 @@ func TestValidateIO(t *testing.T) {
 			fileNotDir: true,
 			wantErr:    false,
 		},
+		{
+			name:       "empty path",
+			createFile: false,
+			path:       "",
+			fileNotDir: true,
+			wantErr:    true,
+			errMsg:     "path is required",
+		},
+		{
+			name:       "non-existent file",
+			createFile: false,
+			path:       filepath.Join(tmpDir, "nonexistent.txt"),
+			fileNotDir: true,
+			wantErr:    true,
+			errMsg:     "failed to get file info",
+		},
+		{
+			name:       "file when directory expected",
+			createFile: true,
+			path:       filepath.Join(tmpDir, "test.txt"),
+			fileNotDir: false,
+			wantErr:    true,
+			errMsg:     "path is not a directory",
+		},
+		{
+			name:       "directory when file expected",
+			createFile: false,
+			path:       tmpDir,
+			fileNotDir: true,
+			wantErr:    true,
+			errMsg:     "path is not a file",
+		},
+		{
+			name:       "invalid relative path",
+			createFile: false,
+			path:       "./nonexistent/path",
+			fileNotDir: true,
+			wantErr:    true,
+			errMsg:     "failed to get file info",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -68,12 +109,20 @@ func TestValidateIO(t *testing.T) {
 					require.NoError(t, err)
 					path = filepath.Join(wd, path[2:])
 				}
+				// Create parent directory if it doesn't exist
+				dir := filepath.Dir(path)
+				if _, err := os.Stat(dir); os.IsNotExist(err) {
+					require.NoError(t, os.MkdirAll(dir, 0755))
+				}
 				_, err = os.Create(path)
 				require.NoError(t, err)
 			}
 			gotPath, err := ValidateIO(ctx, tt.path, tt.fileNotDir)
 			if tt.wantErr {
 				assert.Error(t, err)
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -81,6 +130,84 @@ func TestValidateIO(t *testing.T) {
 			if tt.createFile {
 				err = os.Remove(path)
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGetWorkingDirRelativeToSourceRoot(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T) (string, func())
+		wantErr     bool
+		errMsg      string
+		expectBazel bool
+	}{
+		{
+			name: "normal source root",
+			setup: func(t *testing.T) (string, func()) {
+				tmpDir := t.TempDir()
+				require.NoError(t, os.Mkdir(filepath.Join(tmpDir, ".git"), 0755))
+				oldWd, err := os.Getwd()
+				require.NoError(t, err)
+				require.NoError(t, os.Chdir(tmpDir))
+				return tmpDir, func() {
+					require.NoError(t, os.Chdir(oldWd))
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name: "bazel environment",
+			setup: func(t *testing.T) (string, func()) {
+				tmpDir := t.TempDir()
+				bazelDir := filepath.Join(tmpDir, "bazel-out")
+				require.NoError(t, os.MkdirAll(bazelDir, 0755))
+				oldWd, err := os.Getwd()
+				require.NoError(t, err)
+				require.NoError(t, os.Chdir(bazelDir))
+				return bazelDir, func() {
+					require.NoError(t, os.Chdir(oldWd))
+				}
+			},
+			wantErr:     false,
+			expectBazel: true,
+		},
+		{
+			name: "no source root found",
+			setup: func(t *testing.T) (string, func()) {
+				tmpDir := t.TempDir()
+				oldWd, err := os.Getwd()
+				require.NoError(t, err)
+				require.NoError(t, os.Chdir(tmpDir))
+				return tmpDir, func() {
+					require.NoError(t, os.Chdir(oldWd))
+				}
+			},
+			wantErr: true,
+			errMsg:  "source root not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, _ := telemetry.InitLogger(context.Background())
+			_, cleanup := tt.setup(t)
+			defer cleanup()
+
+			got, err := getWorkingDirRelativeToSourceRoot(ctx)
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg)
+				}
+				return
+			}
+			require.NoError(t, err)
+			if tt.expectBazel {
+				assert.Contains(t, got, "bazel-out")
+			} else {
+				assert.DirExists(t, filepath.Join(got, ".git"))
 			}
 		})
 	}

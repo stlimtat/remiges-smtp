@@ -1,3 +1,6 @@
+// Package utils provides utility functions for common operations across the application.
+// This package includes functions for input/output validation, path resolution,
+// and working directory management.
 package utils
 
 import (
@@ -10,6 +13,19 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// ValidateIO validates and resolves a given path, ensuring it exists and matches the expected type (file or directory).
+// It handles special path prefixes:
+//   - "./" - resolves relative to the source root directory
+//   - "~/" - resolves relative to the user's home directory
+//
+// Parameters:
+//   - ctx: Context for logging and cancellation
+//   - path: The path to validate and resolve
+//   - fileNotDir: If true, expects a file; if false, expects a directory
+//
+// Returns:
+//   - string: The resolved and cleaned absolute path
+//   - error: Non-nil if validation fails or path resolution encounters an error
 func ValidateIO(
 	ctx context.Context,
 	path string,
@@ -61,6 +77,16 @@ func ValidateIO(
 	return result, nil
 }
 
+// getWorkingDirRelativeToSourceRoot determines the working directory relative to the source root.
+// It handles special cases for Bazel builds and traverses up the directory tree
+// until it finds the source root (indicated by the presence of a .git directory).
+//
+// Parameters:
+//   - ctx: Context for logging and cancellation
+//
+// Returns:
+//   - string: The absolute path to the source root directory
+//   - error: Non-nil if the source root cannot be determined
 func getWorkingDirRelativeToSourceRoot(
 	ctx context.Context,
 ) (string, error) {
