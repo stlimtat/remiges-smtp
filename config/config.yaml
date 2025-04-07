@@ -31,8 +31,8 @@ mail-processors:
               - date
               - message-id
               - content-type
-            private-key-file: /app/config/key001.pem
-            seal-headers: true
+            private-key-file: /app/config/stlim.net.pem
+            seal-headers: false
             selector-domain: key001
   - type: mergeHeaders
     index: 13

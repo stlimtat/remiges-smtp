@@ -44,6 +44,8 @@ func (n *DefaultNetDialerFactory) NewDialer(
 			return nil, err
 		}
 		result = socks5Dialer.(proxy.ContextDialer)
+	} else {
+		result = baseDialer
 	}
 	return result, nil
 }
