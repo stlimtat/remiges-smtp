@@ -2,19 +2,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "dkim",
-    srcs = [
-        "sign.go",
-        "txt_gen.go",
-    ],
+    srcs = ["txt_gen.go"],
     importpath = "github.com/stlimtat/remiges-smtp/internal/dkim",
     visibility = ["//:__subpackages__"],
-    deps = [
-        "//internal/config",
-        "//pkg/pmail",
-        "@com_github_mjl__mox//dns",
-        "@com_github_mjl__mox//mox-",
-        "@com_github_rs_zerolog//:zerolog",
-    ],
+    deps = ["@com_github_rs_zerolog//:zerolog"],
 )
 
 go_test(
