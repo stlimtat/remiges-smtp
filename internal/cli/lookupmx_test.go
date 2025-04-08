@@ -132,66 +132,66 @@ func TestLookupMXSvc_Run(t *testing.T) {
 	}
 }
 
-// // func TestLookupMXCmd_ArgsValidation(t *testing.T) {
-// // 	tests := []struct {
-// // 		name        string
-// // 		args        []string
-// // 		envVars     map[string]string
-// // 		expectError bool
-// // 	}{
-// // 		{
-// // 			name: "valid arguments",
-// // 			args: []string{"--lookup-domain=example.com"},
-// // 			envVars: map[string]string{
-// // 				"DOMAIN": "example.com",
-// // 			},
-// // 			expectError: false,
-// // 		},
-// // 		{
-// // 			name:        "missing domain",
-// // 			args:        []string{},
-// // 			expectError: true,
-// // 		},
-// // 		{
-// // 			name: "empty domain",
-// // 			args: []string{"--lookup-domain="},
-// // 			envVars: map[string]string{
-// // 				"DOMAIN": "",
-// // 			},
-// // 			expectError: true,
-// // 		},
-// // 		{
-// // 			name: "invalid domain format",
-// // 			args: []string{"--lookup-domain=invalid@domain"},
-// // 			envVars: map[string]string{
-// // 				"DOMAIN": "invalid@domain",
-// // 			},
-// // 			expectError: true,
-// // 		},
-// // 	}
+// func TestLookupMXCmd_ArgsValidation(t *testing.T) {
+// 	tests := []struct {
+// 		name        string
+// 		args        []string
+// 		envVars     map[string]string
+// 		expectError bool
+// 	}{
+// 		{
+// 			name: "valid arguments",
+// 			args: []string{"--lookup-domain=example.com"},
+// 			envVars: map[string]string{
+// 				"DOMAIN": "example.com",
+// 			},
+// 			expectError: false,
+// 		},
+// 		{
+// 			name:        "missing domain",
+// 			args:        []string{},
+// 			expectError: true,
+// 		},
+// 		{
+// 			name: "empty domain",
+// 			args: []string{"--lookup-domain="},
+// 			envVars: map[string]string{
+// 				"DOMAIN": "",
+// 			},
+// 			expectError: true,
+// 		},
+// 		{
+// 			name: "invalid domain format",
+// 			args: []string{"--lookup-domain=invalid@domain"},
+// 			envVars: map[string]string{
+// 				"DOMAIN": "invalid@domain",
+// 			},
+// 			expectError: true,
+// 		},
+// 	}
 
-// // 	for _, tt := range tests {
-// // 		t.Run(tt.name, func(t *testing.T) {
-// // 			// Set environment variables
-// // 			for k, v := range tt.envVars {
-// // 				t.Setenv(k, v)
-// // 			}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			// Set environment variables
+// 			for k, v := range tt.envVars {
+// 				t.Setenv(k, v)
+// 			}
 
-// // 			ctx := context.Background()
-// // 			ctx, _ = telemetry.InitLogger(ctx)
+// 			ctx := context.Background()
+// 			ctx, _ = telemetry.InitLogger(ctx)
 
-// // 			cmd, cobraCmd := newLookupMXCmd(ctx)
-// // 			require.NotNil(t, cmd)
-// // 			require.NotNil(t, cobraCmd)
+// 			cmd, cobraCmd := newLookupMXCmd(ctx)
+// 			require.NotNil(t, cmd)
+// 			require.NotNil(t, cobraCmd)
 
-// // 			cobraCmd.SetArgs(tt.args)
+// 			cobraCmd.SetArgs(tt.args)
 
-// // 			err := cobraCmd.Execute()
-// // 			if tt.expectError {
-// // 				assert.Error(t, err)
-// // 			} else {
-// // 				assert.NoError(t, err)
-// // 			}
-// // 		})
-// // 	}
+// 			err := cobraCmd.Execute()
+// 			if tt.expectError {
+// 				assert.Error(t, err)
+// 			} else {
+// 				assert.NoError(t, err)
+// 			}
+// 		})
+// 	}
 // }

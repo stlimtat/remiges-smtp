@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "cli",
@@ -41,4 +41,25 @@ alias(
     name = "go_default_library",
     actual = ":cli",
     visibility = ["//:__subpackages__"],
+)
+
+go_test(
+    name = "cli_test",
+    srcs = [
+        "gen_dkim_test.go",
+        "generic_test.go",
+        "lookupmx_test.go",
+        "options_test.go",
+        "root_test.go",
+    ],
+    embed = [":cli"],
+    deps = [
+        "//internal/config",
+        "//internal/telemetry",
+        "@com_github_rs_zerolog//:zerolog",
+        "@com_github_spf13_cobra//:cobra",
+        "@com_github_spf13_viper//:viper",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
 )
