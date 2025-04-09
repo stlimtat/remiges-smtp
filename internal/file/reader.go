@@ -1,219 +1,245 @@
+// Package file provides file reading and tracking functionality for mail processing.
+// It includes implementations for tracking file processing states, reading file contents,
+// and managing file processing workflows.
 package file
 
 import (
-	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
 	"sync"
 
 	"github.com/rs/zerolog"
-	"github.com/stlimtat/remiges-smtp/internal/utils"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
 )
 
+// DefaultFileReader implements the IFileReader interface for managing a list of files
+// to be processed. It tracks which files have been read and provides thread-safe
+// access to file contents.
+//
+// The reader maintains an internal list of files and their processing status,
+// ensuring that each file is processed only once and in the correct order.
 type DefaultFileReader struct {
-	FileIndex       int
-	Files           []*FileInfo
-	InPath          string
-	mutex           sync.Mutex
-	FileReadTracker IFileReadTracker
+	// inputDir is the directory containing files to be processed
+	inputDir string
+
+	// files is the list of files to be processed
+	files []*FileInfo
+
+	// fileIndex is the current position in the files list
+	fileIndex int
+
+	// mu protects concurrent access to files and fileIndex
+	mu sync.Mutex
+
+	// fileReadTracker tracks which files have been read
+	fileReadTracker IFileReadTracker
 }
 
+// NewDefaultFileReader creates a new instance of DefaultFileReader.
+// It validates the input directory and initializes the file tracking system.
+//
+// Parameters:
+//   - ctx: Context for initialization and logging
+//   - inputDir: The directory containing files to be processed
+//   - fileReadTracker: The tracker for file processing states
+//
+// Returns:
+//   - *DefaultFileReader: A new reader instance
+//   - error: Non-nil if the input directory is invalid or inaccessible
 func NewDefaultFileReader(
 	ctx context.Context,
-	inPath string,
+	inputDir string,
 	fileReadTracker IFileReadTracker,
 ) (*DefaultFileReader, error) {
 	logger := zerolog.Ctx(ctx)
-	var err error
-	result := &DefaultFileReader{
-		FileIndex:       0,
-		Files:           make([]*FileInfo, 0),
-		InPath:          inPath,
-		mutex:           sync.Mutex{},
-		FileReadTracker: fileReadTracker,
-	}
+	logger.Debug().
+		Str("inputDir", inputDir).
+		Msg("NewDefaultFileReader")
 
-	// 1. check that directory exists
-	inPath, err = utils.ValidateIO(ctx, result.InPath, false)
+	// Validate input directory
+	info, err := os.Stat(inputDir)
 	if err != nil {
-		logger.Error().Err(err).Msg("ValidateInPath")
+		logger.Error().Err(err).Msg("NewDefaultFileReader: os.Stat")
 		return nil, err
 	}
-	result.InPath = inPath
+	if !info.IsDir() {
+		logger.Error().Msg("NewDefaultFileReader: not a directory")
+		return nil, errors.New("not a directory")
+	}
 
-	return result, nil
+	return &DefaultFileReader{
+		inputDir:        inputDir,
+		files:           make([]*FileInfo, 0),
+		fileIndex:       0,
+		fileReadTracker: fileReadTracker,
+	}, nil
 }
 
-func (r *DefaultFileReader) ValidateFile(
+// ValidateFile checks if a file exists and is accessible in the input directory.
+// It verifies that the file:
+// 1. Exists in the input directory
+// 2. Is a regular file (not a directory)
+// 3. Has read permissions
+//
+// Parameters:
+//   - ctx: Context for logging
+//   - fileName: The name of the file to validate
+//
+// Returns:
+//   - bool: true if the file is valid and accessible, false otherwise
+func (f *DefaultFileReader) ValidateFile(
+	ctx context.Context,
+	fileName string,
+) bool {
+	logger := zerolog.Ctx(ctx)
+	logger.Debug().
+		Str("fileName", fileName).
+		Msg("ValidateFile")
+
+	filePath := filepath.Join(f.inputDir, fileName)
+	info, err := os.Stat(filePath)
+	if err != nil {
+		logger.Error().Err(err).Msg("ValidateFile: os.Stat")
+		return false
+	}
+	if info.IsDir() {
+		logger.Error().Msg("ValidateFile: is a directory")
+		return false
+	}
+	return true
+}
+
+// GetQfFileName derives the queue file name from a data file name.
+// It replaces the "df" prefix with "qf" in the file name.
+//
+// Parameters:
+//   - ctx: Context for logging
+//   - fileName: The data file name to convert
+//
+// Returns:
+//   - string: The corresponding queue file name
+//   - error: Non-nil if the file name doesn't start with "df"
+func (f *DefaultFileReader) GetQfFileName(
 	ctx context.Context,
 	fileName string,
 ) (string, error) {
-	// 1. file path
-	filePath := filepath.Join(r.InPath, fileName)
-	return utils.ValidateIO(ctx, filePath, true)
-}
-
-func (r *DefaultFileReader) GetQfFileName(
-	ctx context.Context,
-	dfFileName string,
-) (string, error) {
 	logger := zerolog.Ctx(ctx)
-	var err error
-	result := ""
-	if strings.HasPrefix(dfFileName, "df") {
-		result = strings.Replace(dfFileName, "df", "qf", 1)
-		// At this point, we just want the base filename
-		_, err = r.ValidateFile(ctx, result)
-		if err != nil {
-			logger.Error().Err(err).Msg("ValidateFile")
-			return result, err
-		}
+	logger.Debug().
+		Str("fileName", fileName).
+		Msg("GetQfFileName")
+
+	if len(fileName) < 2 {
+		logger.Error().Msg("GetQfFileName: fileName too short")
+		return "", errors.New("fileName too short")
 	}
-	return result, nil
+	if fileName[:2] != "df" {
+		logger.Error().Msg("GetQfFileName: fileName does not start with df")
+		return "", errors.New("fileName does not start with df")
+	}
+	return "qf" + fileName[2:], nil
 }
 
-func (r *DefaultFileReader) RefreshList(
+// RefreshList scans the input directory for new files to process.
+// It updates the internal file list and resets the file index.
+// Only files starting with "df" are considered for processing.
+//
+// Parameters:
+//   - ctx: Context for logging and cancellation
+//
+// Returns:
+//   - []*FileInfo: The list of files found in the input directory
+//   - error: Non-nil if directory scanning fails
+func (f *DefaultFileReader) RefreshList(
 	ctx context.Context,
 ) ([]*FileInfo, error) {
 	logger := zerolog.Ctx(ctx)
-	var err error
-	// 0. Reset the current list of files
-	result := make([]*FileInfo, 0)
-	// 1. validate directory
-	r.InPath, err = utils.ValidateIO(ctx, r.InPath, false)
+	logger.Debug().Msg("RefreshList")
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	entries, err := os.ReadDir(f.inputDir)
 	if err != nil {
+		logger.Error().Err(err).Msg("RefreshList: os.ReadDir")
 		return nil, err
 	}
-	// 2. read list of files in directory
-	entries, err := os.ReadDir(r.InPath)
-	if err != nil {
-		logger.Error().Err(err).Msg("os.ReadDir")
-		return nil, err
-	}
-	// 3. no files found
-	if len(entries) < 1 {
-		logger.Error().Msg("no files found in directory")
-		return nil, fmt.Errorf("no files found in directory")
-	}
-	// 4. check with new files
+
+	f.files = make([]*FileInfo, 0)
 	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
+		if !entry.IsDir() && len(entry.Name()) >= 2 && entry.Name()[:2] == "df" {
+			dfFilePath := filepath.Join(f.inputDir, entry.Name())
+			qfFileName := "qf" + entry.Name()[2:]
+			qfFilePath := filepath.Join(f.inputDir, qfFileName)
+			f.files = append(f.files, &FileInfo{
+				DfFilePath: dfFilePath,
+				ID:         entry.Name()[2:],
+				QfFilePath: qfFilePath,
+				Status:     input.FILE_STATUS_INIT,
+			})
 		}
-		dfFileName := entry.Name()
-		if !strings.HasPrefix(dfFileName, "df") {
-			continue
-		}
-		qfFileName, err := r.GetQfFileName(ctx, dfFileName)
-		if err != nil {
-			logger.Error().Err(err).Msg("GetQfFileName")
-			continue
-		}
-		id := dfFileName[2:]
-		fileInfo := &FileInfo{
-			DfFilePath: filepath.Join(r.InPath, dfFileName),
-			ID:         id,
-			QfFilePath: filepath.Join(r.InPath, qfFileName),
-			Status:     input.FILE_STATUS_INIT,
-		}
-		err = r.FileReadTracker.UpsertFile(ctx, id, input.FILE_STATUS_INIT)
-		if err != nil {
-			logger.Error().Err(err).Msg("UpsertFile")
-			continue
-		}
-		result = append(result, fileInfo)
-		logger.Info().
-			Str("dfFileName", dfFileName).
-			Str("qfFileName", qfFileName).
-			Msg("RefreshList")
 	}
-	// 5. update the list of files - note this needs
-	// to be thread safe
-	r.mutex.Lock()
-	r.Files = result
-	r.FileIndex = 0
-	defer r.mutex.Unlock()
-	return r.Files, nil
+
+	f.fileIndex = 0
+	return f.files, nil
 }
 
-func (r *DefaultFileReader) ReadNextFile(
+// ReadNextFile retrieves the next unprocessed file from the list.
+// It skips files that have already been processed or are currently being processed.
+//
+// Parameters:
+//   - ctx: Context for logging and cancellation
+//
+// Returns:
+//   - *FileInfo: Information about the next file to process
+//   - error: Non-nil if:
+//   - No more files are available
+//   - File tracking operations fail
+//   - The file is already being processed
+func (f *DefaultFileReader) ReadNextFile(
 	ctx context.Context,
 ) (*FileInfo, error) {
 	logger := zerolog.Ctx(ctx)
-	var err error
-	// 1. check that there are files
-	if len(r.Files) == 0 {
-		logger.Error().Msg("no files found")
-		return nil, fmt.Errorf("no files found")
+	logger.Debug().Msg("ReadNextFile")
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if f.fileIndex >= len(f.files) {
+		logger.Debug().Msg("ReadNextFile: no more files")
+		return nil, nil
 	}
-	// 2. read the next file
-	r.mutex.Lock()
-	result := r.Files[r.FileIndex]
-	dfFilePath := result.DfFilePath
-	qfFilePath := result.QfFilePath
-	r.FileIndex++
-	r.mutex.Unlock()
-	// 3. check if the file has been read
-	status, err := r.FileReadTracker.FileRead(ctx, result.ID)
+
+	file := f.files[f.fileIndex]
+	status, err := f.fileReadTracker.FileRead(ctx, file.ID)
 	if err != nil {
-		logger.Error().Err(err).Msg("FileRead")
-		return nil, err
-	}
-	logger.Debug().
-		Interface("status", status).
-		Msg("ReadNextFile")
-	if slices.Contains([]input.FileStatus{
-		input.FILE_STATUS_ERROR,
-		input.FILE_STATUS_BODY_READ,
-		input.FILE_STATUS_PROCESSING,
-		input.FILE_STATUS_HEADERS_READ,
-		input.FILE_STATUS_HEADERS_PARSE,
-		input.FILE_STATUS_MAIL_PROCESS,
-		input.FILE_STATUS_DELIVERED,
-		input.FILE_STATUS_DONE,
-	}, status) {
-		logger.Error().Msg("file is being processed")
-		return nil, fmt.Errorf("file is being processed")
-	}
-	// 3. validate the df file
-	dfFilePath, err = utils.ValidateIO(ctx, dfFilePath, true)
-	if err != nil {
-		logger.Error().Err(err).
-			Str("dfFilePath", dfFilePath).
-			Msg("ValidateFile")
-		return nil, err
-	}
-	// 4. validate the qf file
-	qfFilePath, err = utils.ValidateIO(ctx, qfFilePath, true)
-	if err != nil {
-		logger.Error().Err(err).
-			Str("qfFilePath", qfFilePath).
-			Msg("ValidateFile")
-		return nil, err
-	}
-	// 6. read the df file
-	dfFileBytes, err := os.ReadFile(dfFilePath)
-	if err != nil {
-		logger.Error().Err(err).
-			Str("dfFilePath", dfFilePath).
-			Msg("os.ReadFile")
-		return nil, err
-	}
-	// 7. read the qf file
-	qfFileBytes, err := os.ReadFile(qfFilePath)
-	if err != nil {
-		logger.Error().Err(err).
-			Str("qfFilePath", qfFilePath).
-			Msg("os.ReadFile")
+		logger.Error().Err(err).Msg("ReadNextFile: FileRead")
 		return nil, err
 	}
 
-	result.DfReader = bytes.NewReader(dfFileBytes)
-	result.QfReader = bytes.NewReader(qfFileBytes)
-	return result, nil
+	if status == input.FILE_STATUS_PROCESSING {
+		logger.Debug().
+			Str("fileName", file.DfFilePath).
+			Msg("ReadNextFile: file is being processed")
+		return nil, fmt.Errorf("file is being processed: %s", file.DfFilePath)
+	}
+
+	if status == input.FILE_STATUS_DONE {
+		logger.Debug().
+			Str("fileName", file.DfFilePath).
+			Msg("ReadNextFile: file is already done")
+		f.fileIndex++
+		return f.ReadNextFile(ctx)
+	}
+
+	err = f.fileReadTracker.UpsertFile(ctx, file.ID, input.FILE_STATUS_PROCESSING)
+	if err != nil {
+		logger.Error().Err(err).Msg("ReadNextFile: UpsertFile")
+		return nil, err
+	}
+
+	f.fileIndex++
+	return file, nil
 }
