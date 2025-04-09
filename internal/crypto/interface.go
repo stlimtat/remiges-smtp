@@ -12,12 +12,17 @@ const (
 	// KeyTypeEd25519 represents the Ed25519 digital signature algorithm.
 	// Ed25519 is a modern, high-performance signature scheme that provides
 	// strong security guarantees and fast verification.
-	KeyTypeEd25519 = "ed25519"
+	KeyTypeEd25519 string = "ed25519"
 
 	// KeyTypeRSA represents the RSA public-key cryptosystem.
 	// RSA is a widely used algorithm for secure data transmission and
 	// digital signatures.
-	KeyTypeRSA = "rsa"
+	KeyTypeRSA string = "rsa"
+)
+
+var (
+	// ValidKeyTypes is a list of valid key types.
+	ValidKeyTypes []string = []string{KeyTypeEd25519, KeyTypeRSA}
 )
 
 // IKeyGenerator defines the interface for cryptographic key generation.
