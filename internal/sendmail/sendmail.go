@@ -33,40 +33,60 @@ const (
 	baseRetryDelay = 5 * time.Second
 )
 
-// MailSender handles the delivery of emails to SMTP servers
+// MailSender handles the delivery of emails to SMTP servers.
+// It manages connections, retries, and concurrent delivery to multiple recipients.
 type MailSender struct {
-	CachedMX      map[string]dn.MXRecord
-	Debug         bool
+	// CachedMX stores MX records for domains to reduce DNS lookups
+	CachedMX map[string]dn.MXRecord
+
+	// Debug enables debug mode which prevents actual mail sending
+	Debug bool
+
+	// DialerFactory creates network dialers for SMTP connections
 	DialerFactory INetDialerFactory
-	Resolver      dns.IResolver
-	Slogger       *slog.Logger
-	SmtpOpts      smtpclient.Opts
-	maxRetries    int
-	retryDelay    time.Duration
-	metrics       *Metrics
+
+	// Resolver handles DNS lookups for MX records
+	Resolver dns.IResolver
+
+	// Slogger is used for structured logging
+	Slogger *slog.Logger
+
+	// SmtpOpts contains SMTP client configuration options
+	SmtpOpts smtpclient.Opts
+
+	// maxRetries is the maximum number of delivery attempts per recipient
+	maxRetries int
+
+	// retryDelay is the base delay between retry attempts
+	retryDelay time.Duration
+
+	// metrics tracks various delivery statistics
+	metrics *Metrics
 }
 
+// smtpConnection represents an active SMTP connection
 type smtpConnection struct {
-	conn     net.Conn
-	client   *smtpclient.Client
-	lastUsed time.Time
+	conn     net.Conn           // The underlying network connection
+	client   *smtpclient.Client // The SMTP client
+	lastUsed time.Time          // Timestamp of last usage for connection pooling
 }
 
 // deliveryResult represents the outcome of a mail delivery attempt
 type deliveryResult struct {
-	responses []pmail.Response
-	err       error
+	responses []pmail.Response // SMTP server responses
+	err       error            // Any error that occurred during delivery
 }
 
-// Add metrics collection
+// Metrics collects various statistics about mail delivery
 type Metrics struct {
-	deliveryAttempts  prometheus.Counter
-	deliverySuccesses prometheus.Counter
-	deliveryFailures  prometheus.Counter
-	deliveryDuration  prometheus.Histogram
-	connectionErrors  prometheus.Counter
+	deliveryAttempts  prometheus.Counter   // Total number of delivery attempts
+	deliverySuccesses prometheus.Counter   // Number of successful deliveries
+	deliveryFailures  prometheus.Counter   // Number of failed deliveries
+	deliveryDuration  prometheus.Histogram // Distribution of delivery times
+	connectionErrors  prometheus.Counter   // Number of connection failures
 }
 
+// recordMetrics updates delivery metrics after each attempt
 func (m *MailSender) recordMetrics(start time.Time, err error) {
 	m.metrics.deliveryAttempts.Inc()
 	if err != nil {
@@ -77,6 +97,17 @@ func (m *MailSender) recordMetrics(start time.Time, err error) {
 	m.metrics.deliveryDuration.Observe(time.Since(start).Seconds())
 }
 
+// NewMailSender creates a new MailSender with the specified configuration.
+//
+// Parameters:
+//   - ctx: Context for the sender creation
+//   - debug: Enable debug mode (prevents actual mail sending)
+//   - dialerFactory: Factory for creating network dialers
+//   - resolver: DNS resolver for MX lookups
+//   - slogger: Structured logger
+//
+// Returns:
+//   - *MailSender: A new mail sender instance
 func NewMailSender(
 	ctx context.Context,
 	debug bool,
@@ -102,12 +133,24 @@ func NewMailSender(
 	return result
 }
 
+// NewConn establishes a new connection to one of the provided SMTP hosts.
+// It randomly selects a host from the list to enable load balancing.
+//
+// Parameters:
+//   - ctx: Context for the connection operation
+//   - hosts: List of SMTP server hostnames
+//
+// Returns:
+//   - net.Conn: Established network connection
+//   - error: Any error encountered during connection
 func (m *MailSender) NewConn(
 	ctx context.Context,
 	hosts []string,
 ) (net.Conn, error) {
 	logger := zerolog.Ctx(ctx).With().Strs("hosts", hosts).Logger()
 	var err error
+
+	// Randomly select a host for load balancing
 	randomInt, err := utils.RandInt(int64(len(hosts)))
 	if err != nil {
 		logger.Error().Err(err).Msg("utils.RandInt")
@@ -115,6 +158,7 @@ func (m *MailSender) NewConn(
 	}
 	host := hosts[randomInt]
 
+	// Create a new dialer and establish connection
 	dialer, err := m.DialerFactory.NewDialer(ctx)
 	if err != nil {
 		return nil, err
@@ -128,11 +172,21 @@ func (m *MailSender) NewConn(
 	return result, nil
 }
 
-// SendMail attempts to deliver an email to all recipients
+// SendMail attempts to deliver an email to all recipients concurrently.
+// It manages the delivery process, including retries and error handling.
+//
+// Parameters:
+//   - ctx: Context for the sending operation
+//   - mail: Email to be sent
+//
+// Returns:
+//   - map[string][]pmail.Response: Map of recipient addresses to their SMTP responses
+//   - map[string]error: Map of recipient addresses to any errors encountered
 func (m *MailSender) SendMail(
 	ctx context.Context,
 	mail *pmail.Mail,
 ) (map[string][]pmail.Response, map[string]error) {
+	// Validate the email before attempting delivery
 	if err := mail.Validate(); err != nil {
 		return nil, map[string]error{
 			mail.To[0].String(): rerrors.NewError(rerrors.ErrMailValidation, "invalid mail", err),
@@ -160,7 +214,7 @@ func (m *MailSender) SendMail(
 		}(to)
 	}
 
-	// Collect results
+	// Collect results from all delivery attempts
 	for i := 0; i < len(mail.To); i++ {
 		result := <-resultChan
 		if result.result.err != nil {
@@ -177,6 +231,7 @@ func (m *MailSender) SendMail(
 		}
 	}
 
+	// Return combined error if any deliveries failed
 	if len(errs) > 0 {
 		return results, map[string]error{
 			mail.To[0].String(): rerrors.NewError(
@@ -191,7 +246,16 @@ func (m *MailSender) SendMail(
 	return results, nil
 }
 
-// deliverToRecipient handles delivery to a single recipient with retries
+// deliverToRecipient handles delivery to a single recipient with retries.
+// It implements exponential backoff for retries and handles various error conditions.
+//
+// Parameters:
+//   - ctx: Context for the delivery operation
+//   - mail: Email to be delivered
+//   - to: Recipient's SMTP address
+//
+// Returns:
+//   - deliveryResult: The result of the delivery attempt including responses and errors
 func (m *MailSender) deliverToRecipient(
 	ctx context.Context,
 	mail *pmail.Mail,
@@ -207,7 +271,7 @@ func (m *MailSender) deliverToRecipient(
 		default:
 		}
 
-		// Lookup MX records
+		// Lookup MX records for the recipient's domain
 		hosts, err := m.Resolver.LookupMX(ctx, to.Domain)
 		if err != nil {
 			lastErr = rerrors.NewError(rerrors.ErrDNSLookup, "failed to lookup MX records", err).
@@ -215,7 +279,7 @@ func (m *MailSender) deliverToRecipient(
 			continue
 		}
 
-		// Attempt delivery
+		// Attempt to establish connection and deliver
 		conn, err := m.NewConn(ctx, hosts)
 		if err != nil {
 			lastErr = rerrors.NewError(rerrors.ErrSMTPConnection, "failed to establish connection", err).
@@ -235,6 +299,18 @@ func (m *MailSender) deliverToRecipient(
 	return deliveryResult{nil, rerrors.NewError(rerrors.ErrMailDelivery, "max retries exceeded", lastErr)}
 }
 
+// Deliver sends an email to a specific recipient through an established connection.
+// It handles the SMTP protocol interaction and collects server responses.
+//
+// Parameters:
+//   - ctx: Context for the delivery operation
+//   - conn: Established network connection
+//   - myMail: Email to be delivered
+//   - to: Recipient's SMTP address
+//
+// Returns:
+//   - []pmail.Response: Array of SMTP server responses
+//   - error: Any error encountered during delivery
 func (m *MailSender) Deliver(
 	ctx context.Context,
 	conn net.Conn,
@@ -250,11 +326,14 @@ func (m *MailSender) Deliver(
 		Bytes("subject", myMail.Subject).
 		Bytes("content_type", myMail.ContentType).
 		Logger()
+
+	// Skip actual delivery in debug mode
 	if m.Debug {
 		logger.Info().Msg("debug mode, not sending mail")
 		return nil, nil
 	}
 
+	// Create SMTP client with TLS support
 	client, err := smtpclient.New(
 		ctx,
 		m.Slogger,
@@ -270,6 +349,8 @@ func (m *MailSender) Deliver(
 			Msg("smtpclient.New")
 		return nil, err
 	}
+
+	// Deliver the email and collect responses
 	resps, err := client.DeliverMultiple(
 		ctx,
 		myMail.From.String(),
@@ -291,9 +372,12 @@ func (m *MailSender) Deliver(
 		return nil, err
 	}
 
+	// Ensure we received responses
 	if len(resps) == 0 {
 		return nil, rerrors.NewError(rerrors.ErrMailDelivery, "no responses", nil)
 	}
+
+	// Convert and collect responses
 	results := make([]pmail.Response, 0)
 	for _, resp := range resps {
 		logger.Info().
@@ -305,27 +389,4 @@ func (m *MailSender) Deliver(
 		results = append(results, resp)
 	}
 	return results, nil
-}
-
-// Add structured logging
-func (m *MailSender) logDeliveryAttempt(
-	ctx context.Context,
-	mail *pmail.Mail,
-	to smtp.Address,
-	err error,
-) {
-	logger := zerolog.Ctx(ctx)
-	event := logger.Info()
-	if err != nil {
-		event = logger.Error().Err(err)
-	}
-
-	event.
-		Str("message_id", string(mail.MsgID)).
-		Str("from", mail.From.String()).
-		Str("to", to.String()).
-		Str("subject", string(mail.Subject)).
-		Int64("size", int64(len(mail.FinalBody))).
-		Timestamp().
-		Msg("Mail delivery attempt")
 }

@@ -27,12 +27,14 @@ go_test(
     srcs = [
         "factory_test.go",
         "file_test.go",
+        "file_tracker_test.go",
     ],
     embed = [":output"],
     deps = [
         "//internal/config",
         "//internal/file",
         "//internal/telemetry",
+        "//pkg/input",
         "//pkg/pmail",
         "@com_github_google_uuid//:uuid",
         "@com_github_mjl__mox//smtpclient",
