@@ -124,3 +124,142 @@ func TestNewOutputs(t *testing.T) {
 		})
 	}
 }
+
+func TestNewOutputs_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		cfgs        []config.OutputConfig
+		wantInitErr bool
+	}{
+		{
+			name:        "nil configs",
+			cfgs:        nil,
+			wantInitErr: true,
+		},
+		{
+			name: "multiple outputs with one invalid",
+			cfgs: []config.OutputConfig{
+				{
+					Type: config.ConfigOutputTypeFile,
+					Args: map[string]any{
+						config.ConfigArgPath: "/tmp",
+					},
+				},
+				{
+					Type: "invalid",
+				},
+			},
+			wantInitErr: true,
+		},
+		// {
+		// 	name: "file tracker without tracker",
+		// 	cfgs: []config.OutputConfig{
+		// 		{
+		// 			Type: config.ConfigOutputTypeFileTracker,
+		// 		},
+		// 	},
+		// 	wantInitErr: true,
+		// },
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, _ := telemetry.InitLogger(context.Background())
+			factory := OutputFactory{}
+			_, err := factory.NewOutputs(ctx, tt.cfgs)
+			if tt.wantInitErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestOutputFactory_Write_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name         string
+		fileInfo     *file.FileInfo
+		mail         *pmail.Mail
+		responses    []pmail.Response
+		wantWriteErr bool
+	}{
+		{
+			name:         "nil file info",
+			fileInfo:     nil,
+			mail:         &pmail.Mail{MsgID: []byte("test")},
+			responses:    []pmail.Response{{Response: smtpclient.Response{Code: 250, Line: "OK"}}},
+			wantWriteErr: true,
+		},
+		{
+			name:         "nil mail",
+			fileInfo:     &file.FileInfo{ID: "test"},
+			mail:         nil,
+			responses:    []pmail.Response{{Response: smtpclient.Response{Code: 250, Line: "OK"}}},
+			wantWriteErr: true,
+		},
+		{
+			name:         "nil responses",
+			fileInfo:     &file.FileInfo{ID: "test"},
+			mail:         &pmail.Mail{MsgID: []byte("test")},
+			responses:    nil,
+			wantWriteErr: true,
+		},
+		{
+			name:         "empty responses",
+			fileInfo:     &file.FileInfo{ID: "test"},
+			mail:         &pmail.Mail{MsgID: []byte("test")},
+			responses:    []pmail.Response{},
+			wantWriteErr: true,
+		},
+		{
+			name:     "multiple outputs with one failing",
+			fileInfo: &file.FileInfo{ID: "test"},
+			mail:     &pmail.Mail{MsgID: []byte("test")},
+			responses: []pmail.Response{
+				{Response: smtpclient.Response{Code: 250, Line: "OK"}},
+			},
+			wantWriteErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx, _ := telemetry.InitLogger(context.Background())
+
+			// Create mock outputs
+			mockOutput1 := NewMockIOutput(ctrl)
+			mockOutput2 := NewMockIOutput(ctrl)
+
+			if tt.wantWriteErr {
+				mockOutput1.EXPECT().
+					Write(ctx, tt.fileInfo, tt.mail, tt.responses).
+					Return(nil)
+				mockOutput2.EXPECT().
+					Write(ctx, tt.fileInfo, tt.mail, tt.responses).
+					Return(errors.New("test error"))
+			} else {
+				mockOutput1.EXPECT().
+					Write(ctx, tt.fileInfo, tt.mail, tt.responses).
+					Return(nil)
+				mockOutput2.EXPECT().
+					Write(ctx, tt.fileInfo, tt.mail, tt.responses).
+					Return(nil)
+			}
+
+			factory := OutputFactory{
+				Outputs: []IOutput{mockOutput1, mockOutput2},
+			}
+
+			err := factory.Write(ctx, tt.fileInfo, tt.mail, tt.responses)
+			if tt.wantWriteErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
+}

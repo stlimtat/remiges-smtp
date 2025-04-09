@@ -1,3 +1,6 @@
+// Package output provides functionality for writing mail processing results to various output destinations.
+// It includes implementations for different output types (e.g., file, HTTP, etc.) and a factory
+// for creating output instances based on configuration.
 package output
 
 import (
@@ -15,16 +18,38 @@ import (
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
+// DEFAULT_FILE_NAME is the default format for output file names.
+// The %s placeholder is replaced with a timestamp or mail ID based on configuration.
 const (
 	DEFAULT_FILE_NAME string = "output-%s.csv"
 )
 
+// FileOutput implements the IOutput interface for writing mail processing results to CSV files.
+// It supports different file naming strategies and writes mail processing results in a structured format.
 type FileOutput struct {
-	Cfg          config.OutputConfig
+	// Cfg contains the output configuration specifying the output type and settings
+	Cfg config.OutputConfig
+
+	// FileNameType determines how output files are named (e.g., by date, hour, mail ID)
 	FileNameType string
-	Path         string
+
+	// Path is the directory where output files will be written
+	Path string
 }
 
+// NewFileOutput creates a new FileOutput instance with the provided configuration.
+// It validates the output path and sets up the file naming strategy.
+//
+// Parameters:
+//   - ctx: Context for logging and cancellation
+//   - cfg: Output configuration containing path and file naming settings
+//
+// Returns:
+//   - *FileOutput: A new FileOutput instance
+//   - error: Non-nil if:
+//   - The path is missing from the configuration
+//   - The path is invalid or inaccessible
+//   - The file naming type is invalid
 func NewFileOutput(
 	ctx context.Context,
 	cfg config.OutputConfig,
@@ -52,8 +77,8 @@ func NewFileOutput(
 
 	fileNameType, ok := cfg.Args[config.ConfigArgFileNameType]
 	if !ok {
-		logger.Error().
-			Msg("FileNameType not found in config")
+		logger.Warn().
+			Msg("Output file parameter FileNameType not found in config")
 		fileNameType = config.ConfigArgFileNameTypeDate
 	}
 	result.FileNameType = fileNameType.(string)
@@ -61,6 +86,15 @@ func NewFileOutput(
 	return result, nil
 }
 
+// GetFileName generates an output file name based on the configured naming strategy.
+// The file name is constructed using the current time or mail ID, depending on the configuration.
+//
+// Parameters:
+//   - ctx: Context for logging (currently unused)
+//   - myMail: The mail being processed, used when naming by mail ID
+//
+// Returns:
+//   - string: The full path to the output file
 func (f *FileOutput) GetFileName(
 	_ context.Context,
 	myMail *pmail.Mail,
@@ -86,6 +120,23 @@ func (f *FileOutput) GetFileName(
 	return filepath.Join(f.Path, fileName)
 }
 
+// Write implements the IOutput interface by writing mail processing results to a CSV file.
+// It creates a new CSV file (or overwrites an existing one) and writes the mail ID,
+// processing status, and any error messages.
+//
+// Parameters:
+//   - ctx: Context for logging and cancellation
+//   - fileInfo: Information about the source file being processed
+//   - myMail: The mail content being processed
+//   - resp: The processing results and responses
+//
+// Returns:
+//   - error: Non-nil if:
+//   - The output file cannot be created
+//   - Writing the CSV header fails
+//   - Writing any response line fails
+//   - Flushing the writer fails
+//   - Closing the file fails
 func (f *FileOutput) Write(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
