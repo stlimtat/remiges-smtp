@@ -15,7 +15,7 @@ import (
 )
 
 func TestNewDefaultFileReader(t *testing.T) {
-	tmpDir := os.TempDir()
+	tmpDir := t.TempDir()
 	defer os.RemoveAll(tmpDir)
 	tests := []struct {
 		name        string
@@ -133,12 +133,12 @@ func TestValidateFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tempDir, err := os.MkdirTemp("", "test-*")
-			require.NoError(t, err)
-			defer os.RemoveAll(tempDir)
+			tmpDir := t.TempDir()
+			defer os.RemoveAll(tmpDir)
+			var err error
 
 			if tt.createFile {
-				path := filepath.Join(tempDir, tt.fileName)
+				path := filepath.Join(tmpDir, tt.fileName)
 				if tt.permissions&os.ModeDir != 0 {
 					err = os.Mkdir(path, tt.permissions)
 				} else {
@@ -155,7 +155,7 @@ func TestValidateFile(t *testing.T) {
 			defer ctrl.Finish()
 
 			frt := NewMockIFileReadTracker(ctrl)
-			fr, err := NewDefaultFileReader(ctx, tempDir, frt)
+			fr, err := NewDefaultFileReader(ctx, tmpDir, frt)
 			require.NoError(t, err)
 
 			// Test
@@ -273,12 +273,11 @@ func TestRefreshList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tempDir, err := os.MkdirTemp("", "test-*")
-			require.NoError(t, err)
-			defer os.RemoveAll(tempDir)
+			tmpDir := t.TempDir()
+			defer os.RemoveAll(tmpDir)
 
 			for _, file := range tt.setupFiles {
-				_, err := os.Create(filepath.Join(tempDir, file))
+				_, err := os.Create(filepath.Join(tmpDir, file))
 				require.NoError(t, err)
 			}
 
@@ -301,7 +300,7 @@ func TestRefreshList(t *testing.T) {
 					AnyTimes()
 			}
 
-			fr, err := NewDefaultFileReader(ctx, tempDir, frt)
+			fr, err := NewDefaultFileReader(ctx, tmpDir, frt)
 			require.NoError(t, err)
 
 			// Test
@@ -378,12 +377,11 @@ func TestRefreshList(t *testing.T) {
 // 	for _, tt := range tests {
 // 		t.Run(tt.name, func(t *testing.T) {
 // 			// Setup
-// 			tempDir, err := os.MkdirTemp("", "test-*")
-// 			require.NoError(t, err)
-// 			defer os.RemoveAll(tempDir)
+// 			tmpDir := t.TempDir()
+// 			defer os.RemoveAll(tmpDir)
 
 // 			for _, file := range tt.setupFiles {
-// 				_, err := os.Create(filepath.Join(tempDir, file))
+// 				_, err := os.Create(filepath.Join(tmpDir, file))
 // 				require.NoError(t, err)
 // 			}
 
@@ -448,78 +446,77 @@ func TestRefreshList(t *testing.T) {
 // 	}
 // }
 
-// func TestConcurrentAccess(t *testing.T) {
-// 	if testing.Short() {
-// 		t.Skip("skipping concurrent access test")
-// 	}
-// 	// Setup
-// 	tempDir, err := os.MkdirTemp("", "test-*")
-// 	require.NoError(t, err)
-// 	defer os.RemoveAll(tempDir)
+func TestConcurrentAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping concurrent access test")
+	}
+	// Setup
+	tmpDir := t.TempDir()
+	defer os.RemoveAll(tmpDir)
 
-// 	// Create test files
-// 	for i := 0; i < 10; i++ {
-// 		_, err := os.Create(filepath.Join(tempDir, fmt.Sprintf("df%d", i)))
-// 		require.NoError(t, err)
-// 	}
+	// Create test files
+	for i := 0; i < 10; i++ {
+		_, err := os.Create(filepath.Join(tmpDir, fmt.Sprintf("df%d", i)))
+		require.NoError(t, err)
+	}
 
-// 	ctx := context.Background()
-// 	ctx, _ = telemetry.GetLogger(ctx, os.Stdout)
+	ctx := context.Background()
+	ctx, _ = telemetry.GetLogger(ctx, os.Stdout)
 
-// 	ctrl := gomock.NewController(t)
-// 	defer ctrl.Finish()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-// 	frt := NewMockIFileReadTracker(ctrl)
-// 	frt.EXPECT().
-// 		FileRead(gomock.Any(), gomock.Any()).
-// 		Return(input.FILE_STATUS_INIT, nil).
-// 		AnyTimes()
-// 	frt.EXPECT().
-// 		UpsertFile(gomock.Any(), gomock.Any(), gomock.Any()).
-// 		Return(nil).
-// 		AnyTimes()
+	frt := NewMockIFileReadTracker(ctrl)
+	frt.EXPECT().
+		FileRead(gomock.Any(), gomock.Any()).
+		Return(input.FILE_STATUS_INIT, nil).
+		AnyTimes()
+	frt.EXPECT().
+		UpsertFile(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).
+		AnyTimes()
 
-// 	fr, err := NewDefaultFileReader(ctx, tempDir, frt)
-// 	require.NoError(t, err)
+	fr, err := NewDefaultFileReader(ctx, tmpDir, frt)
+	require.NoError(t, err)
 
-// 	// Refresh list first
-// 	_, err = fr.RefreshList(ctx)
-// 	require.NoError(t, err)
+	// Refresh list first
+	_, err = fr.RefreshList(ctx)
+	require.NoError(t, err)
 
-// 	// Test concurrent access
-// 	const numGoroutines = 10
-// 	results := make(chan *FileInfo, numGoroutines)
-// 	errors := make(chan error, numGoroutines)
+	// Test concurrent access
+	const numGoroutines = 10
+	results := make(chan *FileInfo, numGoroutines)
+	errors := make(chan error, numGoroutines)
 
-// 	for i := 0; i < numGoroutines; i++ {
-// 		go func() {
-// 			file, err := fr.ReadNextFile(ctx)
-// 			if err != nil {
-// 				errors <- err
-// 				return
-// 			}
-// 			results <- file
-// 		}()
-// 	}
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			file, err := fr.ReadNextFile(ctx)
+			if err != nil {
+				errors <- err
+				return
+			}
+			results <- file
+		}()
+	}
 
-// 	// Collect results
-// 	var files []*FileInfo
-// 	for i := 0; i < numGoroutines; i++ {
-// 		select {
-// 		case file := <-results:
-// 			if file != nil {
-// 				files = append(files, file)
-// 			}
-// 		case err := <-errors:
-// 			assert.NoError(t, err)
-// 		}
-// 	}
+	// Collect results
+	var files []*FileInfo
+	for i := 0; i < numGoroutines; i++ {
+		select {
+		case file := <-results:
+			if file != nil {
+				files = append(files, file)
+			}
+		case err := <-errors:
+			assert.NoError(t, err)
+		}
+	}
 
-// 	// Verify that each file was processed only once
-// 	processedFiles := make(map[string]bool)
-// 	for _, file := range files {
-// 		fileName := filepath.Base(file.DfFilePath)
-// 		assert.False(t, processedFiles[fileName], "file processed multiple times: %s", fileName)
-// 		processedFiles[fileName] = true
-// 	}
-// }
+	// Verify that each file was processed only once
+	processedFiles := make(map[string]bool)
+	for _, file := range files {
+		fileName := filepath.Base(file.DfFilePath)
+		assert.False(t, processedFiles[fileName], "file processed multiple times: %s", fileName)
+		processedFiles[fileName] = true
+	}
+}
