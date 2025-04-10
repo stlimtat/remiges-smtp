@@ -55,6 +55,7 @@ go_test(
     embed = [":cli"],
     deps = [
         "//internal/config",
+        "//internal/crypto",
         "//internal/telemetry",
         "@com_github_rs_zerolog//:zerolog",
         "@com_github_spf13_cobra//:cobra",

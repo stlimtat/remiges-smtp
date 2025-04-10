@@ -20,9 +20,8 @@ import (
 )
 
 func TestFileOutput_Write(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "remiges-smtp-output-file-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	tmpDir := t.TempDir()
+	defer os.RemoveAll(tmpDir)
 	tests := []struct {
 		name         string
 		cfg          config.OutputConfig
@@ -34,7 +33,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tempDir,
+					config.ConfigArgPath:         tmpDir,
 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeDate,
 				},
 			},
@@ -46,7 +45,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tempDir,
+					config.ConfigArgPath:         tmpDir,
 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeMailID,
 				},
 			},
@@ -58,7 +57,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tempDir,
+					config.ConfigArgPath:         tmpDir,
 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeHour,
 				},
 			},
@@ -70,7 +69,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tempDir,
+					config.ConfigArgPath:         tmpDir,
 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeQuarterHour,
 				},
 			},
@@ -82,7 +81,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath: tempDir,
+					config.ConfigArgPath: tmpDir,
 				},
 			},
 			wantInitErr:  false,
@@ -93,7 +92,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath: filepath.Join(tempDir, "invalid"),
+					config.ConfigArgPath: filepath.Join(tmpDir, "invalid"),
 				},
 			},
 			wantInitErr:  true,
@@ -104,7 +103,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tempDir,
+					config.ConfigArgPath:         tmpDir,
 					config.ConfigArgFileNameType: "invalid",
 				},
 			},
@@ -162,9 +161,8 @@ func TestFileOutput_Write(t *testing.T) {
 }
 
 // func TestFileOutput_Write_EdgeCases(t *testing.T) {
-// 	tempDir, err := os.MkdirTemp("", "remiges-smtp-output-file-test")
-// 	require.NoError(t, err)
-// 	defer os.RemoveAll(tempDir)
+// 	tmpDir := t.TempDir()
+// 	defer os.RemoveAll(tmpDir)
 
 // 	tests := []struct {
 // 		name         string
@@ -233,7 +231,7 @@ func TestFileOutput_Write(t *testing.T) {
 // 			fo, err := NewFileOutput(ctx, config.OutputConfig{
 // 				Type: config.ConfigOutputTypeFile,
 // 				Args: map[string]any{
-// 					config.ConfigArgPath:         tempDir,
+// 					config.ConfigArgPath:         tmpDir,
 // 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeDate,
 // 				},
 // 			})
@@ -274,9 +272,8 @@ func TestFileOutput_Write(t *testing.T) {
 // }
 
 func TestFileOutput_GetFileName(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "remiges-smtp-output-file-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	tmpDir := t.TempDir()
+	defer os.RemoveAll(tmpDir)
 
 	now := time.Now()
 	expectedDate := now.Format("2006-01-02")
@@ -328,7 +325,7 @@ func TestFileOutput_GetFileName(t *testing.T) {
 			fo, err := NewFileOutput(ctx, config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tempDir,
+					config.ConfigArgPath:         tmpDir,
 					config.ConfigArgFileNameType: tt.fileNameType,
 				},
 			})
@@ -337,7 +334,7 @@ func TestFileOutput_GetFileName(t *testing.T) {
 			fileName := fo.GetFileName(ctx, tt.mail)
 			assert.Contains(t, fileName, tt.expectedPrefix)
 			// assert.Contains(t, fileName, DEFAULT_FILE_NAME)
-			assert.Contains(t, fileName, tempDir)
+			assert.Contains(t, fileName, tmpDir)
 		})
 	}
 }

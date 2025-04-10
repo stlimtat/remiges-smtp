@@ -20,16 +20,11 @@ go_library(
 
 go_test(
     name = "file_test",
-    srcs = [
-        "file_read_tracker_test.go",
-        "reader_test.go",
-    ],
+    srcs = ["reader_test.go"],
     embed = [":file"],
     deps = [
         "//internal/telemetry",
         "//pkg/input",
-        "@com_github_alicebob_miniredis_v2//:miniredis",
-        "@com_github_redis_go_redis_v9//:go-redis",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
         "@org_uber_go_mock//gomock",

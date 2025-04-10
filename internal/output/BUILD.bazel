@@ -22,6 +22,12 @@ go_library(
     ],
 )
 
+alias(
+    name = "go_default_library",
+    actual = ":output",
+    visibility = ["//:__subpackages__"],
+)
+
 go_test(
     name = "output_test",
     srcs = [
@@ -42,10 +48,4 @@ go_test(
         "@com_github_stretchr_testify//require",
         "@org_uber_go_mock//gomock",
     ],
-)
-
-alias(
-    name = "go_default_library",
-    actual = ":output",
-    visibility = ["//:__subpackages__"],
 )
