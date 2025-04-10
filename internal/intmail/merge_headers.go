@@ -2,6 +2,7 @@ package intmail
 
 import (
 	"context"
+	"slices"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -36,10 +37,15 @@ func (_ *MergeHeadersProcessor) Process(
 	logger.Info().Msg("MergeHeadersProcessor: Process")
 
 	result := make([]byte, 0)
-	for key, value := range inMail.HeadersMap {
+	keys := make([]string, 0)
+	for key := range inMail.HeadersMap {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+	for _, key := range keys {
 		result = append(
 			result,
-			[]byte(key+": "+string(value)+"\r\n")...,
+			[]byte(key+": "+string(inMail.HeadersMap[key])+"\r\n")...,
 		)
 	}
 
