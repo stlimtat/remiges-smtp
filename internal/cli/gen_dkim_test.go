@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/stlimtat/remiges-smtp/internal/config"
+	"github.com/stlimtat/remiges-smtp/internal/crypto"
 	"github.com/stlimtat/remiges-smtp/internal/telemetry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,7 +74,7 @@ func TestGenDKIMSvc_Run(t *testing.T) {
 	}{
 		{
 			name:        "valid configuration",
-			algorithm:   "rsa",
+			algorithm:   crypto.KeyTypeRSA,
 			tempDir:     tmpDir,
 			expectError: false,
 		},
@@ -83,12 +84,12 @@ func TestGenDKIMSvc_Run(t *testing.T) {
 			tempDir:     tmpDir,
 			expectError: false,
 		},
-		// {
-		// 	name:        "invalid output path",
-		// 	algorithm:   "rsa",
-		// 	tempDir:     "/nonexistent/path",
-		// 	expectError: true,
-		// },
+		{
+			name:        "invalid output path",
+			algorithm:   crypto.KeyTypeRSA,
+			tempDir:     filepath.Join(tmpDir, "nonexistent/path"),
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
