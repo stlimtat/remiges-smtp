@@ -18,10 +18,10 @@ import (
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
 
-// DEFAULT_FILE_NAME is the default format for output file names.
+// DefaultFileName is the default format for output file names.
 // The %s placeholder is replaced with a timestamp or mail ID based on configuration.
 const (
-	DEFAULT_FILE_NAME string = "output-%s.csv"
+	DefaultFileName string = "output-%s.csv"
 )
 
 // FileOutput implements the IOutput interface for writing mail processing results to CSV files.
@@ -103,19 +103,19 @@ func (f *FileOutput) GetFileName(
 	now := time.Now()
 	switch f.FileNameType {
 	case config.ConfigArgFileNameTypeMailID:
-		fileName = fmt.Sprintf(DEFAULT_FILE_NAME, myMail.MsgID)
+		fileName = fmt.Sprintf(DefaultFileName, myMail.MsgID)
 	case config.ConfigArgFileNameTypeHour:
 		hour := now.Format("2006-01-02-15")
-		fileName = fmt.Sprintf(DEFAULT_FILE_NAME, hour)
+		fileName = fmt.Sprintf(DefaultFileName, hour)
 	case config.ConfigArgFileNameTypeQuarterHour:
 		hour := now.Format("2006-01-02-15")
 		minute := now.Minute()
 		quarter := minute / 15
 		hour = fmt.Sprintf("%s-%d", hour, quarter)
-		fileName = fmt.Sprintf(DEFAULT_FILE_NAME, hour)
+		fileName = fmt.Sprintf(DefaultFileName, hour)
 	default:
 		date := time.Now().Format("2006-01-02")
-		fileName = fmt.Sprintf(DEFAULT_FILE_NAME, date)
+		fileName = fmt.Sprintf(DefaultFileName, date)
 	}
 	return filepath.Join(f.Path, fileName)
 }
