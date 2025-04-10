@@ -176,15 +176,15 @@ package cli
 // 			name: "full integration test",
 // 			setup: func(t *testing.T) (*GenericSvc, func()) {
 // 				// Create temporary directory for test files
-// 				tempDir, err := os.MkdirTemp("", "remiges-smtp-test")
-// 				require.NoError(t, err)
+// 				tmpDir := t.TempDir()
+// 				defer os.RemoveAll(tmpDir)
 
 // 				ctx := context.Background()
 // 				ctx, _ = telemetry.InitLogger(ctx)
 
 // 				// Setup configuration
 // 				viper.Set("read-file.redis-addr", "localhost:6379")
-// 				viper.Set("read-file.in-path", tempDir)
+// 				viper.Set("read-file.in-path", tmpDir)
 // 				viper.Set("read-file.file-mails", []config.FileMailConfig{})
 // 				viper.Set("outputs", []config.OutputConfig{})
 // 				viper.Set("mail-processors", []config.MailProcessorConfig{})

@@ -108,6 +108,7 @@ func newGenericSvc( //nolint:funlen // this sets up a generic application contex
 	// for generic, we are not needing to write to a file
 	// so we can just use a temp directory
 	tempDir, err := os.MkdirTemp("", "remiges-smtp")
+	defer os.RemoveAll(tempDir)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("newGenericSvc.MkdirTemp")
 	}

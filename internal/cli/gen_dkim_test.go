@@ -63,9 +63,8 @@ func TestNewGenDKIMCmd(t *testing.T) {
 }
 
 func TestGenDKIMSvc_Run(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "remiges-smtp-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	tmpDir := t.TempDir()
+	defer os.RemoveAll(tmpDir)
 	tests := []struct {
 		name        string
 		algorithm   string
@@ -75,13 +74,13 @@ func TestGenDKIMSvc_Run(t *testing.T) {
 		{
 			name:        "valid configuration",
 			algorithm:   "rsa",
-			tempDir:     tempDir,
+			tempDir:     tmpDir,
 			expectError: false,
 		},
 		{
 			name:        "invalid algorithm - defaults to rsa",
 			algorithm:   "invalid",
-			tempDir:     tempDir,
+			tempDir:     tmpDir,
 			expectError: false,
 		},
 		// {
@@ -94,8 +93,6 @@ func TestGenDKIMSvc_Run(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create temporary directory for output
-
 			ctx := context.Background()
 			ctx, _ = telemetry.InitLogger(ctx)
 			telemetry.SetGlobalLogLevel(zerolog.ErrorLevel)
