@@ -223,7 +223,7 @@ func (f *DefaultFileReader) ReadNextFile(
 		logger.Debug().
 			Str("fileName", file.DfFilePath).
 			Msg("ReadNextFile: file is being processed")
-		return nil, fmt.Errorf("file is being processed: %s", file.DfFilePath)
+		return file, fmt.Errorf("ToIgnore: file is being processed: %s", file.DfFilePath)
 	}
 
 	if status == input.FILE_STATUS_DONE {

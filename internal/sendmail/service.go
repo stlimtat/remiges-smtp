@@ -5,6 +5,7 @@ package sendmail
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -180,57 +181,71 @@ func (s *SendMailService) ReadNextMail(
 ) (*file.FileInfo, *pmail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 
-	// Read the next available mail file
-	fileInfo, err := s.FileReader.ReadNextFile(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	if fileInfo == nil {
-		return nil, nil, nil
-	}
-	logger.Debug().
-		Str("fileInfo", fileInfo.ID).
-		Msg("ReadNextFile")
-	fileInfo.Status = input.FILE_STATUS_PROCESSING
+	var fileInfo *file.FileInfo
+	var myMail *pmail.Mail
+	var err error
 
-	// Transform file content into a mail object
-	myMail, err := s.MailTransformer.Transform(
-		ctx, fileInfo, &pmail.Mail{},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	fileInfo.Status = input.FILE_STATUS_BODY_READ
+	// 1. Read the next available mail file
+	// There is a mutex on the file reader to ensure that only one file is read at a time
+	found := false
+	// 2. Loop until a file is successfully processed
+	for !found {
+		fileInfo, err = s.FileReader.ReadNextFile(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+		if fileInfo == nil {
+			return nil, nil, nil
+		}
+		logger.Debug().
+			Str("fileInfo", fileInfo.ID).
+			Msg("ReadNextFile")
+		fileInfo.Status = input.FILE_STATUS_PROCESSING
 
-	// Process the mail (e.g., DKIM signing)
-	myMail, err = s.MailProcessor.Process(ctx, myMail)
-	if err != nil {
-		return nil, nil, err
-	}
-	fileInfo.Status = input.FILE_STATUS_MAIL_PROCESS
+		// Transform file content into a mail object
+		myMail, err = s.MailTransformer.Transform(
+			ctx, fileInfo, &pmail.Mail{},
+		)
+		if err != nil {
+			if !strings.Contains(err.Error(), "ToIgnore") {
+				return nil, nil, err
+			}
+		}
+		fileInfo.Status = input.FILE_STATUS_BODY_READ
 
-	// Send the mail via SMTP
-	responses, errs := s.MailSender.SendMail(ctx, myMail)
-	if errs != nil {
-		return nil, nil, err
-	}
+		// Process the mail (e.g., DKIM signing)
+		myMail, err = s.MailProcessor.Process(ctx, myMail)
+		if err != nil {
+			if !strings.Contains(err.Error(), "ToIgnore") {
+				return nil, nil, err
+			}
+		}
+		fileInfo.Status = input.FILE_STATUS_MAIL_PROCESS
 
-	// Log delivery results
-	for to, response := range responses {
-		if errs[to] != nil {
-			logger.Error().
-				AnErr("err", errs[to]).
+		// Send the mail via SMTP
+		responses, errs := s.MailSender.SendMail(ctx, myMail)
+		if errs != nil {
+			return nil, nil, err
+		}
+		found = true
+
+		// Log delivery results
+		for to, response := range responses {
+			if errs[to] != nil {
+				logger.Error().
+					AnErr("err", errs[to]).
+					Interface("response", response).
+					Str("to", to).
+					Msg("Delivery failed")
+				continue
+			}
+			logger.Info().
 				Interface("response", response).
 				Str("to", to).
-				Msg("Delivery failed")
-			continue
+				Msg("Delivery done")
 		}
-		logger.Info().
-			Interface("response", response).
-			Str("to", to).
-			Msg("Delivery done")
+		fileInfo.Status = input.FILE_STATUS_DELIVERED
 	}
-	fileInfo.Status = input.FILE_STATUS_DELIVERED
 
 	return fileInfo, myMail, nil
 }

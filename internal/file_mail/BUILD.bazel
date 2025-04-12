@@ -19,6 +19,7 @@ go_library(
     deps = [
         "//internal/config",
         "//internal/file",
+        "//internal/utils",
         "//pkg/input",
         "//pkg/pmail",
         "@com_github_google_uuid//:uuid",

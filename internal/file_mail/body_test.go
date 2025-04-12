@@ -1,8 +1,9 @@
 package file_mail
 
 import (
-	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -72,8 +73,13 @@ World
 				return
 			}
 			require.NoError(t, err)
+			tmpDir := t.TempDir()
+			tmpFile := filepath.Join(tmpDir, "test.txt")
+			err = os.WriteFile(tmpFile, tt.body, 0644)
+			require.NoError(t, err)
+			defer os.Remove(tmpFile)
 			fileInfo := &file.FileInfo{
-				DfReader: bytes.NewReader(tt.body),
+				DfFilePath: tmpFile,
 			}
 			gotMail, err := transformer.Transform(ctx, fileInfo, &pmail.Mail{})
 			if tt.wantTransformErr {

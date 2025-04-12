@@ -67,12 +67,15 @@ func (t *HeaderFromTransformer) Index() int {
 func (t *HeaderFromTransformer) Transform(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
-	myMail *pmail.Mail,
+	inMail *pmail.Mail,
 ) (*pmail.Mail, error) {
 	logger := zerolog.Ctx(ctx).With().
 		Str("id", fileInfo.ID).
 		Logger()
 	logger.Debug().Msg("HeaderFromTransformer")
+	if inMail == nil {
+		inMail = &pmail.Mail{}
+	}
 	var err error
 	var result smtp.Address
 	switch t.FromType {
@@ -80,9 +83,9 @@ func (t *HeaderFromTransformer) Transform(
 		result = t.From
 	default:
 		// 1. check if the header is present
-		fromValue, ok := myMail.Metadata[input.HeaderFromKey]
+		fromValue, ok := inMail.Metadata[input.HeaderFromKey]
 		if !ok {
-			return myMail, nil
+			return inMail, nil
 		}
 		logger.Debug().Bytes("fromValue", fromValue).Msg("HeaderFromTransformer")
 		// 2. parse from value
@@ -101,9 +104,9 @@ func (t *HeaderFromTransformer) Transform(
 			return nil, err
 		}
 	}
-	myMail.From = result
+	inMail.From = result
 	logger.Debug().
-		Interface(input.HeaderFromKey, myMail.From).
+		Interface(input.HeaderFromKey, inMail.From).
 		Msg("HeaderFromTransformer")
-	return myMail, nil
+	return inMail, nil
 }

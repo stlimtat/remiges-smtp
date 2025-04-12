@@ -5,6 +5,7 @@ import (
 	"fmt"
 	reflect "reflect"
 	"sort"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -133,6 +134,10 @@ func (f *MailTransformerFactory) Transform(
 	for _, transformer := range f.transformers {
 		inMail, err = transformer.Transform(ctx, fileInfo, inMail)
 		if err != nil {
+			if strings.Contains(err.Error(), "ToContinue:") {
+				continue
+			}
+			logger.Error().Err(err).Msg("transformer.Transform")
 			return nil, err
 		}
 	}

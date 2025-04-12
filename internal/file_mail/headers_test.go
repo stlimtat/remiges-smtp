@@ -1,8 +1,9 @@
 package file_mail
 
 import (
-	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stlimtat/remiges-smtp/internal/config"
@@ -17,7 +18,7 @@ func TestHeadersTransformer(t *testing.T) {
 	tests := []struct {
 		name     string
 		cfg      config.FileMailConfig
-		fileInfo *file.FileInfo
+		headers  []byte
 		wantMail *pmail.Mail
 		wantErr  bool
 	}{
@@ -27,11 +28,7 @@ func TestHeadersTransformer(t *testing.T) {
 				Type: HeadersTransformerType,
 				Args: map[string]any{},
 			},
-			fileInfo: &file.FileInfo{
-				ID:         "1",
-				QfFilePath: "testdata/test.qf",
-				QfReader:   bytes.NewReader([]byte("From: test@example.com\nTo: test@example.com\nSubject: test")),
-			},
+			headers: []byte("From: test@example.com\nTo: test@example.com\nSubject: test"),
 			wantMail: &pmail.Mail{
 				Metadata: map[string][]byte{
 					"From":    []byte("test@example.com"),
@@ -47,11 +44,7 @@ func TestHeadersTransformer(t *testing.T) {
 				Type: HeadersTransformerType,
 				Args: map[string]any{},
 			},
-			fileInfo: &file.FileInfo{
-				ID:         "1",
-				QfFilePath: "testdata/test.qf",
-				QfReader:   bytes.NewReader([]byte("Content-Type: text/plain;\n\tcharset=utf-8\n")),
-			},
+			headers: []byte("Content-Type: text/plain;\n\tcharset=utf-8\n"),
 			wantMail: &pmail.Mail{
 				Metadata: map[string][]byte{
 					"Content-Type": []byte("text/plain;charset=utf-8"),
@@ -67,11 +60,7 @@ func TestHeadersTransformer(t *testing.T) {
 					HeadersConfigArgPrefix: "H??",
 				},
 			},
-			fileInfo: &file.FileInfo{
-				ID:         "1",
-				QfFilePath: "testdata/test.qf",
-				QfReader:   bytes.NewReader([]byte("H??From: test1@example.com\nH??To: test1@example.com\nH??Subject: test1\n")),
-			},
+			headers: []byte("H??From: test1@example.com\nH??To: test1@example.com\nH??Subject: test1\n"),
 			wantMail: &pmail.Mail{
 				Metadata: map[string][]byte{
 					"From":       []byte("test1@example.com"),
@@ -94,7 +83,16 @@ func TestHeadersTransformer(t *testing.T) {
 			err := transformer.Init(ctx, tt.cfg)
 			require.NoError(t, err)
 
-			got, err := transformer.Transform(ctx, tt.fileInfo, &pmail.Mail{})
+			tmpDir := t.TempDir()
+			tmpFile := filepath.Join(tmpDir, "test.qf")
+			err = os.WriteFile(tmpFile, tt.headers, 0644)
+			require.NoError(t, err)
+			defer os.Remove(tmpFile)
+			fileInfo := &file.FileInfo{
+				QfFilePath: tmpFile,
+			}
+
+			got, err := transformer.Transform(ctx, fileInfo, &pmail.Mail{})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

@@ -44,6 +44,9 @@ func (_ *BodyProcessor) Process(
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("BodyProcessor")
 
+	if inMail == nil {
+		inMail = &pmail.Mail{}
+	}
 	if inMail.HeadersMap == nil {
 		inMail.HeadersMap = make(map[string][]byte)
 	}

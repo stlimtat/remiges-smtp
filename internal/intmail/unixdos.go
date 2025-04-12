@@ -35,6 +35,10 @@ func (_ *UnixDosProcessor) Process(
 ) (*pmail.Mail, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Msg("UnixDosProcessor")
+	if inMail == nil || inMail.Body == nil {
+		logger.Error().Msg("UnixDosProcessor: inMail is nil or inMail.Body is nil")
+		return inMail, nil
+	}
 
 	re := regexp.MustCompile(`\r?\n`)
 	inMail.Body = re.ReplaceAll(inMail.Body, []byte("\r\n"))

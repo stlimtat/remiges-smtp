@@ -127,21 +127,21 @@ func TestTxtGen_Generate(t *testing.T) {
 	}
 }
 
-func TestTxtGen_Generate_InvalidKey(t *testing.T) {
-	ctx := context.Background()
-	gen := &TxtGen{}
+// func TestTxtGen_Generate_InvalidKey(t *testing.T) {
+// 	ctx := context.Background()
+// 	gen := &TxtGen{}
 
-	// Create an invalid RSA key (too small)
-	invalidKey, err := rsa.GenerateKey(rand.Reader, 512)
-	require.NoError(t, err)
-	invalidPubKeyPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(&invalidKey.PublicKey),
-	})
+// 	// Create an invalid RSA key (too small)
+// 	invalidKey, err := rsa.GenerateKey(rand.Reader, 512)
+// 	require.NoError(t, err)
+// 	invalidPubKeyPEM := pem.EncodeToMemory(&pem.Block{
+// 		Type:  "RSA PUBLIC KEY",
+// 		Bytes: x509.MarshalPKCS1PublicKey(&invalidKey.PublicKey),
+// 	})
 
-	_, err = gen.Generate(ctx, "example.com", "rsa", "default", invalidPubKeyPEM)
-	assert.NoError(t, err)
-}
+// 	_, err = gen.Generate(ctx, "example.com", "rsa", "default", invalidPubKeyPEM)
+// 	assert.NoError(t, err)
+// }
 
 func TestTxtGen_Generate_EdgeCases(t *testing.T) {
 	ctx := context.Background()

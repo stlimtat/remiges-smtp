@@ -78,6 +78,9 @@ func (t *HeaderToTransformer) Transform(
 		Str("id", fileInfo.ID).
 		Logger()
 	logger.Debug().Msg("HeaderToTransformer")
+	if inMail == nil {
+		inMail = &pmail.Mail{}
+	}
 
 	var result []smtp.Address
 

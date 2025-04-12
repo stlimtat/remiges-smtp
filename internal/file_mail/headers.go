@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
+	"os"
 	"regexp"
 
 	"github.com/rs/zerolog"
 	"github.com/stlimtat/remiges-smtp/internal/config"
 	"github.com/stlimtat/remiges-smtp/internal/file"
+	"github.com/stlimtat/remiges-smtp/internal/utils"
 	"github.com/stlimtat/remiges-smtp/pkg/input"
 	"github.com/stlimtat/remiges-smtp/pkg/pmail"
 )
@@ -50,27 +51,36 @@ func (h *HeadersTransformer) Transform(
 	inMail *pmail.Mail,
 ) (outMail *pmail.Mail, err error) {
 	logger := zerolog.Ctx(ctx).With().Str("qf_file_path", fileInfo.QfFilePath).Logger()
-	logger.Info().Msg("HeadersTransformer")
+	logger.Debug().Msg("HeadersTransformer")
 
 	// 1. check fileInfo.QfReader is not nil
-	if fileInfo.QfReader == nil {
-		return nil, fmt.Errorf("fileInfo.QfReader is nil")
+	if fileInfo.QfFilePath == "" {
+		logger.Error().Msg("ToSkip: fileInfo.QfFilePath is empty")
+		return nil, fmt.Errorf("ToSkip: fileInfo.QfFilePath is empty")
 	}
 
-	// 1. initialize the headers map in the mail
-	inMail.Metadata = make(map[string][]byte)
-
-	// 2. read all the bytes from the qf file
-	byteSlice, err := io.ReadAll(fileInfo.QfReader)
+	// 2. validate the qf file exists and is readable
+	_, err = utils.ValidateIO(ctx, fileInfo.QfFilePath, true)
 	if err != nil {
+		logger.Error().Err(err).Msg("utils.ValidateIO")
+		return nil, err
+	}
+
+	// 3. read all the bytes from the qf file
+	byteSlice, err := os.ReadFile(fileInfo.QfFilePath)
+	if err != nil {
+		logger.Error().Err(err).Msg("os.ReadFile")
 		return nil, err
 	}
 	fileInfo.Status = input.FILE_STATUS_HEADERS_READ
-	// Replace all \n with \r\n
+
+	// 4. initialize the headers map in the mail
+	inMail.Metadata = make(map[string][]byte)
+	// 5. replace all \n with \r\n
 	re := regexp.MustCompile(`\r?\n`)
 	byteSlice = re.ReplaceAll(byteSlice, []byte("\r\n"))
 
-	// 3. split the bytes into lines
+	// 6. split the bytes into lines
 	lines := bytes.Split(byteSlice, []byte("\r\n"))
 
 	// 4. iterate over the lines and add them to the result map

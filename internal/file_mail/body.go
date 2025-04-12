@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
+	"os"
 	"regexp"
 
 	"github.com/rs/zerolog"
@@ -50,16 +50,19 @@ func (_ *BodyTransformer) Transform(
 		Msg("BodyTransformer")
 	var err error
 
-	if fileInfo.DfReader == nil {
-		logger.Error().Msg("DfReader is nil")
-		return nil, fmt.Errorf("DfReader is nil")
+	// 1. validate the df file exists and is readable
+	if fileInfo.DfFilePath == "" {
+		return nil, fmt.Errorf("ToSkip: DfFilePath is empty")
 	}
 
-	inMail.Body, err = io.ReadAll(fileInfo.DfReader)
+	// 2. read all the bytes from the df file
+	inMail.Body, err = os.ReadFile(fileInfo.DfFilePath)
 	if err != nil {
+		logger.Error().Err(err).Msg("os.ReadFile")
 		return nil, err
 	}
-	// Handling of unix new line to dos new line is done in mail Processor
+
+	// 3. Handling of unix new line to dos new line is done in mail Processor
 	re := regexp.MustCompile(`\r?\n`)
 	inMail.Body = re.ReplaceAll(inMail.Body, []byte("\r\n"))
 	inMail.Body = bytes.TrimSpace(inMail.Body)
