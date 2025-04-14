@@ -46,3 +46,6 @@ go.work.sum
 # gitignore for this project
 ################################################################################
 testdata/
+/output/
+config/*.pem
+config/*.pub
