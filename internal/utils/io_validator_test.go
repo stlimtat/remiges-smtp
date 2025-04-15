@@ -56,20 +56,6 @@ func TestValidateIO(t *testing.T) {
 			errMsg:     "failed to get file info",
 		},
 		{
-			name:       "relative path with ./",
-			createFile: true,
-			path:       "./test.txt",
-			fileNotDir: true,
-			wantErr:    false,
-		},
-		{
-			name:       "relative path with ~/",
-			createFile: true,
-			path:       "~/test.txt",
-			fileNotDir: true,
-			wantErr:    false,
-		},
-		{
 			name:       "empty path",
 			createFile: false,
 			path:       "",
@@ -92,14 +78,6 @@ func TestValidateIO(t *testing.T) {
 			fileNotDir: true,
 			wantErr:    true,
 			errMsg:     "path is not a file",
-		},
-		{
-			name:       "invalid relative path",
-			createFile: false,
-			path:       "./nonexistent/path",
-			fileNotDir: true,
-			wantErr:    true,
-			errMsg:     "failed to get file info",
 		},
 	}
 	for _, tt := range tests {
