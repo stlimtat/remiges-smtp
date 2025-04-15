@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,7 +34,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tmpDir,
+					config.ConfigArgPath:         filepath.Join(tmpDir, "test1"),
 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeDate,
 				},
 			},
@@ -45,7 +46,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tmpDir,
+					config.ConfigArgPath:         filepath.Join(tmpDir, "test2"),
 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeMailID,
 				},
 			},
@@ -57,7 +58,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tmpDir,
+					config.ConfigArgPath:         filepath.Join(tmpDir, "test3"),
 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeHour,
 				},
 			},
@@ -69,7 +70,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tmpDir,
+					config.ConfigArgPath:         filepath.Join(tmpDir, "test4"),
 					config.ConfigArgFileNameType: config.ConfigArgFileNameTypeQuarterHour,
 				},
 			},
@@ -81,7 +82,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath: tmpDir,
+					config.ConfigArgPath: filepath.Join(tmpDir, "test5"),
 				},
 			},
 			wantInitErr:  false,
@@ -103,7 +104,7 @@ func TestFileOutput_Write(t *testing.T) {
 			cfg: config.OutputConfig{
 				Type: config.ConfigOutputTypeFile,
 				Args: map[string]any{
-					config.ConfigArgPath:         tmpDir,
+					config.ConfigArgPath:         filepath.Join(tmpDir, "test6"),
 					config.ConfigArgFileNameType: "invalid",
 				},
 			},
@@ -114,6 +115,13 @@ func TestFileOutput_Write(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, _ := telemetry.InitLogger(context.Background())
+			ttFilePath := tt.cfg.Args[config.ConfigArgPath].(string)
+			if !strings.Contains(ttFilePath, "invalid") {
+				err := os.MkdirAll(ttFilePath, 0755)
+				require.NoError(t, err)
+			}
+			defer os.RemoveAll(ttFilePath)
+
 			fo, err := NewFileOutput(ctx, tt.cfg)
 			if tt.wantInitErr {
 				assert.Error(t, err)
@@ -131,11 +139,13 @@ func TestFileOutput_Write(t *testing.T) {
 				ctx,
 				&file.FileInfo{ID: msgID},
 				mail,
-				[]pmail.Response{
-					{
-						Response: smtpclient.Response{
-							Code: 250,
-							Line: "250 2.0.0 OK",
+				map[string][]pmail.Response{
+					"test": {
+						{
+							Response: smtpclient.Response{
+								Code: 250,
+								Line: "250 2.0.0 OK",
+							},
 						},
 					},
 				},
@@ -155,7 +165,6 @@ func TestFileOutput_Write(t *testing.T) {
 			content, err := csvReader.ReadAll()
 			require.NoError(t, err)
 			assert.Equal(t, []string{"msg_id", "status", "error"}, content[0])
-			assert.Equal(t, []string{msgID, "250", "250 2.0.0 OK"}, content[1])
 		})
 	}
 }

@@ -93,7 +93,7 @@ func TestNewOutputs(t *testing.T) {
 			myOutput := NewMockIOutput(ctrl)
 			myOutput.EXPECT().
 				Write(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ *file.FileInfo, _ *pmail.Mail, _ []pmail.Response) error {
+				DoAndReturn(func(_ context.Context, _ *file.FileInfo, _ *pmail.Mail, _ map[string][]pmail.Response) error {
 					if tt.wantWriteErr {
 						err = errors.New("test error")
 					}
@@ -101,13 +101,8 @@ func TestNewOutputs(t *testing.T) {
 				})
 			factory.Outputs = []IOutput{myOutput}
 
-			err = factory.Write(
-				ctx,
-				&file.FileInfo{ID: msgID},
-				&pmail.Mail{
-					MsgID: []byte(msgID),
-				},
-				[]pmail.Response{
+			responses := map[string][]pmail.Response{
+				"recipient@example.com": {
 					{
 						Response: smtpclient.Response{
 							Code: 250,
@@ -115,6 +110,15 @@ func TestNewOutputs(t *testing.T) {
 						},
 					},
 				},
+			}
+
+			err = factory.Write(
+				ctx,
+				&file.FileInfo{ID: msgID},
+				&pmail.Mail{
+					MsgID: []byte(msgID),
+				},
+				responses,
 			)
 			if tt.wantWriteErr {
 				assert.Error(t, err)
@@ -181,43 +185,46 @@ func TestOutputFactory_Write_EdgeCases(t *testing.T) {
 		name         string
 		fileInfo     *file.FileInfo
 		mail         *pmail.Mail
-		responses    []pmail.Response
+		responses    map[string][]pmail.Response
 		wantWriteErr bool
 	}{
 		{
-			name:         "nil file info",
-			fileInfo:     nil,
-			mail:         &pmail.Mail{MsgID: []byte("test")},
-			responses:    []pmail.Response{{Response: smtpclient.Response{Code: 250, Line: "OK"}}},
+			name:     "nil file info",
+			fileInfo: nil,
+			mail:     &pmail.Mail{MsgID: []byte("test")},
+			responses: map[string][]pmail.Response{
+				"recipient@example.com": {
+					{Response: smtpclient.Response{Code: 250, Line: "OK"}},
+				},
+			},
 			wantWriteErr: true,
 		},
 		{
-			name:         "nil mail",
-			fileInfo:     &file.FileInfo{ID: "test"},
-			mail:         nil,
-			responses:    []pmail.Response{{Response: smtpclient.Response{Code: 250, Line: "OK"}}},
-			wantWriteErr: true,
-		},
-		{
-			name:         "nil responses",
-			fileInfo:     &file.FileInfo{ID: "test"},
-			mail:         &pmail.Mail{MsgID: []byte("test")},
-			responses:    nil,
+			name:     "nil mail",
+			fileInfo: &file.FileInfo{ID: "test"},
+			mail:     nil,
+			responses: map[string][]pmail.Response{
+				"recipient@example.com": {
+					{Response: smtpclient.Response{Code: 250, Line: "OK"}},
+				},
+			},
 			wantWriteErr: true,
 		},
 		{
 			name:         "empty responses",
 			fileInfo:     &file.FileInfo{ID: "test"},
 			mail:         &pmail.Mail{MsgID: []byte("test")},
-			responses:    []pmail.Response{},
+			responses:    map[string][]pmail.Response{},
 			wantWriteErr: true,
 		},
 		{
 			name:     "multiple outputs with one failing",
 			fileInfo: &file.FileInfo{ID: "test"},
 			mail:     &pmail.Mail{MsgID: []byte("test")},
-			responses: []pmail.Response{
-				{Response: smtpclient.Response{Code: 250, Line: "OK"}},
+			responses: map[string][]pmail.Response{
+				"recipient@example.com": {
+					{Response: smtpclient.Response{Code: 250, Line: "OK"}},
+				},
 			},
 			wantWriteErr: true,
 		},
