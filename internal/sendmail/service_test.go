@@ -166,13 +166,13 @@ func TestRun(t *testing.T) {
 func TestReadNextMail(t *testing.T) {
 	tests := []struct {
 		name        string
-		setupMocks  func(*file.MockIFileReader, *file_mail.MockIMailTransformer, *intmail.MockIMailProcessor, *MockIMailSender)
+		setupMocks  func(*file.MockIFileReader, *file_mail.MockIMailTransformer, *intmail.MockIMailProcessor, *MockIMailSender, *output.MockIOutput)
 		expectError bool
 		expectNil   bool
 	}{
 		{
 			name: "successful_processing",
-			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender) {
+			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender, mo *output.MockIOutput) {
 				fileInfo := &file.FileInfo{ID: "test-id"}
 				mail := &pmail.Mail{}
 
@@ -195,13 +195,18 @@ func TestReadNextMail(t *testing.T) {
 					SendMail(gomock.Any(), mail).
 					Return(map[string][]pmail.Response{}, nil).
 					Times(1)
+
+				mo.EXPECT().
+					Write(gomock.Any(), fileInfo, mail, map[string][]pmail.Response{}).
+					Return(nil).
+					Times(1)
 			},
 			expectError: false,
 			expectNil:   false,
 		},
 		{
 			name: "no_file_available",
-			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender) {
+			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender, mo *output.MockIOutput) {
 				fr.EXPECT().
 					ReadNextFile(gomock.Any()).
 					Return(nil, nil).
@@ -212,7 +217,7 @@ func TestReadNextMail(t *testing.T) {
 		},
 		{
 			name: "read_file_error",
-			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender) {
+			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender, mo *output.MockIOutput) {
 				fr.EXPECT().
 					ReadNextFile(gomock.Any()).
 					Return(nil, errors.New("read failed")).
@@ -223,7 +228,7 @@ func TestReadNextMail(t *testing.T) {
 		},
 		{
 			name: "transform_error",
-			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender) {
+			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender, mo *output.MockIOutput) {
 				fileInfo := &file.FileInfo{ID: "test-id"}
 
 				fr.EXPECT().
@@ -241,7 +246,7 @@ func TestReadNextMail(t *testing.T) {
 		},
 		{
 			name: "process_error",
-			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender) {
+			setupMocks: func(fr *file.MockIFileReader, mt *file_mail.MockIMailTransformer, mp *intmail.MockIMailProcessor, ms *MockIMailSender, mo *output.MockIOutput) {
 				fileInfo := &file.FileInfo{ID: "test-id"}
 				mail := &pmail.Mail{}
 
@@ -305,7 +310,7 @@ func TestReadNextMail(t *testing.T) {
 			mockMailTransformer := file_mail.NewMockIMailTransformer(ctrl)
 			mockOutput := output.NewMockIOutput(ctrl)
 
-			tt.setupMocks(mockFileReader, mockMailTransformer, mockMailProcessor, mockMailSender)
+			tt.setupMocks(mockFileReader, mockMailTransformer, mockMailProcessor, mockMailSender, mockOutput)
 
 			service := NewSendMailService(
 				context.Background(),
