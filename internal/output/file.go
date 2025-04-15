@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -69,7 +70,7 @@ func NewFileOutput(
 	}
 	result.Path = path.(string)
 
-	result.Path, err = utils.ValidateIO(ctx, result.Path, false)
+	result.Path, err = utils.ValidateIO(ctx, result.Path, false, false)
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to validate path")
 		return nil, err
@@ -120,6 +121,51 @@ func (f *FileOutput) GetFileName(
 	return filepath.Join(f.Path, fileName)
 }
 
+func (f *FileOutput) InitAndWriteHeader(
+	ctx context.Context,
+	myMail *pmail.Mail,
+) (string, error) {
+	fileName := f.GetFileName(ctx, myMail)
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("output.file", fileName).
+		Logger()
+	logger.Debug().Msg("FileOutput: InitAndWriteHeader")
+	var err error
+
+	fileName, err = utils.ValidateIO(ctx, fileName, true, true)
+	if err == nil {
+		return fileName, nil
+	}
+	if !strings.Contains(err.Error(), "ToIgnore") {
+		logger.Error().Err(err).Msg("Failed to validate file name")
+		return fileName, err
+	}
+	outputFile, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		logger.Error().
+			Err(err).
+			Msg("Failed to create file")
+		return fileName, err
+	}
+	defer func() {
+		err = outputFile.Close()
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to close file")
+		}
+	}()
+	writer := csv.NewWriter(outputFile)
+	defer writer.Flush()
+
+	err = writer.Write([]string{"msg_id", "status", "error"})
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to write header")
+		return fileName, err
+	}
+
+	return fileName, nil
+}
+
 // Write implements the IOutput interface by writing mail processing results to a CSV file.
 // It creates a new CSV file (or overwrites an existing one) and writes the mail ID,
 // processing status, and any error messages.
@@ -143,7 +189,10 @@ func (f *FileOutput) Write(
 	myMail *pmail.Mail,
 	responses map[string][]pmail.Response,
 ) error {
-	fileName := f.GetFileName(ctx, myMail)
+	fileName, err := f.InitAndWriteHeader(ctx, myMail)
+	if err != nil {
+		return err
+	}
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("output.file", fileName).
@@ -152,11 +201,9 @@ func (f *FileOutput) Write(
 		Logger()
 	logger.Debug().Msg("FileOutput: Write")
 
-	outputFile, err := os.Create(fileName)
+	outputFile, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		logger.Error().
-			Err(err).
-			Msg("Failed to create file")
+		logger.Error().Err(err).Msg("Failed to open file")
 		return err
 	}
 	defer func() {
@@ -165,15 +212,9 @@ func (f *FileOutput) Write(
 			logger.Error().Err(err).Msg("Failed to close file")
 		}
 	}()
-
 	writer := csv.NewWriter(outputFile)
 	defer writer.Flush()
 
-	err = writer.Write([]string{"msg_id", "status", "error"})
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to write header")
-		return err
-	}
 	for _, resp := range responses {
 		for _, r := range resp {
 			err = writer.Write([]string{

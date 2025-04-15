@@ -26,6 +26,15 @@ const (
 	// DNS related errors
 	ErrDNSLookup ErrorCode = "DNS_LOOKUP"
 	ErrMXRecord  ErrorCode = "MX_RECORD"
+
+	// File related errors
+	ErrFileStatFailed   ErrorCode = "FILE_STAT_FAILED"
+	ErrHomeDir          ErrorCode = "HOME_DIR"
+	ErrNotDir           ErrorCode = "NOT_DIR"
+	ErrNotFile          ErrorCode = "NOT_FILE"
+	ErrPathRequired     ErrorCode = "PATH_REQUIRED"
+	ErrWorkingDir       ErrorCode = "WORKING_DIR"
+	ErrNewlyCreatedFile ErrorCode = "NEWLY_CREATED_FILE"
 )
 
 // AppError represents an application-specific error with context

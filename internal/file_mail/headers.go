@@ -60,7 +60,7 @@ func (h *HeadersTransformer) Transform(
 	}
 
 	// 2. validate the qf file exists and is readable
-	_, err = utils.ValidateIO(ctx, fileInfo.QfFilePath, true)
+	_, err = utils.ValidateIO(ctx, fileInfo.QfFilePath, true, false)
 	if err != nil {
 		logger.Error().Err(err).Msg("utils.ValidateIO")
 		return nil, err

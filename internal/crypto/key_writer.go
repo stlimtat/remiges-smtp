@@ -21,7 +21,7 @@ func NewKeyWriter(
 	logger := zerolog.Ctx(ctx).With().Str("out_path", outPath).Logger()
 
 	var err error
-	outPath, err = utils.ValidateIO(ctx, outPath, false)
+	outPath, err = utils.ValidateIO(ctx, outPath, false, false)
 	if err != nil {
 		logger.Error().Err(err).Msg("utils.ValidateIO failed")
 		return nil, err

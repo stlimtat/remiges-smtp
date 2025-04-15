@@ -83,7 +83,7 @@ func (p *DKIMProcessor) InitDKIMCrypto(
 		privateKeyPath, err := utils.ValidateIO(
 			ctx,
 			filepath.Clean(moxSelector.PrivateKeyFile),
-			true,
+			true, false,
 		)
 		if err != nil {
 			logger.Error().Err(err).Msg("InitDKIMCrypto: ValidateIO")
