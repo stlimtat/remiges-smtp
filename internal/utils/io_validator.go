@@ -25,15 +25,19 @@ import (
 //   - ErrFileStatFailed: When unable to get file information
 //   - ErrNotFile: When a file is expected but a directory is found
 //   - ErrNotDir: When a directory is expected but a file is found
+//   - ErrNewlyCreatedFile: When a new file is created (only returned when createFile is true)
 //
 // Parameters:
 //   - ctx: Context for logging and cancellation
 //   - path: The path to validate and resolve
 //   - fileNotDir: If true, expects a file; if false, expects a directory
+//   - createFile: If true and the file doesn't exist, creates it. If false, returns an error for non-existent files.
 //
 // Returns:
 //   - string: The resolved and cleaned absolute path
 //   - error: Non-nil if validation fails or path resolution encounters an error
+//     When createFile is true and a new file is created, returns ErrNewlyCreatedFile
+//     with message "ToIgnore: create new file" to indicate successful file creation
 func ValidateIO(
 	ctx context.Context,
 	path string,
