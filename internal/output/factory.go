@@ -88,10 +88,10 @@ func (f *OutputFactory) Write(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
 	myMail *pmail.Mail,
-	resp []pmail.Response,
+	responses map[string][]pmail.Response,
 ) error {
 	for _, output := range f.Outputs {
-		err := output.Write(ctx, fileInfo, myMail, resp)
+		err := output.Write(ctx, fileInfo, myMail, responses)
 		if err != nil {
 			return err
 		}

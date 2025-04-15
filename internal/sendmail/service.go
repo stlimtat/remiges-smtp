@@ -232,11 +232,6 @@ func (s *SendMailService) ReadNextMail(
 		// Log delivery results
 		for to, response := range responses {
 			if errs[to] != nil {
-				logger.Error().
-					AnErr("err", errs[to]).
-					Interface("response", response).
-					Str("to", to).
-					Msg("Delivery failed")
 				continue
 			}
 			logger.Info().
@@ -245,6 +240,13 @@ func (s *SendMailService) ReadNextMail(
 				Msg("Delivery done")
 		}
 		fileInfo.Status = input.FILE_STATUS_DELIVERED
+
+		// write output to file
+		err = s.MyOutput.Write(ctx, fileInfo, myMail, responses)
+		if err != nil {
+			logger.Error().Err(err).Msg("MyOutput.Write")
+			return nil, nil, err
+		}
 	}
 
 	return fileInfo, myMail, nil

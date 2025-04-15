@@ -44,7 +44,7 @@ func (m *MockIOutput) EXPECT() *MockIOutputMockRecorder {
 }
 
 // Write mocks base method.
-func (m *MockIOutput) Write(ctx context.Context, fileInfo *file.FileInfo, myMail *pmail.Mail, responses []pmail.Response) error {
+func (m *MockIOutput) Write(ctx context.Context, fileInfo *file.FileInfo, myMail *pmail.Mail, responses map[string][]pmail.Response) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Write", ctx, fileInfo, myMail, responses)
 	ret0, _ := ret[0].(error)

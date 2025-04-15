@@ -63,7 +63,7 @@ func (f *FileTrackerOutput) Write(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
 	myMail *pmail.Mail,
-	_ []pmail.Response,
+	_ map[string][]pmail.Response,
 ) error {
 	logger := zerolog.Ctx(ctx).
 		With().

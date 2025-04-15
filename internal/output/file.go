@@ -141,7 +141,7 @@ func (f *FileOutput) Write(
 	ctx context.Context,
 	fileInfo *file.FileInfo,
 	myMail *pmail.Mail,
-	resp []pmail.Response,
+	responses map[string][]pmail.Response,
 ) error {
 	fileName := f.GetFileName(ctx, myMail)
 	logger := zerolog.Ctx(ctx).
@@ -174,15 +174,17 @@ func (f *FileOutput) Write(
 		logger.Error().Err(err).Msg("Failed to write header")
 		return err
 	}
-	for _, resp := range resp {
-		err = writer.Write([]string{
-			string(myMail.MsgID),
-			fmt.Sprintf("%d", resp.Code),
-			resp.Line,
-		})
-		if err != nil {
-			logger.Error().Err(err).Msg("Failed to write line")
-			return err
+	for _, resp := range responses {
+		for _, r := range resp {
+			err = writer.Write([]string{
+				string(myMail.MsgID),
+				fmt.Sprintf("%d", r.Code),
+				r.Line,
+			})
+			if err != nil {
+				logger.Error().Err(err).Msg("Failed to write line")
+				return err
+			}
 		}
 	}
 

@@ -21,11 +21,11 @@ type IOutput interface {
 	//   - ctx: Context for cancellation and timeout control
 	//   - fileInfo: Information about the source file being processed
 	//   - myMail: The mail content being processed
-	//   - responses: The processing results and responses
+	//   - responses: The processing results and responses per mail
 	//
 	// Returns:
 	//   - error: Non-nil if the write operation fails
-	Write(ctx context.Context, fileInfo *file.FileInfo, myMail *pmail.Mail, responses []pmail.Response) error
+	Write(ctx context.Context, fileInfo *file.FileInfo, myMail *pmail.Mail, responses map[string][]pmail.Response) error
 }
 
 // IOutputFactory defines the interface for creating output instances based on configuration.

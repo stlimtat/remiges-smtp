@@ -143,11 +143,6 @@ func (m *MailSender) NewConn(
 	logger := zerolog.Ctx(ctx).With().Strs("hosts", hosts).Logger()
 	var err error
 
-	if m.Debug {
-		logger.Debug().Msg("debug mode, not connecting to SMTP server")
-		return nil, rerrors.NewError(rerrors.ErrSMTPConnection, "debug mode, not connecting to SMTP server", nil)
-	}
-
 	// Randomly select a host for load balancing
 	randomInt, err := utils.RandInt(int64(len(hosts)))
 	if err != nil {
@@ -329,7 +324,15 @@ func (m *MailSender) Deliver(
 	// Skip actual delivery in debug mode
 	if m.Debug {
 		logger.Info().Msg("debug mode, not sending mail")
-		return nil, nil
+		return []pmail.Response{
+			{
+				Response: smtpclient.Response{
+					Code: 250,
+					Err:  nil,
+					Line: "OK",
+				},
+			},
+		}, nil
 	}
 
 	// Create SMTP client with TLS support
