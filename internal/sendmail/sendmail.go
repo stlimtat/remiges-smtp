@@ -64,13 +64,6 @@ type MailSender struct {
 	metrics *Metrics
 }
 
-// smtpConnection represents an active SMTP connection
-type smtpConnection struct {
-	conn     net.Conn           // The underlying network connection
-	client   *smtpclient.Client // The SMTP client
-	lastUsed time.Time          // Timestamp of last usage for connection pooling
-}
-
 // deliveryResult represents the outcome of a mail delivery attempt
 type deliveryResult struct {
 	responses []pmail.Response // SMTP server responses
@@ -150,6 +143,11 @@ func (m *MailSender) NewConn(
 	logger := zerolog.Ctx(ctx).With().Strs("hosts", hosts).Logger()
 	var err error
 
+	if m.Debug {
+		logger.Debug().Msg("debug mode, not connecting to SMTP server")
+		return nil, rerrors.NewError(rerrors.ErrSMTPConnection, "debug mode, not connecting to SMTP server", nil)
+	}
+
 	// Randomly select a host for load balancing
 	randomInt, err := utils.RandInt(int64(len(hosts)))
 	if err != nil {
@@ -186,6 +184,8 @@ func (m *MailSender) SendMail(
 	ctx context.Context,
 	mail *pmail.Mail,
 ) (map[string][]pmail.Response, map[string]error) {
+	logger := zerolog.Ctx(ctx)
+
 	// Validate the email before attempting delivery
 	if err := mail.Validate(); err != nil {
 		return nil, map[string]error{
@@ -193,7 +193,6 @@ func (m *MailSender) SendMail(
 		}
 	}
 
-	logger := zerolog.Ctx(ctx)
 	results := make(map[string][]pmail.Response)
 	errs := make(map[string]error)
 
