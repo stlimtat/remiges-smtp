@@ -16,8 +16,7 @@
 
 <!-- PROJECT LOGO -->
 # remiges-smtp
-smtp client with file scrapping
-
+SMTP client with file scraping capabilities
 
 
 <!-- TABLE OF CONTENTS -->
@@ -33,11 +32,12 @@ smtp client with file scrapping
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
+    <li><a href="#tutorial">Tutorial</a></li>
+    <li><a href="#faq">FAQ</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -47,16 +47,32 @@ smtp client with file scrapping
 </details>
 
 
+<!-- DIRECTORY STRUCTURE -->
+## Directory structure
+```
+/remiges-smtp
+├── config                 # Location to be used to store
+├── docker-compose.yml     # Docker Compose configuration for smtpclientd
+├── Dockerfile.smtpclientd # Dockerfile that compiles the application
+├── output                 # Location to be used to record output
+├── README.md              # Default README.md
+├── testdata               # Location to be used to hold data
+└── doc                    # Document directory
+  ├── FAQ.md               # Frequently Asked Questions
+  ├── QUICKSTART.md        # QuickStart Guide
+  ├── TUTORIAL.md          # Tutorial Document
+  └── USAGE.md             # Document providing usage information
+```
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-The project was conceived as a smtpclient with limited capabilities:
-1. Read a set of files from a directory
-2. Parse the files and format them as RFC compliant emails
-  a. Sign the message with DKIM-Signature
-3. Connect to the mail servers indicated by the To address and send the email
-4. Write the result in a CSV file
+Remiges SMTP is a powerful SMTP client that can:
+- Read and process files from directories
+- Format them as RFC-compliant emails
+- Sign messages with DKIM
+- Connect to mail servers and send emails
+- Record results in CSV format
 
 ### Built With
 
@@ -75,20 +91,9 @@ The following software were used to build this project and application:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy up and running follow these simple example steps.
+See [QUICKSTART.md](./doc/QUICKSTART.md)
 
-### Prerequisites
-
-To get started, you will need to have downloaded the dependent libraries.  This has been managed by Bazel.
-
-* smtpclient cli tool
-  ```sh
-  bazel test //...
-  ```
-* unit tests
-  ```sh
-  bazel test //...
-  ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Installation
 
@@ -96,13 +101,8 @@ To get started, you will need to have downloaded the dependent libraries.  This 
    ```sh
    git clone https://github.com/stlimtat/remiges-smtp.git
    ```
-2. Run the simple smtpclient server in a docker container
-   ```sh
-   docker compose up
-   ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- USAGE EXAMPLES -->
@@ -112,6 +112,21 @@ See [USAGE.md](./doc/USAGE.md)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+
+<!-- TUTORIAL -->
+## Tutorial
+
+See [TUTORIAL.md](./doc/TUTORIAL.md)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+<!-- FAQ -->
+## FAQ
+
+See [FAQ.md](./doc/FAQ`.md)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 <!-- ROADMAP -->
@@ -130,22 +145,7 @@ See the [open issues](https://github.com/stlimtat/remiges-smtp/issues) for a ful
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Top contributors:
-
-<a href="https://github.com/stlimtat/remiges-smtp/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=stlimtat/remiges-smtp" alt="contrib.rocks image" />
-</a>
+We welcome contributions! Please see our [Contributing Guide](./doc/CONTRIBUTING.md) for details.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
